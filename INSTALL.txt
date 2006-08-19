@@ -1,0 +1,9 @@
+// $Id$
+
+imce.module installation instructions
+
+1) Copy this directory to your modules directory
+2) Enable the module at: administer -> modules
+3) Configure the module settings at: administer -> settings -> imce
+4) Assign permissions to user roles at: administer -> access control
+5) Start using imce by clicking the browse icon in image or link popup of tinymce.
