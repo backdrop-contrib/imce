@@ -1,3 +1,4 @@
+// $Id$
 if (isJsEnabled()) {
   addLoadEvent(imceInitiate);
 }

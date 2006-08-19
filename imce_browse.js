@@ -1,3 +1,4 @@
+// $Id$
 addLoadEvent(imceStartBrowser);
 
 var selectedrow = null;
