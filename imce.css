@@ -1,0 +1,87 @@
+body {
+  font: 8pt verdana;
+  background: #f5f5f5;
+  color: #444;
+  margin: 4px;
+}
+a {
+  color: #000;
+}
+img {
+  border: 0;
+}
+div {
+  width: 99%;
+}
+form {
+  margin: 0.2em 0em;
+}
+input {
+  color: #444;
+  background: #eee;
+  border: 2px solid #bbb;
+}
+table {
+  font-size: 1em;
+  width: 96%;
+  border-collapse: collapse;
+}
+th {
+  text-align: right;
+}
+th.filename {
+  text-align: left;
+}
+#bodydiv td{
+  border-bottom: 1px solid #ddd;
+  text-align: right;
+}
+#bodydiv td.filename {
+  text-align: left;
+}
+#bodydiv {/*File list area*/
+  height: 110px;
+  overflow: auto;
+  border-bottom: 2px solid #000;
+  border-top: 2px solid #000;
+}
+.messages {
+  color: #36c;
+  padding: 0.2em;
+  font-weight: bold;
+  text-align: center;
+}
+.error{
+  color: #f60;
+}
+#imagepreview {/*Image preview area*/
+  height: 240px;
+  overflow: auto;
+  text-align: center;
+  vertical-align: middle;
+  border-bottom: 2px solid #000;
+  margin-bottom: 0.5em;
+}
+.rover {
+  background: #eee;
+  cursor: pointer;
+}
+.rsel {
+  background: #9c9;
+  color: #fff;
+}
+.first {
+  width: 50%;
+}
+.second {
+  width: 14%;
+}
+.third {
+  width: 18%;
+}
+.fourth {
+  width: 18%;
+}
+.nolimit {
+  color: #f60;
+}

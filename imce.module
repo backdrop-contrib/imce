@@ -1,0 +1,291 @@
+<?php
+
+/**
+ * Implementation of hook_help().
+ */
+function imce_help($section) {
+  switch ($section) {
+    case 'admin/modules#description':
+      return t('Provides an image browser for tinyMCE.');
+  }
+}
+
+/**
+ * Implementation of hook_footer().
+ */
+function imce_footer() {//set imce if tinymce is in action 
+  if (strpos(drupal_set_html_head(), 'tinyMCE.init') && user_access('view files')) {
+    drupal_add_js(drupal_get_path('module', 'imce').'/imce_set.js');   
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function imce_perm() {
+  return array('view files', 'upload files', 'delete files', 'limitless upload');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function imce_menu($may_cache) {
+  global $user;
+  $items = array();
+  if ($may_cache) {
+    $items[] = array(
+      'path' => 'imce/browse',
+      'title' => 'imce settings',
+      'access' => user_access('view files'),
+      'callback' => 'imce_browse',
+      'type' => MENU_CALLBACK);
+  }
+  elseif (arg(0)=='imce' && arg(1)!='browse') {
+    if (arg(1)=='delete' && user_access('delete files') && $_GET['delpath'] && strpos($_GET['delpath'], imce_get_directory())===0) {
+      imce_delete_file($_GET['delpath']);
+    }
+    elseif (arg(1)=='upload' && user_access('upload files') && $_FILES['thefile']) {
+      imce_copy_uploaded($_FILES['thefile'], imce_get_directory());
+    }
+    drupal_goto('imce/browse');
+  }
+  return $items;
+}
+
+/**
+ * Image Browser.
+ */
+function imce_browse() {
+  
+  //get working directory.
+  if (!($dir = imce_get_directory())) {
+    print t('Directory error!');
+    exit();
+  }
+
+  $emptyrow = array(array('data'=>'', 'class'=>'first'), array('data'=>'', 'class'=>'second'), array('data'=>'', 'class'=>'third'), array('data'=>'', 'class'=>'fourth'));//to assign width values for table cells.
+  $header = array(array('data'=>t('filename'), 'class'=>'filename'), t('size'), t('dimensions'), t('operations'));
+  $delete = user_access('delete files');
+  $basepath = base_path();
+  
+  //file list
+  $files = imce_scan_directory($dir);
+  foreach ($files['list'] as $path=>$file) {
+    $rows[] = array(
+      'data' => array(
+        array('data' => $file['f'], 'class' => 'filename'),
+        format_size($file['s']),
+        $file['w'].'x'.$file['h'],
+        ($delete ? l(t('delete'), 'imce/delete', array(), 'delpath='.$path).' - ' : ''). '<a href="javascript: imceFinitor(\''. $basepath. $path.'\', '.$file['w'].', '.$file['h'].')">'. t('add').'</a>'
+      ),
+      'ipath' => $file['w'] ? $basepath. $path : '',
+      'iw' => $file['w'],
+      'ih' => $file['h']
+    );
+  }
+  if (!isset($rows)) {
+    $rows = array(array(array('data'=>'<div class="messages">'.t('Directory is empty.').'</div>', 'colspan'=>4,)));
+  }
+  $_SESSION['imcetotal'] = $files['size'];
+
+//upload form
+  $upload_form = user_access('upload files') ? ('<form action="'.url('imce/upload').'" method="post" id="uploadform" enctype="multipart/form-data">
+  <input type="file" name="thefile" id="thefile" size="40">
+  <input type="submit" name="submit" value="'.t('Upload File').'">
+  </form>
+  <div class="limits"><strong>'. t('Limits').'</strong>: '.t('File size').' = '. variable_get('imce_max_size', 100).' KB, '.t('Dimensions').' = '. variable_get('imce_max_width', 500). 'x'. variable_get('imce_max_height', 500).', '.t('Quota').' = <strong>'. format_size($_SESSION['imcetotal']).'</strong>/'. variable_get('imce_quota', 500).' KB</div><div class="nolimit">'. (user_access('limitless upload') ? t('No limits for you!') : '').'</div>') : '';
+
+  $imce_path = $basepath. drupal_get_path('module', 'imce');
+  $output = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>'.t('Image Browser').'</title>
+  <script type="text/javascript" src="'. $basepath .'misc/drupal.js"></script>
+  <script type="text/javascript" src="'. $imce_path .'/imce_browse.js"></script>'.
+  theme('stylesheet_import', $imce_path.'/imce.css').'
+</head>
+<body>
+<div id="headerdiv">'.
+theme('table', $header, array($emptyrow), array('id'=>'headertable')).'
+</div>
+<div id="bodydiv">'.
+theme('table', $emptyrow, $rows, array('id'=>'bodytable')).'
+</div>
+<div id="imagepreview">'.theme('status_messages').'</div>'.
+$upload_form.'
+<input type="hidden" value="'.t('This is not an image! Continue?').'" id="confirm-msg" />
+</body>
+</html>';
+
+  print $output;
+  exit();
+}
+
+/**
+ * copy uploaded file to the specified directory.
+ */ 
+function imce_copy_uploaded($file, $dir) {
+
+  //is the file real
+  if (!is_uploaded_file($file['tmp_name']) || !isset($_SESSION['imcetotal'])) {
+    drupal_set_message(t('No files were uploaded.'), 'error');
+    return false;
+  }
+
+  //dont like too long filenames and files without an extension.
+  if (strlen($file['name'])>32) {
+    drupal_set_message(t('Filename is too long(>32 chars).'), 'error');
+    return false;
+  }
+  if (!($dot = strrpos($file['name'], '.'))) {
+    drupal_set_message(t('Invalid filename.'), 'error');
+    return false;
+  }
+  
+  $extension = strtolower(substr($file['name'], $dot));
+  $nolimit = user_access('limitless upload');
+  
+  //check image dimensions and type.
+  if ($info = @getimagesize($file['tmp_name'])) {
+    if (!in_array($info[2], array(1, 2, 3))) {// 1=gif, 2=jpg, 3=png. real file types
+      drupal_set_message(t('Only images with .jpg, .gif, and .png extensions are allowed.'), 'error');
+      return false;
+    }
+    if (($info[0]>variable_get('imce_max_width', 500) || $info[1]>variable_get('imce_max_height', 500)) && !$nolimit) {
+      drupal_set_message(t('Image dimensions exceed the limit.'), 'error');
+      return false;
+    }
+  }
+  // file is not an image. check if the extension is allowed
+  elseif (($extensions = variable_get('imce_allowed_extensions', ''))) {
+    if (!in_array($extension, explode(',', str_replace(' ', '', $extensions)))) {
+      drupal_set_message(t('Invalid file extension. Allowed extensions are .jpg, .gif, .png, %ext', array('%ext' => $extensions)), 'error');
+      return false;
+    }
+  }
+  else {
+    drupal_set_message(t('Only images with .jpg, .gif, and .png extensions are allowed.'), 'error');
+    return false;
+  }
+
+  //check quota, filesize.
+  if ($file['size'] > variable_get('imce_max_size', 100)*1024 && !$nolimit) {
+    drupal_set_message(t('File size exceeds upload limit.'), 'error');
+    return false;
+  }
+  $newtotal = $file['size'] + $_SESSION['imcetotal'];
+  if ($newtotal > variable_get('imce_quota', 500)*1024 && !$nolimit) {
+    drupal_set_message(t('You have not enough free space.'), 'error');
+    return false;
+  }
+
+  //copy file
+  $cleared = preg_replace("/[^\w\-\.]/", '_', $file['name']);//clear unwanted characters in filename.
+  if (!@copy($file['tmp_name'], file_create_filename($cleared, $dir))) {
+    drupal_set_message(t('Error copying the file.'), 'error');
+    return false;
+  }
+
+  //success
+  $_SESSION['imcetotal'] += $file['size'];
+  drupal_set_message(t('Upload successful.'));
+  return true;
+}
+
+/**
+ * delete a file
+ */
+function imce_delete_file($file) {
+  if (@unlink($file)) {
+    drupal_set_message(t('File deleted successfully.'));
+    return true;
+  }
+  drupal_set_message(t('Error deleting file.'), 'error');
+  return false;
+}
+
+/**
+ * scan directory and return file list and total size of dir.
+ */
+function imce_scan_directory($dir) {
+  if (!is_dir($dir) || !is_readable($dir) || !($handle = @opendir($dir))) {
+    drupal_set_message(t('Error opening directory'), 'error');
+    return false;
+  }
+  $files = array();
+  $totalsize = 0;
+  while(($file = @readdir($handle)) !== false) {
+    if ($file == '.' || $file == '..' || $file == 'CVS') continue;
+    $path = $dir.'/'.$file;
+    $size = @filesize($path);
+    $img = @getimagesize($path);
+    $files[$path] = array('f'=>$file, 's'=>$size, 'w'=>(int)$img[0], 'h'=>(int)$img[1]);
+    $totalsize += $size;
+  }
+  return array('list'=>$files, 'size'=>$totalsize);
+}
+
+/**
+ * return working image directory.
+ */
+function imce_get_directory() {
+  global $user;
+  if ($shared = variable_get('imce_shared_folder', '')) {//use shared folder if it is declared
+    $dir = file_directory_path().'/'.$shared;
+  }
+  else {//use personal folders by default.
+    $dir = file_directory_path().'/'.variable_get('imce_personal_prefix', 'u').$user->uid;
+  }
+  return file_check_directory($dir, true) ? $dir : false;
+}
+
+/**
+ * Implementation of hook_settings().
+ */
+function imce_settings() {
+  $form['imce_max_width'] = array( 
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#default_value' => variable_get('imce_max_width', 500),
+    '#prefix' => '<div class="form-item"><label>'.t('Image dimensions').':</label><div class="container-inline">'.t('Width').' X '.t('Height').': ',
+    '#suffix' => ' X ',
+  ); 
+  $form['imce_max_height'] = array( 
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#default_value' => variable_get('imce_max_height', 500),
+    '#suffix' => 'px</div><div class="description">'.t('Define the maximum dimensions for an image to be uploaded.').'</div></div>',
+  ); 
+  $form['imce_max_size'] = array( 
+    '#type' => 'textfield', 
+    '#title' => t('File size'),
+    '#default_value' => variable_get('imce_max_size', 100),
+    '#description' => t('Define the maximum file size(KB) for an image to be uploaded.'),
+  ); 
+  $form['imce_quota'] = array( 
+    '#type' => 'textfield', 
+    '#title' => t('Upload quota'), 
+    '#default_value' => variable_get('imce_quota', 500),
+    '#description' => t('Define the total upload quota(KB) per user.'),
+  ); 
+  $form['imce_personal_prefix'] = array( 
+    '#type' => 'textfield', 
+    '#title' => t('Prefix for personal folder names'), 
+    '#default_value' => variable_get('imce_personal_prefix', 'u'),
+    '#description' => t('Define the prefix that user IDs will be appended in order to create personal folders. Ex: entering "u" will result in folder names like u1, u14 etc. If you leave it blank, user IDs will be used as folder names.'),
+  );
+  $form['imce_shared_folder'] = array( 
+    '#type' => 'textfield',
+    '#title' => t('Use a shared folder'),
+    '#default_value' => variable_get('imce_shared_folder', ''),
+    '#description' => t('If you want all your users to <strong>use a common folder instead of personal folders</strong>, here you can define that folder name (ex. images). Notice that shared upload means shared quota. If you are happy with personal folders leave this field blank.'),
+  );
+  $form['imce_allowed_extensions'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Non-image file support'),
+    '#default_value' => variable_get('imce_allowed_extensions', ''),
+    '#description' => t('Although imce is mainly designed to browse images, it supports uploading and browsing of any file type. If you like to use this feature, define your <strong>allowed non-image file extensions</strong> here with a comma between them. Ex .doc, .pdf, .zip.  Note that, image upload limits also apply for these files. For a pure image browser leave this field blank.'),
+  );
+  return $form;
+} 
