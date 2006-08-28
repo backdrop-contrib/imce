@@ -1,0 +1,11 @@
+// $Id$
+
+IMCE x.x.x, xxxx-xx-xx (development version)
+------------------------
+- javascript-based file sorting functionality
+- scaling of images that have dimensions above the limit
+- bug fix: chmod(664) for uploaded files to make them visible for everyone.
+
+IMCE 4.7.0, 2006-08-19
+------------------------
+- initial release
