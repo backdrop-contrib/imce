@@ -64,8 +64,7 @@ function imce_browse() {
     exit();
   }
 
-  $emptyrow = array(array('data'=>'', 'class'=>'first'), array('data'=>'', 'class'=>'second'), array('data'=>'', 'class'=>'third'), array('data'=>'', 'class'=>'fourth'));//to assign width values for table cells.
-  $header = array(array('data'=>t('filename'), 'class'=>'filename'), t('size'), t('dimensions'), t('operations'));
+  $header = array(array('data'=>t('filename'), 'class'=>'filename'), array('data'=>t('size'), 'class'=>'size'), array('data'=>t('dimensions'), 'class'=>'dimensions'), array('data'=>t('date'), 'class'=>'date'), array('data'=>t('operations'), 'class'=>'operations'));
   $delete = user_access('delete files');
   $basepath = base_path();
   
@@ -75,9 +74,10 @@ function imce_browse() {
     $rows[] = array(
       'data' => array(
         array('data' => $file['f'], 'class' => 'filename'),
-        format_size($file['s']),
-        $file['w'].'x'.$file['h'],
-        ($delete ? l(t('delete'), 'imce/delete', array(), 'delpath='.$path).' - ' : ''). '<a href="javascript: imceFinitor(\''. $basepath. $path.'\', '.$file['w'].', '.$file['h'].')">'. t('add').'</a>'
+        array('data' => format_size($file['s']), 'class' => 'size'),
+        array('data' => $file['w'].'x'.$file['h'], 'class' => 'dimensions'),
+        array('data' => date('Y-m-d', $file['d']), 'class' => 'date', 'timestamp' => $file['d'], 'title' => date('H:i:s', $file['d'])),
+        array('data' => ($delete ? l(t('delete'), 'imce/delete', array('onclick' => 'return confirm(\''.t('Delete?').'\')'), 'delpath='.$path).' - ' : ''). '<a href="javascript: imceFinitor(\''. $basepath. $path.'\', '.$file['w'].', '.$file['h'].')">'. t('add').'</a>', 'class' => 'operations'),
       ),
       'ipath' => $file['w'] ? $basepath. $path : '',
       'iw' => $file['w'],
@@ -85,14 +85,15 @@ function imce_browse() {
     );
   }
   if (!isset($rows)) {
-    $rows = array(array(array('data'=>'<div class="messages">'.t('Directory is empty.').'</div>', 'colspan'=>4,)));
+    $rows = array(array(array('data'=>'<div class="messages">'.t('Directory is empty.').'</div>', 'colspan'=>5,)));
   }
   $_SESSION['imcetotal'] = $files['size'];
 
 //upload form
   $upload_form = user_access('upload files') ? ('<form action="'.url('imce/upload').'" method="post" id="uploadform" enctype="multipart/form-data">
   <input type="file" name="thefile" id="thefile" size="40">
-  <input type="submit" name="submit" value="'.t('Upload File').'">
+  <input type="submit" name="submit" value="'.t('Upload File').'">'.
+  (variable_get('imce_resizing', 0) ? '<input type="checkbox" checked="checked" name="resize">'.t('Scale image') : '').'
   </form>
   <div class="limits"><strong>'. t('Limits').'</strong>: '.t('File size').' = '. variable_get('imce_max_size', 100).' KB, '.t('Dimensions').' = '. variable_get('imce_max_width', 500). 'x'. variable_get('imce_max_height', 500).', '.t('Quota').' = <strong>'. format_size($_SESSION['imcetotal']).'</strong>/'. variable_get('imce_quota', 500).' KB</div><div class="nolimit">'. (user_access('limitless upload') ? t('No limits for you!') : '').'</div>') : '';
 
@@ -104,14 +105,15 @@ function imce_browse() {
   <title>'.t('Image Browser').'</title>
   <script type="text/javascript" src="'. $basepath .'misc/drupal.js"></script>
   <script type="text/javascript" src="'. $imce_path .'/imce_browse.js"></script>'.
+  (variable_get('imce_sorting', 0) ? '<script type="text/javascript" src="'. $imce_path .'/imce_sort.js"></script>' : '').
   theme('stylesheet_import', $imce_path.'/imce.css').'
 </head>
 <body>
 <div id="headerdiv">'.
-theme('table', $header, array($emptyrow), array('id'=>'headertable')).'
+theme('table', $header, array(), array('id'=>'headertable')).'
 </div>
 <div id="bodydiv">'.
-theme('table', $emptyrow, $rows, array('id'=>'bodytable')).'
+theme('table', array(), $rows, array('id'=>'bodytable')).'
 </div>
 <div id="imagepreview">'.theme('status_messages').'</div>'.
 $upload_form.'
@@ -153,9 +155,22 @@ function imce_copy_uploaded($file, $dir) {
       drupal_set_message(t('Only images with .jpg, .gif, and .png extensions are allowed.'), 'error');
       return false;
     }
-    if (($info[0]>variable_get('imce_max_width', 500) || $info[1]>variable_get('imce_max_height', 500)) && !$nolimit) {
-      drupal_set_message(t('Image dimensions exceed the limit.'), 'error');
-      return false;
+    $maxw = variable_get('imce_max_width', 500);
+    $maxh = variable_get('imce_max_height', 500);
+    if ($info[0]>$maxw || $info[1]>$maxh) {
+      if (variable_get('imce_resizing', 0) && $_POST['resize']) {
+        if(!image_scale($file['tmp_name'], $file['tmp_name'].$file['name'], $maxw, $maxh)) {
+          drupal_set_message(t('Error scaling image.'), 'error');
+          return false;
+        }
+        $file['tmp_name'] .= $file['name'];//new name
+        $file['size'] = filesize($file['tmp_name']);//new size
+        drupal_set_message(t('Image was scaled to allowed dimensions.'));
+      }
+      else if (!$nolimit) {
+        drupal_set_message(t('Image dimensions exceed the limit.'), 'error');
+        return false;
+      }
     }
   }
   // file is not an image. check if the extension is allowed
@@ -183,13 +198,15 @@ function imce_copy_uploaded($file, $dir) {
 
   //copy file
   $cleared = preg_replace("/[^\w\-\.]/", '_', $file['name']);//clear unwanted characters in filename.
-  if (!@copy($file['tmp_name'], file_create_filename($cleared, $dir))) {
+  $newpath = file_create_filename($cleared, $dir);
+  if (!@copy($file['tmp_name'], $newpath)) {
     drupal_set_message(t('Error copying the file.'), 'error');
     return false;
   }
-
+  
   //success
-  $_SESSION['imcetotal'] += $file['size'];
+  @chmod($newpath, 0664);
+  $_SESSION['imcetotal'] = $newtotal;
   drupal_set_message(t('Upload successful.'));
   return true;
 }
@@ -219,9 +236,10 @@ function imce_scan_directory($dir) {
   while(($file = @readdir($handle)) !== false) {
     if ($file == '.' || $file == '..' || $file == 'CVS') continue;
     $path = $dir.'/'.$file;
-    $size = @filesize($path);
+    $size = filesize($path);
     $img = @getimagesize($path);
-    $files[$path] = array('f'=>$file, 's'=>$size, 'w'=>(int)$img[0], 'h'=>(int)$img[1]);
+    $date = filemtime($path);
+    $files[$path] = array('f'=>$file, 's'=>$size, 'w'=>(int)$img[0], 'h'=>(int)$img[1], 'd'=>$date);
     $totalsize += $size;
   }
   return array('list'=>$files, 'size'=>$totalsize);
@@ -251,25 +269,31 @@ function imce_settings() {
     '#default_value' => variable_get('imce_max_width', 500),
     '#prefix' => '<div class="form-item"><label>'.t('Image dimensions').':</label><div class="container-inline">'.t('Width').' X '.t('Height').': ',
     '#suffix' => ' X ',
-  ); 
+  );
   $form['imce_max_height'] = array( 
     '#type' => 'textfield',
     '#size' => 4,
     '#default_value' => variable_get('imce_max_height', 500),
     '#suffix' => 'px</div><div class="description">'.t('Define the maximum dimensions for an image to be uploaded.').'</div></div>',
-  ); 
+  );
+  $form['imce_resizing'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable resizing'),
+    '#default_value' => variable_get('imce_resizing', 0),
+    '#description' => t('Check this if you want big images to be resized to allowed dimensions. Note that, image resizing increases script execution time.'),
+  );
   $form['imce_max_size'] = array( 
     '#type' => 'textfield', 
     '#title' => t('File size'),
     '#default_value' => variable_get('imce_max_size', 100),
     '#description' => t('Define the maximum file size(KB) for an image to be uploaded.'),
-  ); 
+  );
   $form['imce_quota'] = array( 
     '#type' => 'textfield', 
     '#title' => t('Upload quota'), 
     '#default_value' => variable_get('imce_quota', 500),
     '#description' => t('Define the total upload quota(KB) per user.'),
-  ); 
+  );
   $form['imce_personal_prefix'] = array( 
     '#type' => 'textfield', 
     '#title' => t('Prefix for personal folder names'), 
@@ -287,6 +311,12 @@ function imce_settings() {
     '#title' => t('Non-image file support'),
     '#default_value' => variable_get('imce_allowed_extensions', ''),
     '#description' => t('Although imce is mainly designed to browse images, it supports uploading and browsing of any file type. If you like to use this feature, define your <strong>allowed non-image file extensions</strong> here with a comma between them. Ex .doc, .pdf, .zip.  Note that, image upload limits also apply for these files. For a pure image browser leave this field blank.'),
+  );
+  $form['imce_sorting'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable sorting'),
+    '#default_value' => variable_get('imce_sorting', 0),
+    '#description' => t('Check this to enable sorting of files according to their filename, filesize, file modification date, and image dimensions. Sorting is javascript-based, thus there is no need for page refresh and sorting speed depends on the client computer.'),
   );
   return $form;
 } 
