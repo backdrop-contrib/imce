@@ -11,7 +11,7 @@ function imceInitiate() {
     }
   }
 }
-var imceRefererWin, imceRefererField, imceRefererType;
+var imceRefererWin, imceRefererField, imceRefererType, imceRefererURL;
 function imceImageBrowser(field_name, url, type, win) {
   //if (type!='image') return;//work for only images
   var imcePopup = window.open(tinyMCE.baseURL.substring(0, tinyMCE.baseURL.indexOf('modules')) + 'index.php?q=imce/browse', '', 'width=560, height=440, resize=0');
@@ -19,4 +19,5 @@ function imceImageBrowser(field_name, url, type, win) {
   imceRefererWin = win;
   imceRefererField = win.document.forms[0].elements[field_name];
   imceRefererType = type;
+  imceRefererURL = url;
 }
