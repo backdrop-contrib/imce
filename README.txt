@@ -27,3 +27,9 @@ total quota per user(default:500kb)
 
 - detects tinymce action automatically and throws necessary .js to activate 
 image browser thatcan be reached byclicking the browse icon in popups.
+
+- javascript-based file sorting.
+
+- scaling of big images to allowed dimensions.
+
+- highlighting of newly uploaded files or files that come from tinyMCE.
