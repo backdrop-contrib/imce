@@ -2,6 +2,7 @@
 
 IMCE x.x.x, xxxx-xx-xx (development version)
 ------------------------
+- a file that comes from tinymce pop-up or that is newly uploaded is highlighted for easy tracking.
 - javascript-based file sorting functionality
 - scaling of images that have dimensions above the limit
 - bug fix: chmod(664) for uploaded files to make them visible for everyone.
