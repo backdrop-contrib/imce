@@ -16,7 +16,7 @@ function imce_help($section) {
  */
 function imce_footer() {//set imce if tinymce is in action 
   if (strpos(drupal_set_html_head(), 'tinyMCE.init') && user_access('view files')) {
-    drupal_add_js(drupal_get_path('module', 'imce').'/imce_set.js');   
+    return '<script type="text/javascript" src="'. base_path() .drupal_get_path('module', 'imce').'/imce_set.js' .'"></script>';
   }
 }
 
@@ -79,7 +79,7 @@ function imce_browse() {
         array('data' => date('Y-m-d', $file['d']), 'class' => 'date', 'timestamp' => $file['d'], 'title' => date('H:i:s', $file['d'])),
         array('data' => ($delete ? l(t('delete'), 'imce/delete', array('onclick' => 'return confirm(\''.t('Delete?').'\')'), 'delpath='.$path).' - ' : ''). '<a href="javascript: imceFinitor(\''. $basepath. $path.'\', '.$file['w'].', '.$file['h'].')">'. t('add').'</a>', 'class' => 'operations'),
       ),
-      'ipath' => $file['w'] ? $basepath. $path : '',
+      'ipath' => $basepath. $path,
       'iw' => $file['w'],
       'ih' => $file['h']
     );
@@ -93,7 +93,7 @@ function imce_browse() {
   $upload_form = user_access('upload files') ? ('<form action="'.url('imce/upload').'" method="post" id="uploadform" enctype="multipart/form-data">
   <input type="file" name="thefile" id="thefile" size="40">
   <input type="submit" name="submit" value="'.t('Upload File').'">'.
-  (variable_get('imce_resizing', 0) ? '<input type="checkbox" checked="checked" name="resize">'.t('Scale image') : '').'
+  (variable_get('imce_resizing', 0) ? (user_access('limitless upload') ? '<input type="checkbox" checked="checked" name="resize">'.t('Scale if necessary') : '<input type="hidden" value="1" name="resize">' ) : '').'
   </form>
   <div class="limits"><strong>'. t('Limits').'</strong>: '.t('File size').' = '. variable_get('imce_max_size', 100).' KB, '.t('Dimensions').' = '. variable_get('imce_max_width', 500). 'x'. variable_get('imce_max_height', 500).', '.t('Quota').' = <strong>'. format_size($_SESSION['imcetotal']).'</strong>/'. variable_get('imce_quota', 500).' KB</div><div class="nolimit">'. (user_access('limitless upload') ? t('No limits for you!') : '').'</div>') : '';
 
@@ -118,9 +118,10 @@ theme('table', array(), $rows, array('id'=>'bodytable')).'
 <div id="imagepreview">'.theme('status_messages').'</div>'.
 $upload_form.'
 <input type="hidden" value="'.t('This is not an image! Continue?').'" id="confirm-msg" />
+<input type="hidden" value="'.($_SESSION['imcelatest'] ? $basepath.$_SESSION['imcelatest'] : '').'" id="latest-file" />
 </body>
 </html>';
-
+  unset($_SESSION['imcelatest']);
   print $output;
   exit();
 }
@@ -207,6 +208,7 @@ function imce_copy_uploaded($file, $dir) {
   //success
   @chmod($newpath, 0664);
   $_SESSION['imcetotal'] = $newtotal;
+  $_SESSION['imcelatest'] = $newpath;
   drupal_set_message(t('Upload successful.'));
   return true;
 }
