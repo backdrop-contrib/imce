@@ -67,19 +67,20 @@ function imce_browse() {
   $header = array(array('data'=>t('filename'), 'class'=>'filename'), array('data'=>t('size'), 'class'=>'size'), array('data'=>t('dimensions'), 'class'=>'dimensions'), array('data'=>t('date'), 'class'=>'date'), array('data'=>t('operations'), 'class'=>'operations'));
   $delete = user_access('delete files');
   $basepath = base_path();
-  
+  $private = (variable_get('file_downloads', '')==FILE_DOWNLOADS_PRIVATE);
   //file list
   $files = imce_scan_directory($dir);
   foreach ($files['list'] as $path=>$file) {
+    $url = $private ? url('system/files/').trim(substr($path, strlen(file_directory_path())), '\\/') : $basepath. $path;
     $rows[] = array(
       'data' => array(
         array('data' => $file['f'], 'class' => 'filename'),
         array('data' => format_size($file['s']), 'class' => 'size'),
         array('data' => $file['w'].'x'.$file['h'], 'class' => 'dimensions'),
         array('data' => date('Y-m-d', $file['d']), 'class' => 'date', 'timestamp' => $file['d'], 'title' => date('H:i:s', $file['d'])),
-        array('data' => ($delete ? l(t('delete'), 'imce/delete', array('onclick' => 'return confirm(\''.t('Delete?').'\')'), 'delpath='.$path).' - ' : ''). '<a href="javascript: imceFinitor(\''. $basepath. $path.'\', '.$file['w'].', '.$file['h'].')">'. t('add').'</a>', 'class' => 'operations'),
+        array('data' => ($delete ? l(t('delete'), 'imce/delete', array('onclick' => 'return confirm(\''.t('Delete?').'\')'), 'delpath='.$path).' - ' : ''). '<a href="javascript: imceFinitor(\''.$url.'\', '.$file['w'].', '.$file['h'].')">'. t('add').'</a>', 'class' => 'operations'),
       ),
-      'ipath' => $basepath. $path,
+      'ipath' => $url,
       'iw' => $file['w'],
       'ih' => $file['h']
     );
@@ -118,7 +119,7 @@ theme('table', array(), $rows, array('id'=>'bodytable')).'
 <div id="imagepreview">'.theme('status_messages').'</div>'.
 $upload_form.'
 <input type="hidden" value="'.t('This is not an image! Continue?').'" id="confirm-msg" />
-<input type="hidden" value="'.($_SESSION['imcelatest'] ? $basepath.$_SESSION['imcelatest'] : '').'" id="latest-file" />
+<input type="hidden" value="'.($_SESSION['imcelatest'] ? ($private ? url('system/files/').trim(substr($_SESSION['imcelatest'], strlen(file_directory_path())), '\\/') : $basepath.$_SESSION['imcelatest']) : '').'" id="latest-file" />
 </body>
 </html>';
   unset($_SESSION['imcelatest']);
@@ -322,3 +323,29 @@ function imce_settings() {
   );
   return $form;
 } 
+
+/**
+ * Implementation of hook_file_download().
+ */
+function imce_file_download($file) {
+  if ($shared = variable_get('imce_shared_folder', '')) {
+    if (strpos($file, $shared) !== 0) {
+      return false;
+    }
+  }
+  else {
+    if (!preg_match("/^".variable_get('imce_personal_prefix', 'u')."[0-9]+\//", $file)) {
+      return false;
+    }
+  }
+  if ($path = file_create_path($file)) {
+    $info = @getimagesize($path);
+    $types = array(1 => 'image/gif', 2 => 'image/jpeg', 3 => 'image/png');
+    if ($types[$info[2]]) {
+      return array('Content-type: '. $types[$info[2]], 'Content-Disposition: attachment; filename="'. basename($file) .'"');
+    }
+    else {
+      return array('Content-type: '. (function_exists('mime_content_type') ? mime_content_type($path) : 'application/x-download'), 'Content-Disposition: attachment; filename="'. basename($file) .'"');
+    }
+  }
+}
