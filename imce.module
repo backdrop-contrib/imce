@@ -42,8 +42,8 @@ function imce_menu($may_cache) {
       'type' => MENU_CALLBACK);
   }
   elseif (arg(0)=='imce' && arg(1)!='browse') {
-    if (arg(1)=='delete' && user_access('delete files') && $_GET['delpath'] && strpos($_GET['delpath'], imce_get_directory())===0) {
-      imce_delete_file($_GET['delpath']);
+    if (arg(1)=='delete' && user_access('delete files') && ($delpath = file_check_location($_GET['delpath'], imce_get_directory()))) {
+      imce_delete_file($delpath);
     }
     elseif (arg(1)=='upload' && user_access('upload files') && $_FILES['thefile']) {
       imce_copy_uploaded($_FILES['thefile'], imce_get_directory());
@@ -152,7 +152,7 @@ function imce_copy_uploaded($file, $dir) {
   $nolimit = user_access('limitless upload');
   
   //check image dimensions and type.
-  if ($info = @getimagesize($file['tmp_name'])) {
+  if (in_array($extension, array('.gif', '.jpg', '.jpeg', '.png')) && ($info = @getimagesize($file['tmp_name']))) {
     if (!in_array($info[2], array(1, 2, 3))) {// 1=gif, 2=jpg, 3=png. real file types
       drupal_set_message(t('Only images with .jpg, .gif, and .png extensions are allowed.'), 'error');
       return false;
@@ -199,7 +199,7 @@ function imce_copy_uploaded($file, $dir) {
   }
 
   //copy file
-  $cleared = preg_replace("/[^\w\-\.]/", '_', $file['name']);//clear unwanted characters in filename.
+  $cleared = preg_replace("/[^\w\-\_]/", '_', substr($file['name'], 0, $dot)).$extension;//clear unwanted characters in filename.
   $newpath = file_create_filename($cleared, $dir);
   if (!@copy($file['tmp_name'], $newpath)) {
     drupal_set_message(t('Error copying the file.'), 'error');
