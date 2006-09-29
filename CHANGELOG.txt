@@ -2,6 +2,10 @@
 
 IMCE x.x.x, xxxx-xx-xx (development version)
 ------------------------
+- fixed security issues:
+  - users having "delete files" permission can delete any file on the server.
+  - upload of maliciously renamed files like file.php.gif, which can be run as php on some apache installations.
+- added support for private downloads
 - a file that comes from tinymce pop-up or that is newly uploaded is highlighted for easy tracking.
 - javascript-based file sorting functionality
 - scaling of images that have dimensions above the limit
