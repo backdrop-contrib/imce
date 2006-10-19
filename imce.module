@@ -41,7 +41,7 @@ function imce_menu($may_cache) {
       'callback' => 'imce_browse',
       'type' => MENU_CALLBACK);
   }
-  elseif (arg(0)=='imce' && arg(1)!='browse') {
+  elseif (arg(0)=='imce' && arg(1)!='browse' && drupal_valid_token($_REQUEST['token'], 'imce')) {
     if (arg(1)=='delete' && user_access('delete files') && ($delpath = file_check_location($_GET['delpath'], imce_get_directory()))) {
       imce_delete_file($delpath);
     }
@@ -68,6 +68,7 @@ function imce_browse() {
   $delete = user_access('delete files');
   $basepath = base_path();
   $private = (variable_get('file_downloads', '')==FILE_DOWNLOADS_PRIVATE);
+  $token = drupal_get_token('imce');
   //file list
   $files = imce_scan_directory($dir);
   foreach ($files['list'] as $path=>$file) {
@@ -78,7 +79,7 @@ function imce_browse() {
         array('data' => format_size($file['s']), 'class' => 'size'),
         array('data' => $file['w'].'x'.$file['h'], 'class' => 'dimensions'),
         array('data' => date('Y-m-d', $file['d']), 'class' => 'date', 'timestamp' => $file['d'], 'title' => date('H:i:s', $file['d'])),
-        array('data' => ($delete ? l(t('delete'), 'imce/delete', array('onclick' => 'return confirm(\''.t('Delete?').'\')'), 'delpath='.$path).' - ' : ''). '<a href="javascript: imceFinitor(\''.$url.'\', '.$file['w'].', '.$file['h'].')">'. t('add').'</a>', 'class' => 'operations'),
+        array('data' => ($delete ? l(t('delete'), 'imce/delete', array('onclick' => 'return confirm(\''.t('Delete?').'\')'), 'delpath='.$path.'&token='. $token).' - ' : ''). '<a href="javascript: imceFinitor(\''.$url.'\', '.$file['w'].', '.$file['h'].')">'. t('add').'</a>', 'class' => 'operations'),
       ),
       'ipath' => $url,
       'iw' => $file['w'],
@@ -93,6 +94,7 @@ function imce_browse() {
 //upload form
   $upload_form = user_access('upload files') ? ('<form action="'.url('imce/upload').'" method="post" id="uploadform" enctype="multipart/form-data">
   <input type="file" name="thefile" id="thefile" size="40">
+  <input type="hidden" name="token" value="'. $token .'">
   <input type="submit" name="submit" value="'.t('Upload File').'">'.
   (variable_get('imce_resizing', 0) ? (user_access('limitless upload') ? '<input type="checkbox" checked="checked" name="resize">'.t('Scale if necessary') : '<input type="hidden" value="1" name="resize">' ) : '').'
   </form>
@@ -138,7 +140,16 @@ function imce_copy_uploaded($file, $dir) {
     return false;
   }
 
+  //move uploaded file to drupal's temp directory
+  $temp = tempnam(file_directory_temp(), 'tmp_');
+  if (!move_uploaded_file($file['tmp_name'], $temp)) {
+    drupal_set_message(t('File upload error. Could not move uploaded file.'));
+    return false;
+  }
+  $file['tmp_name'] = $temp;
+
   //dont like too long filenames and files without an extension.
+  $file['name'] = trim(basename($file['name']), '.');
   if (strlen($file['name'])>32) {
     drupal_set_message(t('Filename is too long(>32 chars).'), 'error');
     return false;
@@ -161,11 +172,11 @@ function imce_copy_uploaded($file, $dir) {
     $maxh = variable_get('imce_max_height', 500);
     if ($info[0]>$maxw || $info[1]>$maxh) {
       if (variable_get('imce_resizing', 0) && $_POST['resize']) {
-        if(!image_scale($file['tmp_name'], $file['tmp_name'].$file['name'], $maxw, $maxh)) {
+        if(!image_scale($file['tmp_name'], $file['tmp_name'], $maxw, $maxh)) {
           drupal_set_message(t('Error scaling image.'), 'error');
           return false;
         }
-        $file['tmp_name'] .= $file['name'];//new name
+        clearstatcache();
         $file['size'] = filesize($file['tmp_name']);//new size
         drupal_set_message(t('Image was scaled to allowed dimensions.'));
       }
@@ -237,10 +248,11 @@ function imce_scan_directory($dir) {
   $files = array();
   $totalsize = 0;
   while(($file = @readdir($handle)) !== false) {
-    if ($file == '.' || $file == '..' || $file == 'CVS') continue;
+    if ($file == '.' || $file == '..' || $file == 'CVS' || $file == '.svn') continue;
     $path = $dir.'/'.$file;
     $size = filesize($path);
-    $img = @getimagesize($path);
+    $ext = strtolower(substr($file, strrpos($file, '.')));
+    $img = in_array($ext, array('.gif', '.jpg', '.jpeg', '.png')) ? @getimagesize($path) : NULL;
     $date = filemtime($path);
     $files[$path] = array('f'=>$file, 's'=>$size, 'w'=>(int)$img[0], 'h'=>(int)$img[1], 'd'=>$date);
     $totalsize += $size;
