@@ -3,9 +3,8 @@ body {
   font: 8pt verdana;
   background: #f5f5f5;
   color: #444;
-  margin: 4px 2px;
+  margin: 0.6em 0.2em;
   letter-spacing: -0.05em;
-  width: 555px;
 }
 a {
   color: #000;
@@ -21,29 +20,69 @@ div {
   width: 99%;
 }
 form {
-  margin: 0.2em 0em;
+  margin: 0.5em 0 0 0;
+}
+form input {
+  padding: 0 0.1em;
+  margin: 0 0.1em 0 0.2em;
+  font-size: 1em;
+  letter-spacing: 0;
 }
 table {
   font-size: 1em;
-  width: 525px;
+  width: 96%;
   border-collapse: collapse;
 }
-#bodydiv {/*File list area*/
-  height: 110px;
-  overflow: auto;
-  border-bottom: 2px solid #000;
+th.date {
+  padding-right: 1.2em;
+}
+th.size{
+  padding-right: 0.8em;
+}
+div.forms {
   border-top: 2px solid #000;
+}
+#headerdiv {
+  border-bottom: 2px solid #000;
+}
+#bodydiv {/*File list area*/
+  height: 115px;
+  overflow: auto;
 }
 #bodydiv td{
   border-bottom: 1px solid #ddd;
 }
+#resize-bar {
+  position: relative;
+  font-size: 1px;
+  height: 3px;
+  background: #000;
+}
+#resize-bar-in {
+  position: absolute;
+  font: bold 18px verdana;
+  color: #ff9900;
+  width: auto;
+  display: none;
+}
 #imagepreview {/*Image preview area*/
-  height: 240px;
+  height: 270px;
   overflow: auto;
   text-align: center;
   vertical-align: middle;
-  border-bottom: 2px solid #000;
-  margin-bottom: 0.5em;
+}
+#filterspan {
+  position: absolute;
+  top: 0.2em;
+  left: 8em;
+  color: #36c;
+}
+#filterspan select {
+  font-size: 0.9em;
+  padding: 0;
+  margin: 0;
+  height: 1.8em;
+  letter-spacing: 0;
 }
 .rover {
   background: #eee;
@@ -58,12 +97,6 @@ table {
   padding: 0.2em;
   font-weight: bold;
   text-align: center;
-}
-.error{
-  color: #f60;
-}
-.nolimit {
-  color: #f60;
 }
 .filename {
   width: 40%;
@@ -84,4 +117,7 @@ table {
 .operations {
   width: 15%;
   text-align: right;
+}
+.error, .sorted {
+  color: #f60;
 }

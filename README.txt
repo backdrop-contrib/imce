@@ -1,35 +1,32 @@
 // $Id$
 
-IMCE is mainly designed for uploading and adding images to tinyMCE editor.
-It also supports non-image file uploading and browsing.
-So, it can be used as an image browser in tinyMCE's image popup window 
-and as a link browser in link window.
+IMCE is an image/file uploader and browser that supports personal directories and quota.
+
+IMCE, initially, was implemented for easy uploading images and adding them to TinyMCE.
+In the development process many features have been added.
+
+It now supports the other most used wysiwyg editor FCKeditor. In addition to these two editors,
+with the aid of newly implemented Javacript API, IMCE has also support for inline image/file 
+insertion into plain textareas.
+
 
 Features:
 
-- no requirements for any image related module since its image handling
-is minimal. no image nodes, no thumbnails. 
-
-- allows only .jpg, .png, and .gif images 
-
-- non-image file support can be activated in configurations by defining
-allowed extensions.
-
-- by default, it uploads images to personal directories. instead of personal
-directories a common folder for all users can be defined in configurations. 
-
-- configurable upload limits:
-filesize per upload(default:100kb)
-image dimensions(default:500x500)
-total quota per user(default:500kb)
-
-- introduces view, upload, delete, limitless upload permissions.
-
-- detects tinymce action automatically and throws necessary .js to activate 
-image browser thatcan be reached byclicking the browse icon in popups.
-
-- javascript-based file sorting.
-
-- scaling of big images to allowed dimensions.
-
-- highlighting of newly uploaded files or files that come from tinyMCE.
+No module dependency.
+Uploading .jpg, .png, and .gif images and previewing.
+Option to allow uploading non-image file types.
+Support for private downloads.
+Limits for file size per upload, total directory size(quota), and image dimensions.
+Option to use personal folders or a shared folder for users.
+File sorting according to file name, file size or date.
+Highlighting of active files.
+Built-in support for TinyMCE
+Automatic thumbnail creation.
+Custom resizing.
+Role based settings.
+Custom settings for user #1.
+File filtering according to type and extension.
+Keyboard shurtcuts (UP, DOWN, DELETE, INSERT).
+Javascript API that allows custom usage of the browser, which makes IMCE suitable for any wysiwyg editor.
+Built-in support for FCKeditor
+Built-in support for inline image/file insertion into plain textareas.

@@ -1,48 +1,113 @@
 // $Id$
-addLoadEvent(imceStartBrowser);
-
-var imceSelectedRow = null;
+$(imceStartBrowser);
 
 function imceStartBrowser() {
-  var row, rows = $('bodytable').getElementsByTagName('tr');
-  var path = $('latest-file').value ? $('latest-file').value : (window.opener&&!$('imagepreview').innerHTML ? window.opener.imceRefererURL : null);
-  for (var i=0; row = rows[i]; i++) {
-    if (path && path==row.getAttribute('ipath')) {
-      imceHighlight(row, 1);
+  var imceOpener = window.opener&&window.opener!=window.self ? window.opener : null;
+  if (imceOpener) {
+    if (eval("'function'==typeof(imceOpener."+window.name+"ImceFinish)")) {//custom function for adding
+      imceVar['targetWin'] = imceOpener;
+      imceVar['customCall'] = window.name+"ImceFinish";
+      if(eval("'undefined'!=typeof(imceOpener."+window.name+"ImceUrl)")) {//custom url to be highlighted.
+        imceVar['targetUrl'] = eval("imceOpener."+window.name+"ImceUrl");
+      }
     }
-    row.onmouseover = function() {addClass(this, 'rover')};
-    row.onmouseout = function() {removeClass(this, 'rover')};
-    row.onclick = function() {imceHighlight(this);};
+    else if (imceOpener.imceTinyWin) {//tinymce
+      imceVar['targetWin'] = imceOpener.imceTinyWin;
+      imceVar['targetField'] = imceOpener.imceTinyField;
+      imceVar['targetUrl'] = imceOpener.imceTinyURL;
+      imceVar['targetType'] = imceOpener.imceTinyType;
+      imceVar['targetWidth'] = imceOpener.imceTinyWin.document.forms[0].width||null;
+      imceVar['targetHeight'] = imceOpener.imceTinyWin.document.forms[0].height||null;
+    }
+    else if (imceOpener.FCK) {//fckeditor
+      imceVar['targetWin'] = imceOpener;
+      imceVar['targetField'] = imceOpener.document.getElementById('txtUrl');
+      imceVar['targetUrl'] = imceVar['targetField'].value;
+      imceVar['targetType'] = imceOpener.location.pathname.split('.')[0].split('_')[1];
+      imceVar['targetWidth'] = imceOpener.document.getElementById('txtWidth')||null;
+      imceVar['targetHeight'] = imceOpener.document.getElementById('txtHeight')||null;
+    }
+  }
+  if ($('#resizeform').length) {
+    $('#resize-file-span').css('display', 'none');
+    $('#resizeform').css('visibility', 'hidden');
+    $('#resizeform').submit( function() { return $('#img_w').val()*1>=1 && $('#img_h').val()*1>=1 });
+    $('#img_w').focus( function() {
+      if ($('#img_h').val()) {
+        var info = imceInfo(imceVar['activeRow']);
+        this.value = Math.round(info['w']/info['h']*$('#img_h').val());
+      }
+    });
+    $('#img_h').focus( function() {
+      if ($('#img_w').val()) {
+        var info = imceInfo(imceVar['activeRow']);
+        this.value = Math.round(info['h']/info['w']*$('#img_w').val());
+      }
+    });
+  }
+  var activepath = imceVar['latestFile'] ? imceVar['latestFile'] : (imceVar['targetUrl'] && !$('#imagepreview').html() ? imceVar['targetUrl'] : null);
+  var list = $('#bodytable').get(0).rows;
+  if (list.length>0 && list[0].cells.length>1) {
+    for (var i=0; row=list[i]; i++) {
+      var info = imceInfo(row);
+      var fURL = imceVar['fileUrl']+'/'+info['f'];
+      activepath==fURL ? imceHighlight(row, 'append') : 0;
+      row.onmouseover = function() {$(this).addClass('rover')};
+      row.onmouseout = function() {$(this).removeClass('rover')};
+      row.onclick = function() {imceHighlight(this);};
+      row.cells[4].innerHTML += imceVar['targetWin'] ? ' &nbsp; <a href="javascript: imceFinitor(\''+fURL+'\', '+info['w']+', '+info['h']+')">'+ imceVar['addText'] +'</a>' : '';
+      imceVar["confirmDel"] ? row.cells[4].firstChild.onclick = function() {return confirm(imceVar["confirmDel"])} : 0;
+    }
   }
 }
 
 function imceHighlight(row, append) {
-  if (imceSelectedRow) {
-    removeClass(imceSelectedRow, 'rsel');
+  if (imceVar['activeRow']) {
+    $(imceVar['activeRow']).removeClass('rsel');
+    if ($('#resizeform').length) {
+      $('#resizeform').css('visibility', 'hidden');
+      $('#img_name').val('');
+    }
   }
-  if (imceSelectedRow==row) {
-    imceSelectedRow =null;
-    $('imagepreview').innerHTML = '';
+  if (imceVar['activeRow']==row) {
+    imceVar['activeRow'] =null;
+    $('#imagepreview *:last').remove();
   }
   else {
-    var w = parseInt(row.getAttribute('iw'));
-    var h = parseInt(row.getAttribute('ih'));
-    var path = row.getAttribute('ipath');
-    addClass(row, 'rsel');
-    imceSelectedRow = row;
-    $('imagepreview').innerHTML = (append ? $('imagepreview').innerHTML : '') + (w&&h ? '<a href="javascript: imceFinitor(\'' + path + '\', ' + w + ', ' + h + ')"><img src="'+ path +'" width="'+ w +'" height="'+ h +'" /></a>' : '');
+    var info = imceInfo(row);
+    var path = imceVar['fileUrl']+'/'+info['f'];
+    $(row).addClass('rsel');
+    imceVar['activeRow'] = row;
+    $('#imagepreview').html((append ? $('#imagepreview').html() : '') +'<a'+ (imceVar['targetWin'] ? (' href="javascript: imceFinitor(\''+ path +'\', '+ info['w'] +', '+ info['h'] +')"') : '') +'>'+ (info['w']&&info['h'] ? ('<img src="'+ path +'" width="'+ info['w'] +'" height="'+ info['h'] + '" />') : info['f']) +'</a>');
+    if ($('#resizeform').length && info['w'] && info['h']) {
+      $('#resizeform').css('visibility', 'visible');
+      $('#img_name').val(info['f']);
+    }
   }
 }
 
 function imceFinitor(path, w, h) {
-  if (!window.opener || !window.opener.imceRefererWin || (window.opener.imceRefererType=='image' && !(w&&h) && !confirm($('confirm-msg').value))) return;
-  window.opener.imceRefererField.value = path;
-  if (window.opener.imceRefererWin.document.forms[0].width) {
-    window.opener.imceRefererWin.document.forms[0].width.value = w;
+  if (imceVar['customCall']) {// if there is a custom function, call it
+    eval("imceVar['targetWin']."+imceVar['customCall']+"(path, w, h, window.self)");
+    return;
   }
-  if (window.opener.imceRefererWin.document.forms[0].height) {
-    window.opener.imceRefererWin.document.forms[0].height.value = h;
+  imceVar['targetField'].value = path;
+  if (imceVar['targetWidth']) {
+    imceVar['targetWidth'].value = w;
   }
-  window.opener.imceRefererWin.focus();
+  if (imceVar['targetHeight']) {
+    imceVar['targetHeight'].value = h;
+  }
+  imceVar['targetWin'].focus();
+  imceVar['targetField'].focus();
   window.close();
+}
+
+function imceInfo(row) {
+  var info = [];
+  var wh = row.cells[2].innerHTML.split('x');
+  info['w'] = parseInt(wh[0]);
+  info['h'] = parseInt(wh[1]);
+  info['f'] = row.cells[0].innerHTML;
+  return info;
 }
