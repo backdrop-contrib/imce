@@ -6,14 +6,18 @@
  */
 function imce_footer() {
   if (user_access('access imce')) {
-    $header = drupal_set_html_head();
-    if (variable_get('imce_settings_tinymce', 1) && strpos($header, 'tinyMCE.init')) {//set imce if tinymce is in action
+    $header = drupal_get_js();
+    //set imce if tinymce is in action
+    if (module_exists('tinymce') && variable_get('imce_settings_tinymce', 1) && strpos($header, 'tinyMCE.init')) {
       $output .= '<script type="text/javascript" src="'. base_path() . drupal_get_path('module', 'imce') .'/imce_set_tinymce.js' .'"></script>';
     }
-    if (variable_get('imce_settings_fck', 0) && strpos($header, 'fckeditor.js')) {//set imce if fckeditor is in action
+    //set imce if fckeditor is in action
+    if (module_exists('fckeditor') && variable_get('imce_settings_fck', 0) && strpos($header, 'fckeditor.js')) {
       $output .= '<script type="text/javascript" src="'. base_path() . drupal_get_path('module', 'imce') .'/imce_set_fck.js' .'"></script>';
     }
-    return $output;
+    if ($output) {
+      return '<script type="text/javascript"> var imceBrowserURL = "'.url('imce/browse').'"; </script>'. $output;
+    }
   }
 }
 
@@ -28,32 +32,72 @@ function imce_perm() {
  * Implementation of hook_menu().
  */
 function imce_menu($may_cache) {
+  global $user;
   $GLOBALS['imce_ext'] = array('.gif', '.jpg', '.jpeg', '.png');
   $items = array();
   if ($may_cache) {
     $items[] = array('path' => 'imce/browse',
-      'title' => 'imce browse',
+      'title' => 'IMCE browse',
       'access' => user_access('access imce'),
       'callback' => 'imce_browse',
       'type' => MENU_CALLBACK,
     );
     $items[] = array('path' => 'admin/settings/imce',
-      'title' => 'IMCE settings',
+      'title' => t('IMCE settings'),
       'description' => t('Control how your image/file browser works.'),
       'access' => user_access('administer imce'),
       'callback' => 'imce_form_admin',
     );
+    $items[] = array('path' => 'admin/settings/imce/subfolder',
+      'title' => t('Sub-folder tool'),
+      'access' => user_access('administer imce'),
+      'callback' => 'imce_form_subfolder',
+    );
   }
-  elseif (arg(0)=='imce' && arg(1) != 'browse' && user_access('access imce') && drupal_valid_token($_REQUEST['token'], 'imce')) {
-    $set = (object) imce_settings_user();
-    if (arg(1)=='delete' && $set->delete && ($filename=basename(arg(2)))) {
-      imce_delete_file($set, $filename);
+  elseif (arg(0)=='user' && ($uid=arg(1)) && is_numeric($uid)) {
+    if ($user->uid == $uid) {
+      $access = user_access('access imce');
+      $acc = $user;
     }
-    elseif (arg(1)=='upload' && $set->upload && $_FILES['thefile']) {
-      imce_copy_uploaded($set, $_FILES['thefile']);
+    elseif (user_access('administer imce') && $uid!=1 && $acc=user_load(array('uid'=>$uid))) {
+      $access = array_intersect(user_roles(0, 'access imce'), $acc->roles);
     }
-    elseif (arg(1)=='resize' && $set->resize && ($filename=basename($_POST['img_name']))) {
-      imce_resize_image($set, $filename, $_POST['img_w'], $_POST['img_h'], $_POST['img_copy']);
+    if ($access) {
+      $items[] = array('path' => 'user/'.$uid.'/imce',
+        'title' => t('Personal files'),
+        'access' => TRUE,
+        'callback' => 'imce_user_page',
+        'callback arguments' => array($acc),
+        'type' => MENU_LOCAL_TASK,
+        'weight' => 10,
+      );
+    }
+  }
+  elseif (arg(0)=='imce' && arg(1) != 'browse' && user_access('access imce')) {
+    if (drupal_valid_token($_REQUEST['token'], 'imce')) {
+      $set = (object) imce_settings_user();
+      if (arg(1)=='delete' && $set->delete && ($filename=basename(arg(2)))) {
+        imce_delete_file($set, $filename);
+      }
+      elseif (arg(1)=='upload' && $set->upload && $_FILES['thefile']) {
+        imce_copy_uploaded($set, $_FILES['thefile']);
+      }
+      elseif (arg(1)=='resize' && $set->resize && ($filename=basename($_POST['img_name']))) {
+        imce_resize_image($set, $filename, $_POST['img_w'], $_POST['img_h'], $_POST['img_copy']);
+      }
+      elseif (arg(1)=='dir' && $set->subnav && isset($_POST['dirname'])) {
+        $target =  $set->dir.'/'.$_POST['dirname'];
+        if (is_dir($target) && ($real = file_check_location($target, $set->root))) {
+          $_SESSION['imcedir'] = imce_relative_path($real);
+        }
+      }
+    }
+    elseif (arg(1)=='login' && user_access('administer imce') && is_numeric($uid=arg(2)) && $uid!=1 && $user->uid!=$uid && ($acc=user_load(array('uid' => $uid))) && array_intersect(user_roles(0, 'access imce'), $acc->roles)) {
+      $_SESSION['imceuser'] = array('uid'=>$acc->uid, 'roles'=>$acc->roles, 'name'=>($acc->name ? $acc->name : t('Anonymous')), 'ownperm' =>arg(3)=='own');
+      unset($_SESSION['imcedir']);
+    }
+    elseif (arg(1)=='logout' && user_access('administer imce')) {
+      unset($_SESSION['imceuser'], $_SESSION['imcedir']);
     }
     drupal_goto('imce/browse');
   }
@@ -73,15 +117,15 @@ function imce_browse() {
   $token = drupal_get_token('imce');
 
   //file list
-  $files = imce_scan_directory($set->dir);
+  $directory = imce_scan_directory($set->dir);
   //prevent quota theft by multiple sessions.
-  if ($_SESSION['imcelatest'] && $files['size']>$set->quota*1024 && !$set->nolimit) {
-    $files['size'] -= filesize($_SESSION['imcelatest']);
+  if ($_SESSION['imcelatest'] && $directory['size']>$set->quota*1024 && !$set->nolimit) {
+    $directory['size'] -= filesize($_SESSION['imcelatest']);
     @unlink($_SESSION['imcelatest']);
-    unset($files['list'][$_SESSION['imcelatest']], $_SESSION['imcelatest']);
+    unset($directory['files'][$_SESSION['imcelatest']], $_SESSION['imcelatest']);
     drupal_set_message(t('File was deleted due to quota exceed!'), 'error');
   }
-  foreach ($files['list'] as $path=>$file) {
+  foreach ($directory['files'] as $path=>$file) {
     $rows[] = array(array('data' => $file['f'], 'class' => 'filename'),
       array('data' => format_size($file['s']), 'class' => 'size', 'id' => $file['s']),
       array('data' => $file['w'].'x'.$file['h'], 'class' => 'dimensions'),
@@ -92,27 +136,38 @@ function imce_browse() {
   if (!isset($rows)) {
     $rows = array(array('<div class="messages">'.t('Directory is empty.').'</div>'));
   }
-  $_SESSION['imcetotal'] = $files['size'];
+  $_SESSION['imcetotal'] = $directory['size'];
+
+  //folder list
+  if ($set->subnav) {
+    foreach ($directory['folders'] as $folder) {
+      $foptions .= '<option value="'.$folder.'">/'.$folder.'</option>';
+    }
+    $subdir = $set->root != $set->dir;
+    if ($foptions||$subdir) {
+      $foptions = ' <form action="'.url('imce/dir').'" name="dirform" id="dirform" method="post"><select name="dirname" id="dirname">'. ($subdir ? '<option value="..">'. t('Up') .'</option>' : '') .'<option value="/" selected="selected">/</option>'.$foptions.'</select><input type="submit" name="op" id="dirop" value="'.t('Go').'" /><input type="hidden" name="token" value="'. $token .'" /></form>';
+    }
+  }
 
   //upload form
   if ($set->upload) {
     $uploadform = '<form action="'.url('imce/upload').'" method="post" id="uploadform" enctype="multipart/form-data">
-  <input type="file" name="thefile" id="thefile" size="30">
-  <input type="hidden" name="token" value="'. $token .'">
-  <input type="submit" name="submit" value="'.t('Upload File').'">'.
-  ($set->nolimit ? '<input type="checkbox" checked="checked" name="scale">'.t('Scale if necessary') : ($set->scale ? '<input type="hidden" value="1" name="scale">' : '')).
-  ($set->twidth&&$set->theight ? '<input type="checkbox" name="thumb">'.t('Create thumbnail').' ('. $set->twidth .'x'. $set->theight .')' : '').'
+  <input type="file" name="thefile" id="thefile" size="30" />
+  <input type="hidden" name="token" value="'. $token .'" />
+  <input type="submit" name="submit" value="'.t('Upload File').'" />'.
+  ($set->nolimit ? '<input type="checkbox" checked="checked" name="scale" />'.t('Scale if necessary') : ($set->scale ? '<input type="hidden" value="1" name="scale" />' : '')).
+  ($set->twidth&&$set->theight ? '<input type="checkbox" name="thumb" />'.t('Create thumbnail').' ('. $set->twidth .'x'. $set->theight .')' : '').'
 </form>
 <div class="limits">'.  ($set->nolimit ? t('Dimensions for scaling') .' = <strong>'. $set->width .'x'. $set->height .'</strong>, '. t('Quota') .' = <strong>'. format_size($_SESSION['imcetotal']).'</strong>/'.t('Unlimited') : '<strong>'. t('Limits') .'</strong>: '. t('File size') .' = <strong>'. $set->filesize .' KB</strong>, '. t('Dimensions') .' = <strong>'. $set->width .'x'. $set->height .'</strong>, '. t('Quota') .' = <strong>'. format_size($_SESSION['imcetotal']) .'</strong>/'. $set->quota .' KB').'</div>';
   }
   //resize form
   if ($set->resize) {
     $resizeform = '<form action="'.url('imce/resize').'" method="post" id="resizeform">
-  <input type="submit" name="submit" value="'.t('Resize image').'">
-  <input type="hidden" name="token" value="'. $token .'">
-  <span id="resize-file-span">'.t('filename').':<input type="text" name="img_name" id="img_name" size="12">
-  '.t('dimensions').':</span><input type="text" name="img_w" id="img_w" size="2">x<input type="text" name="img_h" id="img_h" size="2">
-  <input type="checkbox" name="img_copy">'.t('Create a copy').'
+  <input type="submit" name="submit" value="'.t('Resize image').'" />
+  <input type="hidden" name="token" value="'. $token .'" />
+  <span id="resize-file-span">'.t('filename').':<input type="text" name="img_name" id="img_name" size="12" />
+  '.t('dimensions').':</span><input type="text" name="img_w" id="img_w" size="2" />x<input type="text" name="img_h" id="img_h" size="2" />
+  <input type="checkbox" name="img_copy" />'.t('Create a copy').'
 </form>';
   }
 
@@ -120,7 +175,7 @@ function imce_browse() {
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title>'.t('Image Browser').'</title>
+  <title>'.t('Image/File Browser').'</title>
   <script type="text/javascript" src="'. $basepath .'misc/jquery.js"></script>
   <script type="text/javascript" src="'. $imcepath .'/imce_browse.js"></script>'.
   ($set->extras ? '<script type="text/javascript" src="'. $imcepath .'/imce_extras.js"></script>' : '').'
@@ -134,6 +189,12 @@ theme('table', $header, array(), array('id'=>'headertable')).'
 theme('table', array(), $rows, array('id'=>'bodytable')).'
 </div>
 <div id="resize-bar"><div id="resize-bar-in">^</div></div>
+<div id="relative-div">
+  <div id="info-div">'. t('Directory') .': '. ($private&&$set->uid!=1 ? imce_relative_path($set->dir, $syspath) : $set->dir).
+  ($foptions ? $foptions : '').
+  ($_SESSION['imceuser'] ? '<div>'.t('User').': '.$_SESSION['imceuser']['name'].' - '.l(t('logout'), 'imce/logout').'</div>' : '').'
+  </div>
+</div>
 <div id="imagepreview">'.theme('status_messages').'</div>
 <div class="forms">'.
 $uploadform .
@@ -141,9 +202,10 @@ $resizeform .'
 </div>
 <script type="text/javascript">
   var imceVar = [];
-  imceVar["fileUrl"] = "'. ($private ? url('system/files/').trim(substr($set->dir, strlen($syspath)), '\\/') : $basepath.$set->dir) .'";
-  imceVar["latestFile"] = "'. ($_SESSION['imcelatest'] ? ($private ? url('system/files/'). trim(substr($_SESSION['imcelatest'], strlen($syspath)), '\\/') : $basepath.$_SESSION['imcelatest']) : '') .'";
+  imceVar["fileUrl"] = "'. imce_relative_url($set->dir) .'";
+  imceVar["latestFile"] = "'. ($_SESSION['imcelatest'] ? imce_relative_url($_SESSION['imcelatest']) : '') .'";
   imceVar["confirmDel"] = "'. ($set->delete ? t('Are you sure want to delete this file?') : '') .'";
+  imceVar["viewText"] = "'.t('view').'";
   imceVar["addText"] = "'.t('add').'";'.
 ($set->extras ? ' imceVar["filterText"] = ["'.t('Display'). '", "'. t('all'). '", "'. t('images'). '", "'. t('non-images').'"];' : '') .'
 </script>
@@ -333,19 +395,25 @@ function imce_scan_directory($dir) {
     drupal_set_message(t('Error opening directory'), 'error');
     return FALSE;
   }
-  $files = array();
-  $totalsize = 0;
-  while(($file = @readdir($handle)) !== FALSE) {
-    if ($file == '.' || $file == '..' || $file == 'CVS' || $file == '.svn') continue;
+  $directory = array('size' => 0, 'files' => array(), 'folders' => array());
+  while(($file = readdir($handle)) !== FALSE) {
+    if ($file == '.' || $file == '..' || $file == 'CVS' || $file == '.svn' || $file == '.htaccess') {
+      continue;
+    }
+    if (is_dir($dir.'/'.$file)) {
+      $directory['folders'][] = $file;
+      continue;
+    }
     $path = $dir.'/'.$file;
-    $size = @filesize($path);
+    $size = filesize($path);
     $ext = strtolower(substr($file, strrpos($file, '.')));
     $img = in_array($ext, $GLOBALS['imce_ext']) ? @getimagesize($path) : array(0, 0);
-    $date = @filemtime($path);
-    $files[$path] = array('f'=>$file, 's'=>$size, 'w'=>(int)$img[0], 'h'=>(int)$img[1], 'd'=>$date);
-    $totalsize += $size;
+    $date = filemtime($path);
+    $directory['files'][$path] = array('f'=>$file, 's'=>$size, 'w'=>(int)$img[0], 'h'=>(int)$img[1], 'd'=>$date);
+    $directory['size'] += $size;
   }
-  return array('list'=>$files, 'size'=>$totalsize);
+  closedir($handle);
+  return $directory;
 }
 
 /**
@@ -359,9 +427,15 @@ function imce_get_directory($set) {
     $dir = file_directory_path().'/'.$set['prefix'].$set['uid'];
   }
   if (file_check_directory($dir, TRUE)) {
+    if ($set['subnav'] && $set['subdirs']) {
+      foreach (explode(',', $set['subdirs']) as $sub) {
+        $sub = $dir .'/'. trim($sub,'\\/ ');
+        file_check_directory($sub, TRUE);
+      }
+    }
     return $dir;
   }
-  exit(t('Directory error!'));//without a working directory imce is useless. so, terminate.
+  exit(t('Directory error!').' - '.$dir. theme('status_messages'));//without a working directory imce is useless. so, terminate.
 }
 
 /**
@@ -391,7 +465,23 @@ function imce_settings_user() {
   }
   $set = $set ? $set : imce_settings_default();
   $set['uid'] = $user->uid;
-  $set['dir'] = imce_get_directory($set);
+  $set['root'] = imce_get_directory($set);
+  if ($_SESSION['imceuser']) {
+    $settings = variable_get('imce_settings_roles', array());
+    foreach (imce_sorted_roles() as $rid=>$name) {
+      if (isset($_SESSION['imceuser']['roles'][$rid]) && is_array($settings[$rid])) {
+        $userset = $settings[$rid];
+        break;
+      }
+    }
+    $userset = $userset ? $userset : imce_settings_default();
+    $userset['uid'] = $_SESSION['imceuser']['uid'];
+    if ($_SESSION['imceuser']['ownperm']) {
+      $set = $userset;
+    }
+    $set['root'] = imce_get_directory($userset);
+  }
+  $set['dir'] = ($set['subnav'] && $_SESSION['imcedir'] && file_check_location($_SESSION['imcedir'], $set['root'])) ? $_SESSION['imcedir'] : $set['root'];
   return $set;
 }
 
@@ -399,14 +489,14 @@ function imce_settings_user() {
  * get user #1 settings
  */
 function imce_settings_user1() {
-  return array_merge(imce_settings_default(), variable_get('imce_settings_user1', array()), array('resize'=>1, 'scale'=>1, 'delete'=>1, 'upload'=>1, 'nolimit'=>1));
+  return array_merge(imce_settings_default(), variable_get('imce_settings_user1', array()), array('resize' => 1, 'scale' => 1, 'delete' => 1, 'upload' => 1, 'nolimit' => 1, 'subnav' => 1));
 }
 
 /**
  * return default settings.
  */
 function imce_settings_default() {
-  return array('width' => 500, 'height' => 500, 'scale' => 0, 'twidth' => '', 'theight' => '', 'resize' => 0, 'filesize' => 100, 'quota' => 500, 'prefix' => 'u', 'shared' => '', 'extensions' => '', 'extras' => 0, 'delete' => 1, 'upload' => 1, 'nolimit' => 0);
+  return array('width' => 500, 'height' => 500, 'scale' => 0, 'twidth' => '', 'theight' => '', 'resize' => 0, 'filesize' => 100, 'quota' => 500, 'prefix' => 'u', 'shared' => '', 'extensions' => '', 'extras' => 0, 'delete' => 1, 'upload' => 1, 'nolimit' => 0, 'subnav' => 0, 'subdirs' => '');
 }
 
 /**
@@ -445,7 +535,7 @@ function imce_form_template($rid) {
     );
     $form['theight'] = array('#type' => 'textfield', '#size' => 4, '#default_value' => $set->theight, '#suffix' => 'px</div><div class="description">'.t('You can enable automatic thumbnail creation from newly uploaded images. To disable leave the fields blank.').'</div></div>',
     );
-    $form['shared'] = array('#type' => 'textfield', '#title' => t('Your upload directory'), '#default_value' => $set->shared ? $set->shared : 'u1', '#description' => t('This directory must be relative to drupals file path. So if you want to use files/xyz, just enter xyz here.'),
+    $form['shared'] = array('#type' => 'textfield', '#title' => t('Your upload directory'), '#default_value' => $set->shared ? $set->shared : 'u1', '#description' => t('This directory must be relative to <strong>!filepath</strong> directory. So if you want to use <strong>!filepath/foldername</strong>, just enter <strong>foldername</strong> here. You may also enter <strong>/</strong> to use the file system root. If you leave it blank, u1 will be used.', array('!filepath' => file_directory_path())),
     );
     $form['extras'] = array('#type' => 'checkbox', '#title' => '<strong>'.t('Enable extras').'</strong>', '#default_value' => $set->extras, '#description' => t('This javascript package includes browsing enhancements like file sorting, keyboard shortcuts, file filtering, etc.'),
     );
@@ -483,7 +573,7 @@ function imce_form_template($rid) {
   $form['scale'] = array('#type' => 'checkbox',
     '#title' => '<strong>'.t('Enable scaling of newly uploaded images.').'</strong>',
     '#default_value' => $set->scale,
-    '#description' => t('If a newly uploaded image has dimensions exceeding the limit, it will be scaled down.'),
+    '#description' => t('If a newly uploaded image has dimensions exceeding the limit, it will be scaled down instead of giving an error.'),
   );
   $form['twidth'] = array('#type' => 'textfield',
     '#size' => 4,
@@ -521,10 +611,20 @@ function imce_form_template($rid) {
     '#default_value' => $set->shared,
     '#description' => t('If you want all your users to <strong>use a common folder instead of personal folders</strong>, here you can define that folder name (ex. images). Notice that shared upload means shared quota. If you are happy with personal folders leave this field blank.'),
   );
+  $form['subnav'] = array('#type' => 'checkbox',
+    '#title' => '<strong>'.t('Enable sub-folder navigation.').'</strong>',
+    '#default_value' => $set->subnav,
+    '#description' => t('This option allows users to manage multiple folders under their main folder. Only the users who have at least one sub-folder can use this feature.'),
+  );
+  $form['subdirs'] = array('#type' => 'textfield',
+    '#title' => t('Default sub-folder names'),
+    '#default_value' => $set->subdirs,
+    '#description' => t('Enter comma separated sub-folder names that will be created automatically, if the sub-folder navigation is enabled. Each user of this role will have these folders in their main folder by default. Additional folders can be created using !subfoldertool. You should note that total user quota increases with every new sub-folder because the quotation is per folder basis.', array('!subfoldertool' => l(t('Sub-folder tool'), 'admin/settings/imce/subfolder'))),
+  );
   $form['extensions'] = array('#type' => 'textfield',
     '#title' => t('Non-image file support'),
     '#default_value' => $set->extensions,
-    '#description' => t('Although imce is mainly designed to browse images, it supports uploading and browsing of any file type. If you like to use this feature, define your <strong>allowed non-image file extensions</strong> here with a comma between them. Ex .doc, .pdf, .zip.  Note that, image upload limits also apply for these files. For a pure image browser leave this field blank.'),
+    '#description' => t('Although IMCE is mainly designed to browse images, it supports uploading and browsing of any file type. If you like to use this feature, define your <strong>allowed non-image file extensions</strong> here with a comma between them. Ex .doc, .pdf, .zip.  Note that, image upload limits also apply for these files. For a pure image browser leave this field blank.'),
   );
   $form['extras'] = array('#type' => 'checkbox',
     '#title' => '<strong>'.t('Enable extras').'</strong>',
@@ -542,16 +642,16 @@ function imce_form_admin_form() {
   $form['#tree'] = TRUE;
 
   $form['common'] = array('#type' => 'fieldset', '#collapsible' => TRUE, '#title' => t('Common settings'),);
-  $form['common']['tinymce'] = array('#type' => 'checkbox',//tinyce support
+  $form['common']['tinymce'] = module_exists('tinymce') ? array('#type' => 'checkbox',//tinymce support
     '#title' => '<strong>'.t('Enable tinyMCE support').'</strong>',
     '#default_value' => variable_get('imce_settings_tinymce', 1),
-    '#description' => t('Make imce the default image/file browser for tinyMCE.'),
-  );
-  $form['common']['fck'] = array('#type' => 'checkbox',//fck support
+    '#description' => t('Make IMCE the default image/file browser for tinyMCE.'),
+  ) : NULL;
+  $form['common']['fck'] = module_exists('fckeditor') ? array('#type' => 'checkbox',//fck support
     '#title' => '<strong>'.t('Enable FCKEditor support').'</strong>',
     '#default_value' => variable_get('imce_settings_fck', 0),
-    '#description' => t('Replace the built-in file browser of FCKeditor with imce.'),
-  );
+    '#description' => t('Replace the built-in file browser of FCKeditor with IMCE.'),
+  ) : NULL;
   $form['common']['textarea'] = array('#type' => 'textfield',//plain textarea support
     '#title' => t('Enable inline image/file insertion into plain textareas'),
     '#default_value' => variable_get('imce_settings_textarea', ''),
@@ -567,7 +667,7 @@ function imce_form_admin_form() {
     $form['common']['rank'] = array('#type' => 'textfield',
       '#title' => t('Role precedence'),
       '#default_value' => implode('>', $rids),
-      '#description' => t('A user having <strong>multiple roles</strong> gets the permissions of the highest one. Sort role IDs according to their <strong>precedence from higher to lower</strong> by putting > in between. Here is the id-name pairs of roles having access to imce:').'<div>'.implode(', ', $rtext).'</div>',
+      '#description' => t('A user having <strong>multiple roles</strong> gets the permissions of the highest one. Sort role IDs according to their <strong>precedence from higher to lower</strong> by putting > in between. Here is the id-name pairs of roles having access to IMCE:').'<div>'.implode(', ', $rtext).'</div>',
     );
   }
 
@@ -625,7 +725,7 @@ function imce_file_download($file) {
   $imcefile = FALSE;
   foreach ($roles as $rid=>$set) {
     if ($set['shared']) {
-      if (strpos($file, $set['shared'].'/') === 0) {
+      if ($set['shared'] == '/' || strpos($file, $set['shared'].'/') === 0) {
         $imcefile = TRUE;
         break;
       }
@@ -638,14 +738,8 @@ function imce_file_download($file) {
     }
   }
   if ($imcefile && ($path = file_create_path($file))) {
-    $info = @getimagesize($path);
-    $types = array(1 => 'image/gif', 2 => 'image/jpeg', 3 => 'image/png');
-    if ($types[$info[2]]) {
-      return array('Content-type: '. $types[$info[2]], 'Content-Disposition: attachment; filename="'. basename($file) .'"');
-    }
-    else {
-      return array('Content-type: '. (function_exists('mime_content_type') ? mime_content_type($path) : 'application/x-download'), 'Content-Disposition: attachment; filename="'. basename($file) .'"');
-    }
+    $ctype = ($info = @getimagesize($path)) ? $info['mime'] : (function_exists('mime_content_type') ? mime_content_type($path) : 'application/x-download');
+    return array('Content-type: '. $ctype);
   }
 }
 
@@ -666,7 +760,114 @@ function imce_elements() {
 function imce_process_textarea($element, $edit=NULL, $ids=array()) {
   if (in_array($element['#id'], $ids)) {
   drupal_add_js(drupal_get_path('module', 'imce').'/imce_set_inline.js');
-  $element['#description'] .= '<div style="display:none"><a href="'.url('imce/browse').'" name="'.$element['#id'].'" class="imce-insert-inline">'.t('Insert image/file.').'</a></div>';
+  $element['#description'] .= '<div style="display:none">'. t('Insert !image or !link.', array('!image' => l(t('image'), 'imce/browse', array('name' => $element['#id'].'|image', 'class' => 'imce-insert-inline')), '!link' => l(t('link'), 'imce/browse', array('name' => $element['#id'].'|link', 'class' => 'imce-insert-inline')))) .'</div>';
   }
   return $element;
+}
+
+/**
+ * IMCE user/x/imce page.
+ */
+function imce_user_page($acc) {
+  if ($GLOBALS['user']->uid == $acc->uid) {//user
+    $output = '<iframe id="imce-frame" height="500px" width="99%" name="imce-frame" src="'.url('imce/browse').'" scrolling="no"></iframe>';
+  }
+  else {//admin
+    $output = '<p class="imce-login">'. t('Browse this user\'s files using !yours or !his', array('!yours' => l(t('your previlidges'), 'imce/login/'.$acc->uid, array('target' => 'imce-frame')), '!his' => l(t('his/her previlidges'), 'imce/login/'.$acc->uid.'/own', array('target' => 'imce-frame')))) .'</p><br /><iframe id="imce-frame" height="500px" width="99%" name="imce-frame" src="about:blank" scrolling="no"></iframe>';
+  }
+  drupal_set_title($acc->name);
+  return $output;
+}
+
+/* 
+ * Convert absolute paths to relative paths. return new path relative to the root.
+ */
+function imce_relative_path($path, $root=NULL) {
+  $abs = str_replace('\\', '/', realpath($path));
+  $root = str_replace('\\', '/', ($root ? realpath($root) : $_SERVER['DOCUMENT_ROOT']));
+  return strpos($abs, $root)===0 ? trim(substr($abs, strlen($root)), '/') : substr($abs, (($pos=strpos($abs, '/')) ? $pos : 0));
+}
+
+/* 
+ * convert file path to relative url.
+ */
+function imce_relative_url($path='') {
+  if (variable_get('file_downloads', '')==FILE_DOWNLOADS_PRIVATE) {
+    $file = trim(substr($path, strlen(file_directory_path())), '\\/');
+    return url('system/files').(strlen($file) ? '/'.$file : '');
+  }
+  return base_path().$path;
+}
+
+/**
+ * return sub folder creation form
+ */
+function imce_form_subfolder_form() {
+  $form['help'] = array('#value' => t('<p>Here you can create sub-folders for your users. Multiple folder creation is possible at a time with the <strong>*</strong> character. For example, specifying <strong>user*/foo</strong> will create <strong>foo</strong> named folders under each folder starting with <strong>user</strong>. */foo*/bar will create bar named folders under folders starting with foo in each folder of file system path.</p>'),);
+  $form['path'] = array('#type' => 'textfield', '#default_value' => $_POST['edit']['path'], '#maxlength' => 255, '#prefix' => '<div class="form-item"><label>'.t('Folder path').':</label><div class="container-inline">'. file_directory_path().'/', '#suffix' => '</div></div>',);
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Create'),);
+  return $form;
+}
+
+/**
+ * get sbfolder creation form
+ */
+function imce_form_subfolder() {
+  return drupal_get_form('imce_form_subfolder_form');
+}
+
+/**
+ * subfolder form submit. (Forms API -> formID_submit)
+ */
+function imce_form_subfolder_form_submit($form_id, $edit) {
+  imce_create_subfolders($edit['path'], file_directory_path());
+  return FALSE;
+}
+
+/**
+ * create folder(s) under root according to path.
+ */
+function imce_create_subfolders($path, $root) {
+  $args = explode('/', str_replace('\\', '/', $path));
+  $dirs = array($root);
+  for ($i=0; strlen($arg=$args[$i]); $i++) {
+    if (strpos($arg, '*')===FALSE) {//no asterisks. create the folder(s)
+      for ($j=0; isset($dirs[$j]); $j++) {
+        $dirs[$j] .= '/'. $arg;
+        if (!file_check_location($dirs[$j], $root) || !file_check_directory($dirs[$j], TRUE)) {
+          drupal_set_message(t('Specified path must be under file sytem path.'), 'error');
+          return FALSE;
+        }
+      }
+    }
+    else {//get matching subfolders.
+      $newdirs = array();
+      $expr = str_replace('*', '.*', $arg);
+      foreach ($dirs as $dir) {
+        $newdirs = array_merge($newdirs, imce_get_subfolders($dir, $expr));
+      }
+      if (!count($newdirs)) {
+        drupal_set_message(t('No matching sub-folders found.'), 'error');
+        return FALSE;
+      }
+      $dirs = $newdirs;
+    }
+  }
+  return TRUE;
+}
+
+/**
+ * scan directory and return folders matching expression.
+ */
+function imce_get_subfolders($dir, $expr='') {
+  $folders = array();
+  if ($handle = @opendir($dir)) {
+    while(($file = readdir($handle)) !== FALSE) {
+      if ($file != '.' && $file != '..' && is_dir($dir.'/'.$file) && preg_match('/^'.$expr.'$/', $file)) {
+        $folders[] = $dir.'/'.$file;
+      }
+    }
+    closedir($handle);
+  }
+  return $folders;
 }

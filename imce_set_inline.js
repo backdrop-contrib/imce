@@ -3,12 +3,13 @@ if (Drupal.jsEnabled) {
   $(imceInitiateInline);
 }
 
-var imceActiveTextarea;
+var imceActiveTextarea, imceActiveType;
 function imceInitiateInline() {
   $('a.imce-insert-inline').each( function () {
     $(this.parentNode).css('display', 'block');
-    $(this).click(function() {
-      imceActiveTextarea = $('#'+this.name).get(0);
+    $(this).unclick().click(function() {
+      imceActiveTextarea = $('#'+this.name.split('|')[0]).get(0);
+      imceActiveType = this.name.split('|')[1];
       window.open(this.href, '_imce_', 'width=640, height=480, resizable=1');
       return false;
     });
@@ -16,19 +17,28 @@ function imceInitiateInline() {
 }
 
 //custom callback. hook:ImceFinish
-function _imce_ImceFinish(path, w, h, imceWin) {
-  var html = w&&h ? ('<img src="'+path+'" width="'+w+'" height="'+h+'" alt="'+path.substr(path.lastIndexOf('/')+1)+'" />') : ('<a href="'+path+'">'+path.substr(path.lastIndexOf('/')+1)+'</a>');
-  imceInsertAtCursor(imceActiveTextarea, html);
+function _imce_ImceFinish(path, w, h, s, imceWin) {
+  var basename = path.substr(path.lastIndexOf('/')+1);
+  imceActiveType = imceActiveType ? imceActiveType : (w&&h ? 'image' : 'link');
+  var html = imceActiveType=='image' ? ('<img src="'+ path +'" width="'+ w +'" height="'+ h +'" alt="'+ basename +'" />') : ('<a href="'+ path +'">'+ basename +' ('+ s +')</a>');
+  imceInsertAtCursor(imceActiveTextarea, html, imceActiveType);
   imceWin.close();
+  imceActiveType = null;
 }
 
 //insert html at cursor position
-function imceInsertAtCursor(field, txt) {
+function imceInsertAtCursor(field, txt, type) {
   field.focus();
   if ('undefined' != typeof(field.selectionStart)) {
+    if (type == 'link' && (field.selectionEnd-field.selectionStart)) {
+      txt = txt.split('">')[0] +'">'+ field.value.substring(field.selectionStart, field.selectionEnd) +'</a>';
+    }
     field.value = field.value.substring(0, field.selectionStart) + txt + field.value.substring(field.selectionEnd, field.value.length);
   }
   else if (document.selection) {
+    if (type == 'link' && document.selection.createRange().text.length) {
+      txt = txt.split('">')[0] +'">'+ document.selection.createRange().text +'</a>';
+    }
     document.selection.createRange().text = txt;
   }
   else {

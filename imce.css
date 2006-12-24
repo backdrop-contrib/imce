@@ -16,16 +16,20 @@ a:hover {
 img {
   border: 0;
 }
-div {
-  width: 99%;
-}
 form {
   margin: 0.5em 0 0 0;
 }
-form input {
+input {
   padding: 0 0.1em;
   margin: 0 0.1em 0 0.2em;
   font-size: 1em;
+  letter-spacing: 0;
+}
+select {
+  font-size: 0.9em;
+  padding: 0;
+  margin: 0;
+  height: 1.8em;
   letter-spacing: 0;
 }
 table {
@@ -60,10 +64,18 @@ div.forms {
 }
 #resize-bar-in {
   position: absolute;
-  font: bold 18px verdana;
-  color: #ff9900;
-  width: auto;
+  font: bold 14px verdana;
+  color: #f90;
   display: none;
+}
+#relative-div {
+  position: relative;
+  height: 0px;
+}
+#info-div {
+  position: absolute;
+  top: 2px;
+  left: 2px;
 }
 #imagepreview {/*Image preview area*/
   height: 270px;
@@ -77,12 +89,8 @@ div.forms {
   left: 8em;
   color: #36c;
 }
-#filterspan select {
-  font-size: 0.9em;
-  padding: 0;
-  margin: 0;
-  height: 1.8em;
-  letter-spacing: 0;
+#dirform {
+  display: inline;
 }
 .rover {
   background: #eee;

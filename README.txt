@@ -29,4 +29,6 @@ File filtering according to type and extension.
 Keyboard shurtcuts (UP, DOWN, DELETE, INSERT).
 Javascript API that allows custom usage of the browser, which makes IMCE suitable for any wysiwyg editor.
 Built-in support for FCKeditor
-Built-in support for inline image/file insertion into plain textareas.
+Built-in support for inline image/file insertion into plain textareas.#
+admin ability to switch to any user's settings.
+administration of user files in user/x/imce pages.

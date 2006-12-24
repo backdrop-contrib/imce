@@ -1,19 +1,24 @@
 // $Id$
 if (Drupal.jsEnabled) {
-  $(imceInitiateFCK);
+  $(window).load(imceInitiateFCK);
 }
 function imceInitiateFCK() {
   if ("undefined" != typeof(window.FCKeditorAPI)) {
-    var path;
-    var width = 640;
-    var height = 480;
-    var types = ['Image', 'Link', 'Flash'];
-    for (var i in FCKeditorAPI.__Instances) {
-      var fck = FCKeditorAPI.__Instances[i];
-      path = path ? path : fck.Config.BasePath.substring(0, fck.Config.BasePath.indexOf('modules')) + 'index.php?q=imce/browse';
-      for (var t in types) {
-        eval('fck.Config.'+types[t]+'BrowserURL = path; fck.Config.'+types[t]+'BrowserWindowWidth = width; fck.Config.'+types[t]+'BrowserWindowHeight = height;');
+    $.each(FCKeditorAPI.__Instances, function(){imceSetFCK(this);});
+  }
+  else if ("undefined" != typeof(window.FCKeditor_OpenPopup)) {
+    $('textarea').each(function () {
+      if (eval('"undefined" != typeof(oFCKeditor_' + this.id.replace(/\-/g, '_') +')')) {
+        imceSetFCK(eval('oFCKeditor_' + this.id.replace(/\-/g, '_')));
       }
-    }
+    });
+  }
+}
+function imceSetFCK(fck) {
+  var width = 640;
+  var height = 480;
+  var types = ['Image', 'Link', 'Flash'];
+  for (var t in types) {
+    eval('fck.Config.'+types[t]+'Browser = true; fck.Config.'+types[t]+'BrowserURL = imceBrowserURL; fck.Config.'+types[t]+'BrowserWindowWidth = width; fck.Config.'+types[t]+'BrowserWindowHeight = height;');
   }
 }
