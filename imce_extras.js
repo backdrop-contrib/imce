@@ -127,13 +127,13 @@ function imceCompareNumeric(r1, r2) {
   return a-b;
 }
 function imceCompareDate(r1, r2) {
-  var a = parseInt(r1.cells[imceVar['activeCol']].id);
-  var b = parseInt(r2.cells[imceVar['activeCol']].id);
+  var a = parseInt(r1.cells[imceVar['activeCol']].id.substr(2));
+  var b = parseInt(r2.cells[imceVar['activeCol']].id.substr(2));
   return a-b;
 }
 function imceCompareSize(r1, r2) {
-  var a = parseInt(r1.cells[imceVar['activeCol']].id);
-  var b = parseInt(r2.cells[imceVar['activeCol']].id);
+  var a = parseInt(r1.cells[imceVar['activeCol']].id.substr(2));
+  var b = parseInt(r2.cells[imceVar['activeCol']].id.substr(2));
   return a-b;
 }
 function imceCompareString(r1, r2) {

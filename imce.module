@@ -127,9 +127,9 @@ function imce_browse() {
   }
   foreach ($directory['files'] as $path=>$file) {
     $rows[] = array(array('data' => $file['f'], 'class' => 'filename'),
-      array('data' => format_size($file['s']), 'class' => 'size', 'id' => $file['s']),
+      array('data' => format_size($file['s']), 'class' => 'size', 'id' => 's-'.$file['s']),
       array('data' => $file['w'].'x'.$file['h'], 'class' => 'dimensions'),
-      array('data' => date('Y-m-d', $file['d']), 'class' => 'date', 'id' => $file['d'], 'title' => date('H:i:s', $file['d'])),
+      array('data' => date('Y-m-d', $file['d']), 'class' => 'date', 'id' => 'd-'.$file['d'], 'title' => date('H:i:s', $file['d'])),
       array('data' => $set->delete ? l(t('delete'), 'imce/delete/'.$file['f'], NULL, 'token='.$token) : '', 'class' => 'operations'),
     );
   }
@@ -176,6 +176,15 @@ function imce_browse() {
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <title>'.t('Image/File Browser').'</title>
+  <script type="text/javascript">
+    var imceVar = [];
+    imceVar["fileUrl"] = "'. imce_relative_url($set->dir) .'";
+    imceVar["latestFile"] = "'. ($_SESSION['imcelatest'] ? imce_relative_url($_SESSION['imcelatest']) : '') .'";
+    imceVar["confirmDel"] = "'. ($set->delete ? t('Are you sure want to delete this file?') : '') .'";
+    imceVar["viewText"] = "'.t('view').'";
+    imceVar["addText"] = "'.t('add').'";'. ($set->extras ? '
+    imceVar["filterText"] = ["'.t('Display'). '", "'. t('all'). '", "'. t('images'). '", "'. t('non-images').'"];' : '') .'
+  </script>
   <script type="text/javascript" src="'. $basepath .'misc/jquery.js"></script>
   <script type="text/javascript" src="'. $imcepath .'/imce_browse.js"></script>'.
   ($set->extras ? '<script type="text/javascript" src="'. $imcepath .'/imce_extras.js"></script>' : '').'
@@ -200,15 +209,6 @@ theme('table', array(), $rows, array('id'=>'bodytable')).'
 $uploadform .
 $resizeform .'
 </div>
-<script type="text/javascript">
-  var imceVar = [];
-  imceVar["fileUrl"] = "'. imce_relative_url($set->dir) .'";
-  imceVar["latestFile"] = "'. ($_SESSION['imcelatest'] ? imce_relative_url($_SESSION['imcelatest']) : '') .'";
-  imceVar["confirmDel"] = "'. ($set->delete ? t('Are you sure want to delete this file?') : '') .'";
-  imceVar["viewText"] = "'.t('view').'";
-  imceVar["addText"] = "'.t('add').'";'.
-($set->extras ? ' imceVar["filterText"] = ["'.t('Display'). '", "'. t('all'). '", "'. t('images'). '", "'. t('non-images').'"];' : '') .'
-</script>
 </body>
 </html>';
   unset($_SESSION['imcelatest']);
