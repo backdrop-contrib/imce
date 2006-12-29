@@ -8,7 +8,7 @@ function imce_footer() {
   if (user_access('access imce')) {
     $header = drupal_get_js();
     //set imce if tinymce is in action
-    if (module_exists('tinymce') && variable_get('imce_settings_tinymce', 1) && strpos($header, 'tinyMCE.init')) {
+    if (module_exists('tinymce') && variable_get('imce_settings_tinymce', 1) && strpos($header, 'tiny_mce')) {
       $output .= '<script type="text/javascript" src="'. base_path() . drupal_get_path('module', 'imce') .'/imce_set_tinymce.js' .'"></script>';
     }
     //set imce if fckeditor is in action
