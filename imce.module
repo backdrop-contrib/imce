@@ -773,7 +773,7 @@ function imce_user_page($acc) {
     $output = '<iframe id="imce-frame" height="500px" width="99%" name="imce-frame" src="'.url('imce/browse').'" scrolling="no"></iframe>';
   }
   else {//admin
-    $output = '<p class="imce-login">'. t('Browse this user\'s files using !yours or !his', array('!yours' => l(t('your previlidges'), 'imce/login/'.$acc->uid, array('target' => 'imce-frame')), '!his' => l(t('his/her previlidges'), 'imce/login/'.$acc->uid.'/own', array('target' => 'imce-frame')))) .'</p><br /><iframe id="imce-frame" height="500px" width="99%" name="imce-frame" src="about:blank" scrolling="no"></iframe>';
+    $output = '<p class="imce-login">'. t('Browse this user\'s files using !yours or !his', array('!yours' => l(t('your privileges'), 'imce/login/'.$acc->uid, array('target' => 'imce-frame')), '!his' => l(t('his/her privileges'), 'imce/login/'.$acc->uid.'/own', array('target' => 'imce-frame')))) .'</p><br /><iframe id="imce-frame" height="500px" width="99%" name="imce-frame" src="about:blank" scrolling="no"></iframe>';
   }
   drupal_set_title($acc->name);
   return $output;
