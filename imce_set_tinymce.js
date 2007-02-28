@@ -7,6 +7,7 @@ function imceInitiateTinyMCE() {
     for (var i=0; i<tinyMCE.configs.length; i++) {
       tinyMCE.configs[i]['file_browser_callback'] = 'imceImageBrowser';
     }
+    setTimeout('for (var i in tinyMCE.instances) {var fE = tinyMCE.instances[i]["formElement"]; if (fE["tagName"]=="DIV") tinyMCE.instances[i]["formElement"] = fE.firstChild;}', 3000);//fix formElement issue of tinymce after 3sec.
   }
 }
 var imceTinyWin, imceTinyField, imceTinyType, imceTinyURL;

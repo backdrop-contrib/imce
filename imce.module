@@ -8,11 +8,11 @@ function imce_footer() {
   if (user_access('access imce')) {
     $header = drupal_get_js();
     //set imce if tinymce is in action
-    if (module_exists('tinymce') && variable_get('imce_settings_tinymce', 1) && strpos($header, 'tiny_mce')) {
+    if (!imce_integrate('tinymce', 'check') && module_exists('tinymce') && variable_get('imce_settings_tinymce', 1) && strpos($header, 'tiny_mce')) {
       $output .= '<script type="text/javascript" src="'. base_path() . drupal_get_path('module', 'imce') .'/imce_set_tinymce.js' .'"></script>';
     }
     //set imce if fckeditor is in action
-    if (module_exists('fckeditor') && variable_get('imce_settings_fck', 0) && strpos($header, 'fckeditor.js')) {
+    if (!imce_integrate('fck', 'check') && module_exists('fckeditor') && variable_get('imce_settings_fck', 0) && strpos($header, 'fckeditor.js')) {
       $output .= '<script type="text/javascript" src="'. base_path() . drupal_get_path('module', 'imce') .'/imce_set_fck.js' .'"></script>';
     }
     if ($output) {
@@ -421,7 +421,7 @@ function imce_scan_directory($dir) {
  */
 function imce_get_directory($set) {
   if ($set['shared']) {//use shared folder if it is declared
-    $dir = file_directory_path().'/'.$set['shared'];
+    $dir = file_directory_path().($set['shared']=='/' ? '' : '/'.$set['shared']);
   }
   else {//use personal folders by default.
     $dir = file_directory_path().'/'.$set['prefix'].$set['uid'];
@@ -784,7 +784,7 @@ function imce_user_page($acc) {
  */
 function imce_relative_path($path, $root=NULL) {
   $abs = str_replace('\\', '/', realpath($path));
-  $root = str_replace('\\', '/', ($root ? realpath($root) : $_SERVER['DOCUMENT_ROOT']));
+  $root = str_replace('\\', '/', ($root ? realpath($root) : dirname(realpath($_SERVER['SCRIPT_FILENAME']))));
   return strpos($abs, $root)===0 ? trim(substr($abs, strlen($root)), '/') : substr($abs, (($pos=strpos($abs, '/')) ? $pos : 0));
 }
 
@@ -870,4 +870,19 @@ function imce_get_subfolders($dir, $expr='') {
     closedir($handle);
   }
   return $folders;
+}
+
+/**
+ * integrate with editors.
+ */
+function imce_integrate($e, $check=NULL) {
+  static $state = array();
+  if ($check) {
+    return $state[$e];
+  }
+  if (!$state[$e]) {
+    drupal_add_js(drupal_get_path('module', 'imce').'/imce_set_'.$e.'.js');
+    drupal_add_js('var imceBrowserURL = "'.url('imce/browse').'";', 'inline');
+    $state[$e] = TRUE;
+  }
 }
