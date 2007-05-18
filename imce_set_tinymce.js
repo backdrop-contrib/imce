@@ -1,24 +1,37 @@
 // $Id$
-if (Drupal.jsEnabled) {
-  $(window).load(imceInitiateTinyMCE);
-}
-function imceInitiateTinyMCE() {
-  if ("undefined" != typeof(window.tinyMCE)) {
-    for (var i=0; i<tinyMCE.configs.length; i++) {
-      tinyMCE.configs[i]['file_browser_callback'] = 'imceImageBrowser';
-    }
-    setTimeout('for (var i in tinyMCE.instances) {var fE = tinyMCE.instances[i]["formElement"]; if (fE["tagName"]=="DIV") tinyMCE.instances[i]["formElement"] = fE.firstChild;}', 3000);//fix formElement issue of tinymce after 3sec. comment out this line if you use tinymce2.1 or above.
+
+//hookImceFinish
+function tinyImceFinish(path, w, h, s, win) {
+
+  imceTiny.field.value = path; // set URL
+  
+  if (imceTiny.win.document.forms[0].elements['width']) { //set width
+    imceTiny.win.document.forms[0].elements['width'].value = w;
   }
+  
+  if (imceTiny.win.document.forms[0].elements['height']) { //set height
+    imceTiny.win.document.forms[0].elements['height'].value = h;
+  }
+
+  imceTiny.pop.blur();
+  imceTiny.win.focus();
+  imceTiny.field.focus();
 }
-var imceTinyWin, imceTinyField, imceTinyType, imceTinyURL;
-function imceImageBrowser(field_name, url, type, win) {
-  //if (type!='image') return;//work for only images
-  var width = 640;
-  var height = 480;
-  var imcePopup = window.open(imceBrowserURL, '', 'width='+ width +', height='+ height +', resizable=1');
-  imcePopup.focus();
-  imceTinyWin = win;
-  imceTinyField = win.document.forms[0].elements[field_name];
-  imceTinyType = type;
-  imceTinyURL = url;
+
+//hookImceUrl
+var tinyImceUrl;
+
+//global variable container
+var imceTiny = {};
+
+// file browser function of tinyMCE
+function imceFileBrowser(field_name, url, type, win) {
+  if (typeof imceTiny.pop == 'undefined' || imceTiny.pop.closed) {
+    imceTiny.pop = window.open(imceBrowserURL, 'tiny', 'width='+ 640 +', height='+ 480 +', resizable=1');
+  }
+  imceTiny.pop.focus();
+  imceTiny.win = win;
+  imceTiny.field = win.document.forms[0].elements[field_name];
+  tinyImceUrl = url;
+  //TODO: initiate active url highlighting in IMCE window.
 }
