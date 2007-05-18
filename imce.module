@@ -2,26 +2,6 @@
 // $Id$
 
 /**
- * Implementation of hook_footer().
- */
-function imce_footer() {
-  if (user_access('access imce')) {
-    $header = drupal_get_js();
-    //set imce if tinymce is in action
-    if (!imce_integrate('tinymce', 'check') && module_exists('tinymce') && variable_get('imce_settings_tinymce', 1) && strpos($header, 'tiny_mce')) {
-      $output .= '<script type="text/javascript" src="'. base_path() . drupal_get_path('module', 'imce') .'/imce_set_tinymce.js' .'"></script>';
-    }
-    //set imce if fckeditor is in action
-    if (!imce_integrate('fck', 'check') && module_exists('fckeditor') && variable_get('imce_settings_fck', 0) && strpos($header, 'fckeditor.js')) {
-      $output .= '<script type="text/javascript" src="'. base_path() . drupal_get_path('module', 'imce') .'/imce_set_fck.js' .'"></script>';
-    }
-    if ($output) {
-      return '<script type="text/javascript"> var imceBrowserURL = "'.url('imce/browse').'"; </script>'. $output;
-    }
-  }
-}
-
-/**
  * Implementation of hook_perm().
  */
 function imce_perm() {
