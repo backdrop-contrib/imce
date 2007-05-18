@@ -19,9 +19,9 @@ function imceInitiateInline() {
 //custom callback. hook:ImceFinish
 function _imce_ImceFinish(path, w, h, s, imceWin) {
   var basename = path.substr(path.lastIndexOf('/')+1);
-  imceActiveType = imceActiveType ? imceActiveType : (w&&h ? 'image' : 'link');
-  var html = imceActiveType=='image' ? ('<img src="'+ path +'" width="'+ w +'" height="'+ h +'" alt="'+ basename +'" />') : ('<a href="'+ path +'">'+ basename +' ('+ s +')</a>');
-  imceInsertAtCursor(imceActiveTextarea, html, imceActiveType);
+  var type = imceActiveType=='link' ? 'link' : (w&&h ? 'image' : 'link');
+  var html = type=='image' ? ('<img src="'+ path +'" width="'+ w +'" height="'+ h +'" alt="'+ basename +'" />') : ('<a href="'+ path +'">'+ basename +' ('+ s +')</a>');
+  imceInsertAtCursor(imceActiveTextarea, html, type);
   imceWin.close();
   imceActiveType = null;
 }

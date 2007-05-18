@@ -32,3 +32,23 @@ Built-in support for FCKeditor
 Built-in support for inline image/file insertion into plain textareas.#
 admin ability to switch to any user's settings.
 administration of user files in user/x/imce pages.
+
+How to install:
+
+1) Copy imce directory to your modules directory
+2) Enable the module at: admin/build/modules
+3) Assign permissions to user roles at: admin/user/access
+4) Configure the module settings at: admin/settings/imce
+5) Start using imce by clicking the browse button in image or link popup of tinymce or fckeditor.
+If you configure imce to work with plain textareas there should appear a link under the specified textareas.
+You can also reach IMCE from your account page.
+
+Common issues to pay attention:
+- Make sure you have the closure variable in your theme file. It contains the html that activates browse button 
+for WYSIWYG editors. For phptemplate based themes, closure is $closure inside page.tpl.php.
+- Directory paths in settings page must be relative to drupal's file system path that is usually "files".
+Therefore, to use the folder "files/foo" just enter "foo".
+- If your images disappear after node submission it is probably becouse of your default "input format" not
+allowing <img> tag. Select "Full HTML" as default or add <img> tag to allowed tags for your default input format.
+- If you are using an ftp-created directory and getting errors, try setting the folder permissions to
+chmod 0777 to make sure PHP has full access to it.

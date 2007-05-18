@@ -48,10 +48,16 @@ function imce_menu($may_cache) {
       'access' => user_access('administer imce'),
       'callback' => 'imce_form_admin',
     );
+    $items[] = array('path' => 'admin/settings/imce/settings',
+      'title' => t('Settings'),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+    );
     $items[] = array('path' => 'admin/settings/imce/subfolder',
       'title' => t('Sub-folder tool'),
       'access' => user_access('administer imce'),
       'callback' => 'imce_form_subfolder',
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 1,
     );
   }
   elseif (arg(0)=='user' && ($uid=arg(1)) && is_numeric($uid)) {
@@ -88,7 +94,7 @@ function imce_menu($may_cache) {
       elseif (arg(1)=='dir' && $set->subnav && isset($_POST['dirname'])) {
         $target =  $set->dir.'/'.$_POST['dirname'];
         if (is_dir($target) && ($real = file_check_location($target, $set->root))) {
-          $_SESSION['imcedir'] = imce_relative_path($real);
+          $_SESSION['imcedir'] = imce_relative_path($real, file_directory_path());
         }
       }
     }
@@ -236,7 +242,7 @@ function imce_copy_uploaded($set, $file) {
 
   //dont like too long filenames and files without an extension.
   $file['name'] = trim(basename($file['name']), '.');
-  $file['name'] = substr($file['name'], -48); //max filename lenght is 48
+  $file['name'] = strlen($file['name'])>48 ? substr($file['name'], -48) : $file['name']; //max filename lenght is 48
   if (!($dot = strrpos($file['name'], '.'))) {
     drupal_set_message(t('Invalid filename.'), 'error');
     return FALSE;
@@ -481,7 +487,7 @@ function imce_settings_user() {
     }
     $set['root'] = imce_get_directory($userset);
   }
-  $set['dir'] = ($set['subnav'] && $_SESSION['imcedir'] && file_check_location($_SESSION['imcedir'], $set['root'])) ? $_SESSION['imcedir'] : $set['root'];
+  $set['dir'] = ($set['subnav'] && $_SESSION['imcedir'] && file_check_location(file_directory_path() .'/'. $_SESSION['imcedir'], $set['root'])) ? file_directory_path() .'/'. $_SESSION['imcedir'] : $set['root'];
   return $set;
 }
 
@@ -846,7 +852,7 @@ function imce_create_subfolders($path, $root) {
       foreach ($dirs as $dir) {
         $newdirs = array_merge($newdirs, imce_get_subfolders($dir, $expr));
       }
-      if (!count($newdirs)) {
+      if (empty($newdirs)) {
         drupal_set_message(t('No matching sub-folders found.'), 'error');
         return FALSE;
       }
