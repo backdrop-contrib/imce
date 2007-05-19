@@ -46,6 +46,10 @@ th.size{
 div.forms {
   border-top: 2px solid #000;
 }
+#bodytable tr:hover {
+  background: #eee;
+  cursor: pointer;
+}
 #headerdiv {
   border-bottom: 2px solid #000;
 }
@@ -91,10 +95,6 @@ div.forms {
 }
 #dirform {
   display: inline;
-}
-.rover {
-  background: #eee;
-  cursor: pointer;
 }
 .rsel {
   background: #9c9;

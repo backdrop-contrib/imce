@@ -6,6 +6,7 @@ imceVar['absURL'] = 0;//absolute URLs
 function imceStartBrowser() {
   var imceOpener = window.opener && window.opener != window.self ? window.opener : null;
   if (imceOpener) {
+    imceVar['targetWin'] = imceOpener;
     if (typeof imceOpener[window.name+'ImceFinish'] == 'function') {
       imceVar['customCall'] = imceOpener[window.name+'ImceFinish'];//function for adding
       if(typeof imceOpener[window.name+'ImceUrl'] == 'string') {.
@@ -36,12 +37,26 @@ function imceStartBrowser() {
     for (var i=0; row=list[i]; i++) {
       var info = imceInfo(row);
       var fURL = imceVar['fileUrl']+'/'+info['f'];
-      activepath==fURL ? imceHighlight(row, 'append') : 0;
-      row.onmouseover = function() {$(this).addClass('rover')};
-      row.onmouseout = function() {$(this).removeClass('rover')};
+      if (activepath == fURL) {
+        imceHighlight(row, true);
+      }
       row.onclick = function() {imceHighlight(this);};
-      row.cells[4].innerHTML += imceVar['customCall'] ? ' &nbsp; <a href="javascript: imceFinitor(\''+fURL+'\', '+info['w']+', '+info['h']+', \''+info['s']+'\')">'+ imceVar['addText'] +'</a>' : '';
-      imceVar["confirmDel"] ? row.cells[4].firstChild.onclick = function() {return confirm(imceVar["confirmDel"])} : 0;
+      if (imceVar['customCall']) {
+        var a = document.createElement('a');
+        a.innerHTML = imceVar['addText'];
+        a.href = '#';
+        a.onclick = function() {
+          var file = imceInfo(this.parentNode.parentNode);
+          imceFinitor(imceVar['fileUrl']+'/'+file['f'], file['w'], file['h'], file['s']);
+          return false;
+        }
+        row.appendChild(a);
+      }
+      if (imceVar["confirmDel"]) {
+        row.cells[4].firstChild.onclick = function() {
+          return confirm(imceVar["confirmDel"]);
+        }
+      }
     }
   }
   if ($('#dirname').length) {
@@ -55,6 +70,9 @@ function imceStartBrowser() {
 }
 
 function imceHighlight(row, append) {
+  if (!row) {
+    return;
+  }
   if (imceVar['activeRow']) {
     $(imceVar['activeRow']).removeClass('rsel');
     if ($('#resizeform').length) {
@@ -92,4 +110,18 @@ function imceInfo(row) {
   info['f'] = row.cells[0].innerHTML;
   info['s'] = row.cells[1].innerHTML;
   return info;
+}
+
+function imceFileRow(url) {
+  var row, rows = $('#bodytable').get(0).rows;
+  for (var i = 0; row = rows[i]; i++) {
+    if (imceVar['fileUrl'] +'/'+ row.cells[0].innerHTML == url) {
+      return row;
+    }
+  }
+  return null;
+}
+
+function imceFileHighlight(url, append) {
+  imceHiglight(imceFileRow(url), append);
 }
