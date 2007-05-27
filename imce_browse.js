@@ -1,15 +1,21 @@
 // $Id$
 
 //TODO: removed absolute url setting. implement it on php side.
+//check opener.opener.hookImceFinish
 
-function imceStartBrowser() {
-  var imceOpener = window.opener && window.opener != window.self ? window.opener : null;
-  if (imceOpener) {
-    imceVar['targetWin'] = imceOpener;
-    if (typeof imceOpener[window.name+'ImceFinish'] == 'function') {//function for adding
-      imceVar['customCall'] = imceOpener[window.name+'ImceFinish'];
-      if(typeof imceOpener[window.name+'ImceUrl'] == 'string') {//url to be highlighted
-        imceVar['targetUrl'] = imceOpener[window.name+'ImceUrl'];
+//Variable container.
+var imce = {};
+
+/**
+ * Initiate browsing.
+ */
+imce.initiate = function() {
+  imce.opener = window.opener && window.opener != window.self ? window.opener : null;
+  if (imce.opener) {
+    if (typeof imce.opener[window.name+'ImceFinish'] == 'function') {//function for adding
+      imce.hookFinish = imce.opener[window.name+'ImceFinish'];
+      if(typeof imce.opener[window.name+'ImceUrl'] == 'string') {//url to be highlighted
+        imce.hookUrl = imce.opener[window.name+'ImceUrl'];
       }
     }
   }
@@ -19,41 +25,41 @@ function imceStartBrowser() {
     $('#resizeform').submit( function() { return $('#img_w').val()*1>=1 && $('#img_h').val()*1>=1 });
     $('#img_w').focus( function() {
       if ($('#img_h').val()) {
-        var file = imceFile(imceVar['activeRow']);
+        var file = imce.file(imce.activeRow);
         this.value = Math.round(file.width/file.height*$('#img_h').val());
       }
     });
     $('#img_h').focus( function() {
       if ($('#img_w').val()) {
-        var file = imceFile(imceVar['activeRow']);
+        var file = imce.file(imce.activeRow);
         this.value = Math.round(file.height/file.width*$('#img_w').val());
       }
     });
   }
-  var activepath = imceVar['latestFile'] ? imceVar['latestFile'] : (imceVar['targetUrl'] && !$('#imagepreview').html() ? imceVar['targetUrl'] : null);
+  var activeUrl = imce.lastUrl ? imce.lastUrl : (imce.hookUrl && !$('#imagepreview').html() ? imce.hookUrl : null);
   var list = $('#bodytable').get(0).rows;
   if (list.length>0 && list[0].cells.length>1) {
     for (var i=0; row = list[i]; i++) {
-      var file = imceFile(row);
-      if (activepath == imceFileUrl(file.name)) {
-        imceHighlight(row, true);
+      var file = imce.file(row);
+      if (activeUrl == imce.fileUrl(file.name)) {
+        imce.highlightRow(row, true);
       }
       row.onclick = function() {
-        imceHighlight(this);
+        imce.highlightRow(this);
       }
-      if (imceVar['customCall']) {
+      if (imce.hookFinish) {
         var a = document.createElement('a');
-        a.innerHTML = imceVar['addText'];
+        a.innerHTML = imce.textAdd;
         a.href = '#';
         a.onclick = function() {
-          imceFinitor(file);
+          imce.finitor(file);
           return false;
         }
         row.cells[4].appendChild(a);
       }
-      if (imceVar["confirmDel"]) {
+      if (imce.textConfirmDel) {
         row.cells[4].firstChild.onclick = function() {
-          return confirm(imceVar["confirmDel"]);
+          return confirm(imce.textConfirmDel);
         }
       }
     }
@@ -68,47 +74,50 @@ function imceStartBrowser() {
   }
 }
 
-function imceHighlight(row, append) {
+/**
+ * Highlight the specified row. Append the file preview to the preview area or show it alone.
+ */
+imce.highlightRow = function(row, append) {
   if (!row) {
     return;
   }
   
-  if (imceVar['activeRow']) {
-    $(imceVar['activeRow']).removeClass('rsel');
+  if (imce.activeRow) {
+    $(imce.activeRow).removeClass('rsel');
     if ($('#resizeform').length) {
       $('#resizeform').css('visibility', 'hidden');
       $('#img_name').val('');
     }
   }
   
-  if (imceVar['activeRow']==row) {
-    imceVar['activeRow'] =null;
+  if (imce.activeRow == row) {
+    imce.activeRow =null;
     $('#imagepreview div:last').remove();
   }
   else {
     $(row).addClass('rsel');
-    imceVar['activeRow'] = row;
-    var file = imceFile(row);
+    imce.activeRow = row;
+    var file = imce.file(row);
     var div = document.createElement('div');
     var a = document.createElement('a');
     if (file.width) {
       var img = document.createElement('img');
-      img.src = imceFileUrl(file.name);
-      img.alt = imceVar['addText'];
+      img.src = imce.fileUrl(file.name);
+      img.alt = imce.textAdd;
       img.width = file.width;
       img.height = file.height;
       a.appendChild(img);
-      if (imceVar['customCall']) {
+      if (imce.hookFinish) {
         a.href = '#';
         a.onclick = function() {
-          imceFinitor(file);
+          imce.finitor(file);
           return false;
         }
       }
     }
     else {
-      a.innerHTML = imceVar['viewText'];
-      a.href = imceFileUrl(file.name);
+      a.innerHTML = imce.textView;
+      a.href = imce.fileUrl(file.name);
       a.onclick = function() {
         window.open(this.href);
         return false;
@@ -116,7 +125,12 @@ function imceHighlight(row, append) {
     }
 
     div.appendChild(a);
-    $('#imagepreview').append(div);
+    if (append) {
+      $('#imagepreview').append(div);
+    }
+    else {
+      $('#imagepreview').empty().append(div);
+    }
 
     if ($('#resizeform').length && file.width) {
       $('#resizeform').css('visibility', 'visible');
@@ -126,14 +140,20 @@ function imceHighlight(row, append) {
   }
 }
 
-function imceFinitor(file) {
-  if (file && imceVar['customCall']) {
-    file.url = imceFileUrl(file.name);
-    imceVar['customCall'](file, window.self);
+/**
+ * Finalize file selection.
+ */
+imce.finitor = function(file) {
+  if (file && imce.hookFinish) {
+    file.url = imce.fileUrl(file.name);
+    imce.hookFinish(file, window.self);
   }
 }
 
-function imceFile(row) {
+/**
+ * Return the file in the row as an object.
+ */
+imce.file = function(row) {
   var wh = row.cells[2].innerHTML.split('x');
   return {
     name: row.cells[0].innerHTML,
@@ -143,11 +163,15 @@ function imceFile(row) {
   }
 }
 
-function imceFileRow(url) {
+/**
+ * Get the row of the file specified by the url.
+ */
+imce.fileRow = function(url) {
   if (url) {
     var row, rows = $('#bodytable').get(0).rows;
+    var basename = path.substr(path.lastIndexOf('/')+1);
     for (var i = 0; row = rows[i]; i++) {
-      if (url == imceFileUrl(row.cells[0].innerHTML)) {
+      if (basename == row.cells[0].innerHTML) {
         return row;
       }
     }
@@ -155,12 +179,19 @@ function imceFileRow(url) {
   return null;
 }
 
-function imceFileHighlight(url, append) {
-  imceHiglight(imceFileRow(url), append);
+/**
+ * Highlight the row of the file specified by the url.
+ */
+imce.fileHighlight = function(url, append) {
+  imce.highlightRow(imce.fileRow(url), append);
 }
 
-function imceFileUrl(filename) {
-  return imceVar['fileUrl'] +'/'+ filename;
+/**
+ * Return the url of the file
+ */
+imce.fileUrl = function(filename) {
+  return imce.dirUrl +'/'+ filename;
 }
 
-$(document).ready(imceStartBrowser);
+//initiate
+$(document).ready(imce.initiate);
