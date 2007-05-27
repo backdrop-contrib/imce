@@ -1,16 +1,4 @@
 // $Id$
-if (Drupal.jsEnabled) {
-  $(document).ready(imceInline.initiate);
-}
-
-//hookImceFinish
-function imceInlineImceFinish(file, imceWin) {
-  var type = imceInline.activeType == 'link' ? 'link' : (file.width ? 'image' : 'link');
-  var html = type=='image' ? ('<img src="'+ file.url +'" width="'+ file.width +'" height="'+ file.height +'" alt="'+ file.name +'" />') : ('<a href="'+ file.url +'">'+ file.name +' ('+ file.size +')</a>');
-  imceInline.activeType = null;
-  imceWin.blur();
-  imceInline.insertAtCursor(imceInline.activeTextarea, html, type);
-}
 
 var imceInline = {};
 
@@ -47,4 +35,17 @@ imceInline.insertAtCursor(field, txt, type) {
   else {
     field.value += txt;
   }
+}
+
+//hookImceFinish
+function imceInlineImceFinish(file, imceWin) {
+  var type = imceInline.activeType == 'link' ? 'link' : (file.width ? 'image' : 'link');
+  var html = type=='image' ? ('<img src="'+ file.url +'" width="'+ file.width +'" height="'+ file.height +'" alt="'+ file.name +'" />') : ('<a href="'+ file.url +'">'+ file.name +' ('+ file.size +')</a>');
+  imceInline.activeType = null;
+  imceWin.blur();
+  imceInline.insertAtCursor(imceInline.activeTextarea, html, type);
+}
+
+if (Drupal.jsEnabled) {
+  $(document).ready(imceInline.initiate);
 }
