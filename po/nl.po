@@ -1,0 +1,168 @@
+# Dutch translation of IMCE module
+# Copyright (c) 2007 qriosadm <botter@qrios.nl>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2007-08-15 13:09+0200\n"
+"PO-Revision-Date: 2007-08-15 13:09+0200\n"
+"Last-Translator: qriosadm <botter@qrios.nl>\n"
+"Language-Team: Dutch <botter@qrios.nl>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+
+#: /?q=admin/user/access
+msgid "access imce"
+msgstr "toegang tot imce"
+
+#: /?q=admin/user/access
+msgid "administer imce"
+msgstr "administreer imce"
+
+#: /imce/browse
+msgid "filename"
+msgstr ""
+
+#: /imce/browse
+msgid "size"
+msgstr "Grootte"
+
+#: /imce/browse
+msgid "dimensions"
+msgstr "Afmetingen"
+
+#: /imce/browse
+msgid "operations"
+msgstr "Opties"
+
+#: /imce/browse
+msgid "Directory is empty."
+msgstr "Map is leeg."
+
+#: /imce/browse
+msgid "Upload File"
+msgstr "Uploaden"
+
+#: /imce/browse
+msgid "Scale if necessary"
+msgstr "Verschaal indien nodig"
+
+#: /imce/browse
+msgid "Create thumbnail"
+msgstr "Maak thumbnail"
+
+#: /imce/browse
+msgid "Dimensions for scaling"
+msgstr "Afmetingen voor verschalen"
+
+#: /imce/browse
+msgid "Quota"
+msgstr "Limiet"
+
+#: /imce/browse
+msgid "Resize image"
+msgstr "Verschaal afbeelding"
+
+#: /imce/browse
+msgid "Create a copy"
+msgstr "Maak een kopie"
+
+#: /imce/browse
+msgid "Image/File Browser"
+msgstr "Afbeelding/Bestand Venster"
+
+#: /imce/browse
+msgid "Are you sure want to delete this file?"
+msgstr "Weet u zeker dat u dit bestand wilt verwijderen?"
+
+#: /imce/browse
+msgid "add"
+msgstr "Toevoegen"
+
+#: /imce/browse
+msgid "Directory"
+msgstr "Map"
+
+#: /admin/settings/imce
+msgid "Common settings"
+msgstr "Algemene instellingen"
+
+#: /admin/settings/imce
+msgid "Enable tinyMCE support"
+msgstr "tinyMCE ondersteuning activeren"
+
+#: /admin/settings/imce
+msgid "Make IMCE the default image/file browser for tinyMCE."
+msgstr "Maak IMCE het standaard afbeelding/bestand venster voor tinyMCE."
+
+#: /admin/settings/imce
+msgid "Width"
+msgstr "Breedte"
+
+#: /admin/settings/imce
+msgid "Height"
+msgstr "Hoogte"
+
+#: /admin/settings/imce
+msgid "Save"
+msgstr "Opslaan"
+
+#: /imce/browse
+msgid "Go"
+msgstr "Ga"
+
+#: /imce/browse
+msgid "Up"
+msgstr "Omhoog"
+
+#: /imce/upload
+msgid "Image was scaled to allowed dimensions."
+msgstr "Afbeelding is verschaald tot de toegestane afmetingen."
+
+#: /imce/upload
+msgid "Upload successful."
+msgstr "Upload succesvol."
+
+#: /imce/upload
+msgid "No files were uploaded."
+msgstr "Er geen bestanden geupload"
+
+#: /imce/resize
+msgid "Resizing successful."
+msgstr "Verschalen succesvol."
+
+#: /imce/resize
+msgid "Error resizing image."
+msgstr "Fout bij verschalen afbeelding."
+
+#: /imce/browse
+msgid "Limits"
+msgstr "Limieten"
+
+#: /imce/browse
+msgid "Dimensions"
+msgstr "Afmetingen"
+
+#: /imce/upload
+msgid "Invalid file extension. Allowed extensions are .jpg, .gif, .png, !ext"
+msgstr "Niet toegestane extentie. Toegestaan zijn: .jpg, .gif, .png, !ext"
+
+#: /imce/delete/
+msgid "File deleted successfully."
+msgstr "Bestand succesvol verwijderd."
+
+#: /imce/resize
+msgid "Image dimensions exceed the limit."
+msgstr "Afbeelding afmetingen overschrijden de limiet."
+
+#: /imce/upload
+msgid "Thumbnail created."
+msgstr "Thumbnail aangemaakt."
+
+#: /imce/delete/
+msgid "Error deleting file."
+msgstr "Fout bij verwijderen bestand"
+
