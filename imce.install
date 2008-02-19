@@ -1,0 +1,28 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function imce_install() {
+  include_once './'. drupal_get_path('module', 'imce') .'/inc/core_profiles.inc';
+  imce_install_profiles();
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function imce_uninstall() {
+  variable_del('imce_profiles');
+  variable_del('imce_roles_profiles');
+  variable_del('imce_settings_textarea');
+  variable_del('imce_settings_absurl');
+}
+
+/**
+ * Update from 5.x to 6.x.
+ */
+function imce_update_6000() {
+  imce_install();
+  return array();
+}

@@ -1,3 +1,4 @@
 ; $Id$
 name = "IMCE"
 description = "An image/file uploader and browser supporting personal directories and user quota."
+core = "6.x"

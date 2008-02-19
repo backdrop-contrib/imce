@@ -6,89 +6,47 @@
  */
 function imce_menu() {
   $items = array();
-  $items['imce/browse'] = array(
+  $items['imce'] = array(
     'title' => 'File browser',
-    'page callback' => 'imce_browse',
+    'page callback' => 'imce_page',
     'access callback' => 'imce_access',
-    'access arguments' => array(),//needed?
+    'file' => 'inc/page.inc',
     'type' => MENU_CALLBACK,
   );
   $items['admin/settings/imce'] = array(
     'title' => 'IMCE',
     'description' => 'Control how your image/file browser works.',
     'page callback' => 'imce_admin',
-    'file' => 'imce.admin.inc',
+    'file' => 'inc/admin.inc',
   );
-  $items['admin/settings/imce/settings'] = array(
+  $items['admin/settings/imce/profiles'] = array(
     'title' => 'Settings',
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
-  $items['admin/settings/imce/subfolder'] = array(
-    'title' => 'Sub-folder tool',
+  $items['admin/settings/imce/subdirectory'] = array(
+    'title' => 'Directory creation tool',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('imce_form_subfolder'),
+    'page arguments' => array('imce_form_subdirectory'),
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
-    'file' => 'imce.subfolder.inc',
+    'file' => 'inc/subdir.inc',
   );
-  $items['admin/settings/imce/add'] = array(
+  $items['admin/settings/imce/profile'] = array(
     'title' => 'Add new profile',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('imce_form_profile'),
+    'page callback' => 'imce_profile_operations',
     'type' => MENU_CALLBACK,
-    'file' => 'imce.admin.inc',
-  );
-  $items['admin/settings/imce/edit/%imce_profile'] = array(
-    'title' => 'Edit profile',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('imce_form_profile', 4),
-    'type' => MENU_CALLBACK,
-    'file' => 'imce.admin.inc',
-  );
-  $items['admin/settings/imce/delete/%imce_profile'] = array(
-    'title' => 'Delete profile',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('imce_form_delete_profile', 4),
-    'type' => MENU_CALLBACK,
-    'file' => 'imce.admin.inc',
+    'file' => 'inc/admin.inc',
   );
   $items['user/%user/imce'] = array(
     'title' => 'File browser',
     'page callback' => 'imce_user_page',
     'page arguments' => array(1),
-    'access callback' => 'imce_user_access',
+    'access callback' => 'imce_user_page_access',
     'access arguments' => array(1),
+    'file' => 'inc/page.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
   );
-  /*
-  global $user;
-  $GLOBALS['imce_ext'] = array('.gif', '.jpg', '.jpeg', '.png');
-  $items = array();
-  if ($may_cache) {
-  }
-  elseif (arg(0)=='imce' && arg(1) != 'browse' && user_access('access imce')) {
-    if (drupal_valid_token($_REQUEST['token'], 'imce')) {
-      $set = (object) imce_settings_user();
-      if (arg(1)=='delete' && $set->delete && ($filename=basename(arg(2)))) {
-        imce_delete_file($set, $filename);
-      }
-      elseif (arg(1)=='upload' && $set->upload && $_FILES['thefile']) {
-        imce_copy_uploaded($set, $_FILES['thefile']);
-      }
-      elseif (arg(1)=='resize' && $set->resize && ($filename=basename($_POST['img_name']))) {
-        imce_resize_image($set, $filename, $_POST['img_w'], $_POST['img_h'], $_POST['img_copy']);
-      }
-      elseif (arg(1)=='dir' && $set->subnav && isset($_POST['dirname'])) {
-        $target =  $set->dir.'/'.$_POST['dirname'];
-        if (is_dir($target) && ($real = file_check_location($target, $set->root))) {
-          $_SESSION['imcedir'] = imce_relative_path($real, file_directory_path());
-        }
-      }
-    }
-    drupal_goto('imce/browse');
-  }
-  */
   return $items;
 }
 
@@ -96,429 +54,30 @@ function imce_menu() {
  * Implementation of hook_theme().
  */
 function imce_theme() {
-  return array(
-    'imce_form_admin' => array(
-      'arguments' => array('form' => NULL),
-    ),
-    'imce_folders' => array(
-      'arguments' => array('form' => NULL),
-    ),
-    'imce_thumbnails' => array(
-      'arguments' => array('form' => NULL),
-    ),
+  $path = drupal_get_path('module', 'imce') .'/tpl';
+  $theme['imce_admin']['function'] = 'imce_admin_theme';
+  $theme['imce_directories']['function'] = 'imce_directories_theme';
+  $theme['imce_thumbnails']['function'] = 'imce_thumbnails_theme';
+  $theme['imce_file_list'] = array(
+    'template' => 'imce-file-list',
+    'arguments' => array('imce_ref' => NULL),
+    'path' => $path,
   );
-}
-
-
-/**
- * Image Browser.
- */
-function imce_browse() {
-  $directory = imce_scan_directory(file_directory_path());
-  $filetable = imce_file_table($directory['files']);
-  return $filetable;
-  $set = (object) imce_settings_user();
-  $private = variable_get('file_downloads', '')==FILE_DOWNLOADS_PRIVATE;
-  $syspath = file_directory_path();
-  $basepath = base_path();
-  $imcepath = $basepath. drupal_get_path('module', 'imce');
-  $header = array(array('data'=>t('filename'), 'class'=>'filename'), array('data'=>t('size'), 'class'=>'size'), array('data'=>t('dimensions'), 'class'=>'dimensions'), array('data'=>t('date'), 'class'=>'date'), array('data'=>t('operations'), 'class'=>'operations'));
-  $token = drupal_get_token('imce');
-
-  //file list
-  $directory = imce_scan_directory($set->dir);
-  //prevent quota theft by multiple sessions.
-  if ($_SESSION['imcelatest'] && $directory['size']>$set->quota*1024 && !$set->nolimit) {
-    $directory['size'] -= filesize($_SESSION['imcelatest']);
-    @unlink($_SESSION['imcelatest']);
-    unset($directory['files'][$_SESSION['imcelatest']], $_SESSION['imcelatest']);
-    drupal_set_message(t('File was deleted due to quota exceed!'), 'error');
-  }
-  foreach ($directory['files'] as $path=>$file) {
-    $rows[] = array(array('data' => $file['f'], 'class' => 'filename'),
-      array('data' => format_size($file['s']), 'class' => 'size', 'id' => 's-'.$file['s']),
-      array('data' => $file['w'].'x'.$file['h'], 'class' => 'dimensions'),
-      array('data' => date('Y-m-d', $file['d']), 'class' => 'date', 'id' => 'd-'.$file['d'], 'title' => date('H:i:s', $file['d'])),
-      array('data' => $set->delete ? l(t('delete'), 'imce/delete/'.$file['f'], NULL, 'token='.$token) : '', 'class' => 'operations'),
-    );
-  }
-  if (!isset($rows)) {
-    $rows = array(array('<div class="messages">'.t('Directory is empty.').'</div>'));
-  }
-  $_SESSION['imcetotal'] = $directory['size'];
-
-  //folder list
-  if ($set->subnav) {
-    foreach ($directory['folders'] as $folder) {
-      $foptions .= '<option value="'.$folder.'">/'.$folder.'</option>';
-    }
-    $subdir = $set->root != $set->dir;
-    if ($foptions||$subdir) {
-      $foptions = ' <form action="'.url('imce/dir').'" name="dirform" id="dirform" method="post"><select name="dirname" id="dirname">'. ($subdir ? '<option value="..">'. t('Up') .'</option>' : '') .'<option value="/" selected="selected">/</option>'.$foptions.'</select><input type="submit" name="op" id="dirop" value="'.t('Go').'" /><input type="hidden" name="token" value="'. $token .'" /></form>';
-    }
-  }
-
-  //upload form
-  if ($set->upload) {
-    $uploadform = '<form action="'.url('imce/upload').'" method="post" id="uploadform" enctype="multipart/form-data">
-  <input type="file" name="thefile" id="thefile" size="30" />
-  <input type="hidden" name="token" value="'. $token .'" />
-  <input type="submit" name="submit" value="'.t('Upload File').'" />'.
-  ($set->nolimit ? '<input type="checkbox" checked="checked" name="scale" />'.t('Scale if necessary') : ($set->scale ? '<input type="hidden" value="1" name="scale" />' : '')).
-  ($set->twidth&&$set->theight ? '<input type="checkbox" name="thumb" />'.t('Create thumbnail').' ('. $set->twidth .'x'. $set->theight .')' : '').'
-</form>
-<div class="limits">'.  ($set->nolimit ? t('Dimensions for scaling') .' = <strong>'. $set->width .'x'. $set->height .'</strong>, '. t('Quota') .' = <strong>'. format_size($_SESSION['imcetotal']).'</strong>/'.t('Unlimited') : '<strong>'. t('Limits') .'</strong>: '. t('File size') .' = <strong>'. $set->filesize .' KB</strong>, '. t('Dimensions') .' = <strong>'. $set->width .'x'. $set->height .'</strong>, '. t('Quota') .' = <strong>'. format_size($_SESSION['imcetotal']) .'</strong>/'. $set->quota .' KB').'</div>';
-  }
-  //resize form
-  if ($set->resize) {
-    $resizeform = '<form action="'.url('imce/resize').'" method="post" id="resizeform">
-  <input type="submit" name="submit" value="'.t('Resize image').'" />
-  <input type="hidden" name="token" value="'. $token .'" />
-  <span id="resize-file-span">'.t('filename').':<input type="text" name="img_name" id="img_name" size="12" />
-  '.t('dimensions').':</span><input type="text" name="img_w" id="img_w" size="2" />x<input type="text" name="img_h" id="img_h" size="2" />
-  <input type="checkbox" name="img_copy" />'.t('Create a copy').'
-</form>';
-  }
-
-  $output = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title>'.t('Image/File Browser').'</title>
-  <script type="text/javascript">
-    var imceVar = [];
-    imceVar["fileUrl"] = "'. (variable_get('imce_absolute_paths', 0) ? $GLOBALS['base_url'] : ''). imce_relative_url($set->dir) .'";
-    imceVar["latestFile"] = "'. ($_SESSION['imcelatest'] ? imce_relative_url($_SESSION['imcelatest']) : '') .'";
-    imceVar["confirmDel"] = "'. ($set->delete ? t('Are you sure want to delete this file?') : '') .'";
-    imceVar["viewText"] = "'.t('view').'";
-    imceVar["addText"] = "'.t('add').'";'. ($set->extras ? '
-    imceVar["filterText"] = ["'.t('Display'). '", "'. t('all'). '", "'. t('images'). '", "'. t('non-images').'"];' : '') .'
-  </script>
-  <script type="text/javascript" src="'. $basepath .'misc/jquery.js"></script>
-  <script type="text/javascript" src="'. $imcepath .'/imce_browse.js"></script>'.
-  ($set->extras ? '<script type="text/javascript" src="'. $imcepath .'/imce_extras.js"></script>' : '').'
-  <style type="text/css" media="all">@import "'. $imcepath .'/imce.css";</style>
-</head>
-<body>
-<div id="headerdiv">'.
-theme('table', $header, array(), array('id'=>'headertable')).'
-</div>
-<div id="bodydiv" title="'.($set->extras ? t('Keyboard shortcuts').': '.t('UP(previous), DOWN(next), DELETE, INSERT(add)') : '').'">'.
-theme('table', array(), $rows, array('id'=>'bodytable')).'
-</div>
-<div id="resize-bar"><div id="resize-bar-in">^</div></div>
-<div id="relative-div">
-  <div id="info-div">'. t('Directory') .': '. ($private&&$set->uid!=1 ? imce_relative_path($set->dir, $syspath) : $set->dir).
-  ($foptions ? $foptions : '').
-  ($_SESSION['imceuser'] ? '<div>'.t('User').': '.$_SESSION['imceuser']['name'].' - '.l(t('logout'), 'imce/logout').'</div>' : '').'
-  </div>
-</div>
-<div id="imagepreview">'.theme('status_messages').'</div>
-<div class="forms">'.
-$uploadform .
-$resizeform .'
-</div>
-</body>
-</html>';
-  unset($_SESSION['imcelatest']);
-  print $output;
-  exit();
+  $theme['imce_content'] = array(
+    'template' => 'imce-content',
+    'arguments' => array('tree' => NULL, 'forms' => NULL, 'imce_ref' => NULL),
+    'path' => $path,
+  );
+  $theme['imce_page'] = array(
+    'template' => 'imce-page',
+    'arguments' => array('content' => NULL),
+    'path' => $path,
+  );
+  return $theme;
 }
 
 /**
- * copy uploaded file to the specified directory.
- */ 
-function imce_copy_uploaded($set, $file) {
-  //is the file real
-  if (!is_uploaded_file($file['tmp_name']) || !isset($_SESSION['imcetotal'])) {
-    drupal_set_message(t('No files were uploaded.'), 'error');
-    return FALSE;
-  }
-
-  //move uploaded file to drupal's temp directory
-  $temp = tempnam(file_directory_temp(), 'tmp_');
-  if (!move_uploaded_file($file['tmp_name'], $temp)) {
-    drupal_set_message(t('File upload error. Could not move uploaded file.'));
-    return FALSE;
-  }
-  $file['tmp_name'] = $temp;
-
-  //dont like too long filenames and files without an extension.
-  $file['name'] = trim(basename($file['name']), '.');
-  $file['name'] = strlen($file['name'])>48 ? substr($file['name'], -48) : $file['name']; //max filename lenght is 48
-  if (!($dot = strrpos($file['name'], '.'))) {
-    drupal_set_message(t('Invalid filename.'), 'error');
-    return FALSE;
-  }
-  $extension = strtolower(substr($file['name'], $dot));
-
-  //check image type and dimensions.
-  if (in_array($extension, $GLOBALS['imce_ext']) && ($info = @getimagesize($file['tmp_name']))) {
-    if (!in_array($info[2], array(1, 2, 3))) {// 1=gif, 2=jpg, 3=png. real file types
-      drupal_set_message(t('Only images with .jpg, .gif, and .png extensions are allowed.'), 'error');
-      return FALSE;
-    }
-    if ($info[0]>$set->width || $info[1]>$set->height) {
-      if (($set->scale||$set->nolimit) && $_POST['scale']) {
-        if(!image_scale($file['tmp_name'], $file['tmp_name'], $set->width, $set->height)) {
-          drupal_set_message(t('Error scaling image.'), 'error');
-          return FALSE;
-        }
-        clearstatcache();
-        $file['size'] = filesize($file['tmp_name']);//new size
-        $info = @getimagesize($file['tmp_name']);
-        drupal_set_message(t('Image was scaled to allowed dimensions.'));
-      }
-      else if (!$set->nolimit) {
-        drupal_set_message(t('Image dimensions exceed the limit.'), 'error');
-        return FALSE;
-      }
-    }
-  }
-  // file is not an image. check if the extension is allowed
-  else if ($set->extensions) {
-    if (!in_array($extension, explode(',', str_replace(' ', '', $set->extensions)))) {
-      drupal_set_message(t('Invalid file extension. Allowed extensions are .jpg, .gif, .png, !ext', array('!ext' => $set->extensions)), 'error');
-      return FALSE;
-    }
-  }
-  else if ($set->uid!=1) {//no limitation for user1 regarding non-image files.
-    drupal_set_message(t('Only images with .jpg, .gif, and .png extensions are allowed.'), 'error');
-    return FALSE;
-  }
-
-  //check quota, filesize.
-  if ($file['size'] > $set->filesize*1024 && !$set->nolimit) {
-    drupal_set_message(t('File size exceeds upload limit.'), 'error');
-    return FALSE;
-  }
-  $newtotal = $file['size'] + $_SESSION['imcetotal'];
-  if ($newtotal > $set->quota*1024 && !$set->nolimit) {
-    drupal_set_message(t('You dont have enough free space.'), 'error');
-    return FALSE;
-  }
-
-  //clear filename and copy file
-  $cleared = preg_replace("/[^\w\-\_]/", '_', substr($file['name'], 0, $dot)).$extension;
-  $newpath = file_create_filename($cleared, $set->dir);
-  if (!@copy($file['tmp_name'], $newpath)) {
-    drupal_set_message(t('Error copying the file.'), 'error');
-    return FALSE;
-  }
-
-  //success
-  @chmod($newpath, 0664);
-  $_SESSION['imcetotal'] = $newtotal;
-  $_SESSION['imcelatest'] = $newpath;
-  drupal_set_message(t('Upload successful.'));
-
-  //thumbnails
-  if ($_POST['thumb'] && $info && $set->twidth && $set->theight && ($set->twidth<$info[0] || $set->theight<$info[1])) {
-    $aspect = $info[1] / $info[0];
-    if ($aspect < $set->theight / $set->twidth) {
-      $w = (int)min($set->twidth, $info[0]);
-      $h = (int)round($w * $aspect);
-    }
-    else {
-      $h = (int)min($set->theight, $info[1]);
-      $w = (int)round($h / $aspect);
-    }
-    if (imce_resize_image($set, basename($newpath), $w, $h, TRUE)) {
-      drupal_set_message(t('Thumbnail created.'));
-    }
-    else {
-      drupal_set_message(t('Thumbnail can not be created.'), 'error');
-    }
-  }
-  return TRUE;
-}
-
-/**
- * delete a file
- */
-function imce_delete_file($set, $filename) {
-  if (file_delete($set->dir.'/'.$filename)) {
-    drupal_set_message(t('File deleted successfully.'));
-    return TRUE;
-  }
-  drupal_set_message(t('Error deleting file.'), 'error');
-  return FALSE;
-}
-
-/**
-  * Resize file:$file in directory:$dir to dimensions $w x $h
-  */
-function imce_resize_image($set, $filename, $w, $h, $copy=FALSE) {
-  //check if file exists
-  $path = $set->dir.'/'.$filename;
-  if (!is_file($path)) {
-    drupal_set_message(t('File does not exist.'), 'error');
-    return FALSE;
-  }
-  $_SESSION['imcelatest'] = $path;
-
-  // check resize dimensions and file type
-  if (!($dot = strrpos($filename, '.')) || !in_array(strtolower(substr($filename, $dot)), $GLOBALS['imce_ext'])) {
-    drupal_set_message(t('File type is not supported.'), 'error');
-    return FALSE;
-  }
-  if (!($w>0 && $h>0) || (($w>$set->width || $h>$set->height) && !$set->nolimit)) {
-    drupal_set_message(t('Image dimensions exceed the limit.'), 'error');
-    return FALSE;
-  }
-
-  //resize image to a temp file
-  $temp = tempnam(file_directory_temp(), 'tmp_');
-  if(!image_resize($path, $temp, $w, $h)) {
-    drupal_set_message(t('Error resizing image.'), 'error');
-    return FALSE;
-  }
-
-  //check quota
-  $newtotal = $_SESSION['imcetotal'] + ($copy ? @filesize($temp) : @filesize($temp)-@filesize($path));
-  if ($newtotal > $set->quota*1024 && !$set->nolimit) {
-    drupal_set_message(t('You dont have enough free space.'), 'error');
-    return FALSE;
-  }
-
-  //copy file
-  $newpath = $copy ? file_create_filename($filename, $set->dir) : $path;
-  if (!@copy($temp, $newpath)) {
-    drupal_set_message(t('Error copying the file.'), 'error');
-    return FALSE;
-  }
-
-  //success
-  @chmod($newpath, 0664);
-  $_SESSION['imcetotal'] = $newtotal;
-  $_SESSION['imcelatest'] = $newpath;
-  drupal_set_message(t('Resizing successful.'));
-  return TRUE;
-}
-
-/**
- * scan directory and return file list and total size of dir.
- */
-function imce_scan_directory($dir) {
-  if (!is_dir($dir) || !is_readable($dir) || !($handle = @opendir($dir))) {
-    drupal_set_message(t('Error opening directory'), 'error');
-    return FALSE;
-  }
-
-  $directory = array('size' => 0, 'files' => array(), 'folders' => array());
-
-  while(($file = readdir($handle)) !== FALSE) {
-    if ($file == '.' || $file == '..' || $file == 'CVS' || $file == '.svn' || $file == '.htaccess') {
-      continue;
-    }
-
-    $path = $dir.'/'.$file;
-
-    if (is_dir($path)) {
-      $directory['folders'][] = $file;
-      continue;
-    }
-
-    $size = filesize($path);
-    $ext = strtolower(substr($file, strrpos($file, '.')+1));
-    $img = in_array($ext, array('gif', 'jpg', 'jpeg', 'png')) ? @getimagesize($path) : array(0, 0);
-    $date = filemtime($path);
-
-    $directory['files'][$path] = array('name'=>$file, 'size'=>$size, 'width'=>(int)$img[0], 'height'=>(int)$img[1], 'date'=>$date);
-    $directory['size'] += $size;
-  }
-
-  closedir($handle);
-  return $directory;
-}
-
-/**
- * return working image directory.
- */
-function imce_get_directory($set) {
-  if ($set['shared']) {//use shared folder if it is declared
-    $dir = file_directory_path().($set['shared']=='/' ? '' : '/'.$set['shared']);
-  }
-  else {//use personal folders by default.
-    $dir = file_directory_path().'/'.$set['prefix'].$set['uid'];
-  }
-
-  if (file_check_directory($dir, TRUE)) {
-    if ($set['subnav'] && $set['subdirs']) {
-      foreach (explode(',', $set['subdirs']) as $sub) {
-        $sub = $dir .'/'. trim($sub,'\\/ ');
-        file_check_directory($sub, TRUE);
-      }
-    }
-    return $dir;
-  }
-
-  exit(t('Directory error!').' - '.$dir. theme('status_messages'));//without a working directory imce is useless. so, terminate.
-}
-
-/**
- * get role settings
- */
-function imce_settings_role($rid) {
-  $settings = variable_get('imce_settings_roles', array());
-  return is_array($settings[$rid]) ? $settings[$rid] : imce_settings_default();
-}
-
-/**
- * get current user's settings
- */
-function imce_settings_user() {
-  global $user;
-  if ($user->uid==1) {
-    $set = imce_settings_user1();
-  }
-  else {
-    $settings = variable_get('imce_settings_roles', array());
-    foreach (imce_sorted_roles() as $rid=>$name) {
-      if (isset($user->roles[$rid]) && is_array($settings[$rid])) {
-        $set = $settings[$rid];
-        break;
-      }
-    }
-  }
-  $set = $set ? $set : imce_settings_default();
-  $set['uid'] = $user->uid;
-  $set['root'] = imce_get_directory($set);
-  if ($_SESSION['imceuser']) {
-    $settings = variable_get('imce_settings_roles', array());
-    foreach (imce_sorted_roles() as $rid=>$name) {
-      if (isset($_SESSION['imceuser']['roles'][$rid]) && is_array($settings[$rid])) {
-        $userset = $settings[$rid];
-        break;
-      }
-    }
-    $userset = $userset ? $userset : imce_settings_default();
-    $userset['uid'] = $_SESSION['imceuser']['uid'];
-    if ($_SESSION['imceuser']['ownperm']) {
-      $set = $userset;
-    }
-    $set['root'] = imce_get_directory($userset);
-  }
-  $set['dir'] = ($set['subnav'] && $_SESSION['imcedir'] && file_check_location(file_directory_path() .'/'. $_SESSION['imcedir'], $set['root'])) ? file_directory_path() .'/'. $_SESSION['imcedir'] : $set['root'];
-  return $set;
-}
-
-/**
- * get user #1 settings
- */
-function imce_settings_user1() {
-  return array_merge(imce_settings_default(), variable_get('imce_settings_user1', array()), array('resize' => 1, 'scale' => 1, 'delete' => 1, 'upload' => 1, 'nolimit' => 1, 'subnav' => 1));
-}
-
-/**
- * return default settings.
- */
-function imce_settings_default() {
-  return array('width' => 500, 'height' => 500, 'scale' => 0, 'twidth' => '', 'theight' => '', 'resize' => 0, 'filesize' => 100, 'quota' => 500, 'prefix' => 'u', 'shared' => '', 'extensions' => '', 'extras' => 0, 'delete' => 1, 'upload' => 1, 'nolimit' => 0, 'subnav' => 0, 'subdirs' => '');
-}
-
-/**
- * Implementation of hook_file_download(). support for private downloads.
+ * Implementation of hook_file_download().
  */
 function imce_file_download($file) {
   if ($path = file_create_path($file)) {
@@ -533,8 +92,8 @@ function imce_file_download($file) {
  */
 function imce_elements() {
   $type = array();
-  if (($ids=str_replace(' ', '', variable_get('imce_settings_textarea', ''))) && user_access('access imce')) {
-    $type['textarea'] = array('#process' => array('imce_process_textarea' => array(explode(',', $ids))),);
+  if (variable_get('imce_settings_textarea', '') && imce_access()) {
+    $type['textarea']['#process'] = array('imce_process_textarea');
   }
   return $type;
 }
@@ -542,136 +101,93 @@ function imce_elements() {
 /**
  * Inline image/link insertion to textareas.
  */
-function imce_process_textarea($element, $edit=NULL, $ids=array()) {
+function imce_process_textarea($element) {
+  $ids = explode(',', str_replace(' ', '', variable_get('imce_settings_textarea', '')));
   if (in_array($element['#id'], $ids)) {
-  drupal_add_js(drupal_get_path('module', 'imce').'/imce_set_inline.js');
-  $element['#description'] .= '<div style="display:none">'. t('Insert !image or !link.', array('!image' => l(t('image'), 'imce/browse', array('name' => $element['#id'].'-IMCE-image', 'class' => 'imce-insert-inline')), '!link' => l(t('link'), 'imce/browse', array('name' => $element['#id'].'-IMCE-link', 'class' => 'imce-insert-inline')))) .'</div>';
+    drupal_add_js(drupal_get_path('module', 'imce').'/js/imce_set_inline.js');
+    $element['#description'] .= '<div id="imce-inline-wrapper" style="display:none">'. t('Insert !image or !link.', array('!image' => l(t('image'), 'imce', array('attributes' => array('name' => $element['#id'].'-IMCE-image', 'class' => 'imce-inline-image'))), '!link' => l(t('link'), 'imce', array('attributes' => array('name' => $element['#id'].'-IMCE-link', 'class' => 'imce-inline-link'))))) .'</div>';
   }
   return $element;
 }
 
 /**
- * IMCE user/x/imce page.
+ * Get the profile for the user.
  */
-function imce_user_page($account) {
-  $output = imce_browse();
-  drupal_set_title($account->name);
-  return $output;
-}
-
-/* 
- * Convert absolute paths to relative paths. return new path relative to the root.
- */
-function imce_relative_path($path, $root=NULL) {
-  $abs = str_replace('\\', '/', realpath($path));
-  $root = str_replace('\\', '/', ($root ? realpath($root) : dirname(realpath($_SERVER['SCRIPT_FILENAME']))));
-  return strpos($abs, $root)===0 ? trim(substr($abs, strlen($root)), '/') : substr($abs, (($pos=strpos($abs, '/')) ? $pos : 0));
-}
-
-/* 
- * convert file path to relative url.
- */
-function imce_relative_url($path='') {
-  if (variable_get('file_downloads', '') == FILE_DOWNLOADS_PRIVATE) {
-    $file = trim(substr($path, strlen(file_directory_path())), '\\/');
-    return url('system/files').(strlen($file) ? '/'.$file : '');
-  }
-  return base_path().$path;
-}
-
-/**
- * integrate with editors.
- */
-function imce_integrate($e, $check=NULL) {
-  static $state = array();
-  if ($check) {
-    return $state[$e];
-  }
-  if (!$state[$e]) {
-    drupal_add_js(drupal_get_path('module', 'imce').'/imce_set_'.$e.'.js');
-    drupal_add_js('var imceBrowserURL = "'.url('imce/browse').'";', 'inline');
-    $state[$e] = TRUE;
-  }
-}
-
-/**
- * imce acess.
- */
-function imce_access() {
-  if ($GLOBALS['user']->uid == 1) {
-    return TRUE;
-  }
-  $imce_rids = array_keys(variable_get('imce_role_profile', array()));
-  $user_rids = array_keys($GLOBALS['user']->roles);
-  return array_intersect($imce_rids, $user_rids) ? TRUE : FALSE;
-}
-
-/**
- * imce acess.
- */
-function imce_user_access($account) {
-  return $GLOBALS['user']->uid == 1 || ($GLOBALS['user']->uid == $account->uid && imce_access());
-}
-
-/**
- * list of files in the directory.
- */
-function imce_file_table($files) {
-  $header = array(
-    array('data'=>t('filename'), 'class'=>'filename'),
-    array('data'=>t('size'), 'class'=>'size'),
-    array('data'=>t('dimensions'), 'class'=>'dimensions'),
-    array('data'=>t('date'), 'class'=>'date'),
-    array('data'=>t('operations'), 'class'=>'operations')
-  );
-  $rows = array();
-
-  foreach ($files as $path=>$file) {
-    $rows[] = array(
-      array('data' => $file['name'], 'class' => 'filename'),
-      array('data' => format_size($file['size']), 'class' => 'size', 'id' => 's-'.$file['size']),
-      array('data' => $file['width'].'x'.$file['height'], 'class' => 'dimensions'),
-      array('data' => date('Y-m-d', $file['date']), 'class' => 'date', 'id' => 'd-'.$file['date'], 'title' => date('H:i:s', $file['date'])),
-      array('data' => '', 'class' => 'operations'),
-    );
-  }
-
-  return theme('table', $header, $rows, array('class' => 'file-list'));
-}
-
-/**
- * Profile load.
- */
-function imce_profile_load($name) {
+function imce_user_profile($user) {
   $profiles = variable_get('imce_profiles', array());
-  return isset($profiles[$name]) ? $profiles[$name] : NULL;
+  if ($user->uid == 1 && isset($profiles[1])) {
+    return $profiles[1];
+  }
+  else {
+    foreach (imce_sorted_roles() as $rid => $role) {
+      if (isset($user->roles[$rid]) && isset($profiles[$role['pid']])) {
+        return $profiles[$role['pid']];
+      }
+    }
+  }
+  return FALSE;
 }
 
 /**
  * Sort roles according to their weights.
  */
 function imce_sorted_roles() {
-  static $roles;
-  if (!isset($roles)) {
+  static $sorted;
+  if (!isset($sorted)) {
+    $sorted = array();
     $roles = user_roles();
-    $imce_roles = variable_get('imce_roles_profiles', array());
-    $imce_roles[DRUPAL_AUTHENTICATED_RID]['weight'] = 11;
-    $imce_roles[DRUPAL_ANONYMOUS_RID]['weight'] = 12;
-    foreach ($roles as $rid => $rname) {
-      $roles[$rid] = array(
+    $profiles = variable_get('imce_profiles', array());
+    $irp = variable_get('imce_roles_profiles', array());
+    $irp[DRUPAL_ANONYMOUS_RID]['weight'] = 12;
+    $irp[DRUPAL_AUTHENTICATED_RID]['weight'] = 11;
+    foreach ($roles as $rid=>$rname) {
+      $sorted[$rid] = array(
         'name' => $rname,
-        'weight' => isset($imce_roles[$rid]['weight']) ? $imce_roles[$rid]['weight'] : 0,
-        'profile' =>  isset($imce_roles[$rid]['profile']) ? $imce_roles[$rid]['profile'] : '',
+        'weight' => isset($irp[$rid]['weight']) ? $irp[$rid]['weight'] : 0,
+        'pid' => isset($irp[$rid]['pid']) && isset($profiles[$irp[$rid]['pid']]) ? $irp[$rid]['pid'] : 0,
       );
     }
-    uasort($roles, 'imce_rolesort');
+    uasort($sorted, 'imce_rolesort');
   }
-  return $roles;
+  return $sorted;
 }
 
 /**
- * Custom sorting function for roles.
+ * Sorting function for roles.
  */
 function imce_rolesort($r1, $r2) {
   return $r1['weight']-$r2['weight'];
+}
+
+/**
+ * imce acess.
+ */
+function imce_access($user = FALSE) {
+  if ($user === FALSE) {
+    global $user;
+  }
+
+  if ($user->uid == 1) {
+    return TRUE;
+  }
+
+  $roles_profiles = variable_get('imce_roles_profiles', array());
+  foreach ($user->roles as $rid => $name) {
+    if ($roles_profiles[$rid]['pid']) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Defines access to user/{$account->uid}/imce for the $user.
+ */
+function imce_user_page_access($account, $user = FALSE) {
+  if ($user === FALSE) {
+    global $user;
+  }
+
+  return $user->uid == 1 || ($account->uid == $user->uid && imce_access($user));
 }
