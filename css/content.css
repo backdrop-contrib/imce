@@ -1,0 +1,207 @@
+/* $Id$ */
+
+/*Main container*/
+#imce-content {}
+
+/*Main sections under imce-content*/
+#ops-wrapper {}
+#browse-wrapper {
+  overflow: hidden;
+  height: 36em;
+  border: 0.2em solid #ccc;
+}
+#browse-resizer {}
+.js #log-wrapper {
+  height: 5em;
+  padding: 0.2em 20%;
+  overflow: auto;
+  background-color: #ddd;
+}
+#log-resizer {}
+a#log-clearer {
+  display: none;
+  font-size: 0.9em;
+}
+.js #forms-wrapper {
+  display: none;
+}
+
+/*columns of browse-wrapper*/
+#navigation-wrapper {
+  width: 12em;
+  height: 100%;
+  overflow: auto;
+  float: left;
+}
+#navigation-resizer {
+  height: 100%;
+  float: left;
+}
+#sub-browse-wrapper {
+  height: 100%;
+  overflow: hidden;
+}
+
+/*rows of sub-browse wrapper*/
+#file-header-wrapper {
+  height: 2em;
+  overflow: hidden;
+  padding: 0.1em 2em 0em 0.1em;
+}
+#file-list-wrapper {
+  height: 18em;
+  overflow: auto;
+  padding: 0.1em 1em 0em 0.1em;
+}
+#dir-stat {
+  font-size: 0.9em;
+  height: 2em;
+  padding: 0em 0.5em;
+}
+#preview-resizer {}
+#image-preview {
+  overflow: auto;
+  height: 14em;
+  text-align: center;
+}
+
+/*Navigation tree (ul)*/
+#navigation-tree {
+  margin: 0.1em;
+  padding: 0em;
+}
+#navigation-tree ul {
+  margin: 0.1em 0em 0.1em 1.5em;
+  padding: 0em;
+}
+#navigation-tree li {
+  padding: 0.1em;
+  margin: 0em;
+  list-style-type: none;
+  list-style-image: none;
+  background: transparent url(collapsed.png) no-repeat 0.3em 0.6em;
+  white-space: nowrap;
+}
+#navigation-tree li.expanded {
+  background-image: url(expanded.png);
+}
+#navigation-tree li.leaf {
+  background-image: url(leaf.png);
+}
+#navigation-tree li span.expander {
+  font-size: 12px;
+  cursor: pointer;
+}
+#navigation-tree li a {
+  display: inline;
+}
+#navigation-tree li a.folder {
+  margin-left: 0.2em;
+  padding-left: 20px;
+  background: transparent url(folder.png) no-repeat 0em 0em;
+}
+#navigation-tree li a.active {
+  font-weight: bold;
+  background-image: url(folder-open.png);
+}
+
+/*File list and header. (Accessible by #file-list and #file-header. Both have the classname "files")*/
+table.files {
+  table-layout: fixed;
+  width: 99%;
+  margin: 0em;
+}
+table.files td {
+  overflow: hidden;
+  border-top: 1px solid #9cc;
+  border-bottom: 1px solid #9cc;
+  padding: 0.1em 0.2em;
+}
+table.files td.name {
+  min-width: 15em;
+}
+table.files td.size {
+  width: 6.5em;
+  text-align: right;
+}
+table.files td.width {
+  width: 4em;
+  text-align: right;
+}
+table.files td.height {
+  width: 4em;
+}
+table.files td.date {
+  width: 12.5em;
+}
+table.files tr {
+  border: none;
+}
+table.files tbody {
+  border: none;
+}
+#file-header td {
+  font-weight: bold;
+  border: none;
+}
+#file-header td.asc {
+  color: #f60;
+}
+#file-header td.desc {
+  color: #f63;
+}
+#file-list tr:hover {
+  background-color: #cfc;
+}
+#file-list tr.selected {}
+
+
+/*File operations. List and contents*/
+#op-items {}
+#op-contents {}
+ul#ops-list {/*also has classes .secondary and .tabs)*/
+  margin: 0.4em;
+  padding: 0;
+  float: none;
+  text-align: center;
+  border: none;
+}
+.op-content {
+  margin: 0em 20%;
+  text-align: left;
+  padding: 0.3em;
+  font-size: 0.9em;
+  display: none;
+}
+.op-content label, .op-content .form-checkboxes, .op-content .form-checkboxes .form-item {
+  display: inline;
+}
+.op-content .form-submit, .op-content .form-item {
+  margin: 0.2em;
+}
+
+#log-wrapper div {
+  padding: 0em;
+  margin: 0.1em;
+  border: none;
+  background: none;
+  font-size: 0.9em;
+}
+#log-wrapper span.time {
+  color: #000;
+}
+#log-wrapper .status {}
+#log-wrapper .warning {}
+#log-wrapper .error {}
+
+/*resizers*/
+.y-resizer {
+  height: 0.2em;
+  cursor: n-resize;
+  background-color: #ccc;
+}
+.x-resizer {
+  width: 0.2em;
+  cursor: e-resize;
+  background-color: #ccc;
+}
