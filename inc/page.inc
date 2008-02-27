@@ -330,7 +330,7 @@ function imce_create_thumbnails($filename, &$imce, $values) {
     }
   }
   if (!empty($created)) {
-  drupal_set_message(t('Thumbnail creation (%thumbnames) successful for %filename.', array('%thumbnames' => implode(', ', $created), '%filename' => $filename)));
+  drupal_set_message(t('Thumbnail creation (%thumbnames) successful for %filename.', array('%thumbnames' => implode(', ', $created), '%filename' => utf8_encode($filename))));
   }
   return $created;
 }
@@ -363,7 +363,7 @@ function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $de
 
   //check if the file is an image
   if (!$imce['files'][$filename]['width'] || !$img = imce_image_info($filepath)) {
-    drupal_set_message(t('%filename is not resizable.', array('%filename' => $filename)), 'error', FALSE);
+    drupal_set_message(t('%filename is not resizable.', array('%filename' => utf8_encode($filename))), 'error', FALSE);
     return FALSE;
   }
 
@@ -377,7 +377,7 @@ function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $de
 
   //check if a file having the same properties exists already.
   if (($f = $imce['files'][$file->filename]) && $f['width'] == $width && $f['height'] == $height) {
-    drupal_set_message(t('%filename(%dimensions) exists already.', array('%filename' => $file->filename, '%dimensions' => $width .'x'. $height)), 'error');
+    drupal_set_message(t('%filename(%dimensions) exists already.', array('%filename' => utf8_encode($file->filename), '%dimensions' => $width .'x'. $height)), 'error');
     return FALSE;
   }
 
@@ -392,7 +392,7 @@ function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $de
   $temp = tempnam(realpath(file_directory_temp()), 'imc');
   $function = 'image_'. $op;
   if (!$function($filepath, $temp, $width, $height)) {
-    drupal_set_message(t('%filename cannot be resized to %dimensions', array('%filename' => $filename, '%dimensions' => $width .'x'. $height)), 'error', FALSE);
+    drupal_set_message(t('%filename cannot be resized to %dimensions', array('%filename' => utf8_encode($filename), '%dimensions' => $width .'x'. $height)), 'error', FALSE);
     if ($op == 'scale' && !($width < $img['width'] && $height < $img['height'])) {
       drupal_set_message(t('Scaling up is not allowed.'), 'error', FALSE);
     }
@@ -411,7 +411,7 @@ function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $de
 
   //copy from temp to filepath
   if (!@copy($temp, $file->filepath)) {
-    drupal_set_message(t('The selected file %file could not be copied.', array('%file' => $file->filename)), 'error', FALSE);
+    drupal_set_message(t('The selected file %file could not be copied.', array('%file' => utf8_encode($file->filename))), 'error', FALSE);
     return FALSE;
   }
   @chmod($file->filepath, 0664);
@@ -562,7 +562,10 @@ function imce_initiate_profile($user) {
       $imce['url'] = url($_GET['q']);
       $imce['clean'] = variable_get('clean_url', '0') == 1;
       $imce['prvt'] = variable_get('file_downloads', '') == FILE_DOWNLOADS_PRIVATE;
-      $imce['furl'] = $imce['prvt'] ? url('system/files') : base_path().file_directory_path();
+      $imce['furl'] = $imce['prvt'] ? url('system/files') : base_path() . file_directory_path();
+      if (variable_get('imce_settings_absurls', 0)) {
+        $imce['furl'] = $GLOBALS['base_url'] . $imce['furl'];
+      }
       $imce['filesize'] *= 1048576;//convert from Mb to byte
       $imce['quota'] *= 1048576;
       return $imce;

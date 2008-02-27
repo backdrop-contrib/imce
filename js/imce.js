@@ -13,6 +13,9 @@ imce.initiate = function() {
   imce.refreshOps();
   imce.initiateSorting();//sorting
   imce.initiateResizeBars();//activate resize-bars
+  if (window['imceOnLoad']) {//run functions set by external applications.
+    window['imceOnLoad'](window);
+  }
 };
 
 /**************** DIRECTORIES ********************/
@@ -162,7 +165,7 @@ imce.fileGet = function (fid) {
 
 //simulate row click. selection-highlighting
 imce.fileClick = function(row, ctrl, shft) {
-  fid = typeof(row) == 'string' ? row : imce.fid(row);
+  var fid = typeof(row) == 'string' ? row : imce.fid(row);
   if (ctrl) {
     imce.fileToggleSelect(fid);
   }
@@ -208,7 +211,7 @@ imce.fileToggleSelect = function (fid) {
   imce['file'+ (imce.selected[fid] ? 'De' : '') +'Select'](fid);
 };
 
-/**************** FILE OPERATIONS ********************/
+/**************** OPERATIONS ********************/
 
 //process file operation form and create operation tabs.
 imce.initiateOps = function() {
@@ -560,14 +563,14 @@ imce.resizeBrowse = function(newH, diff) {
 
 /**************** PREVIEW & EXTERNAL APP  ********************/
 
-//preview a file.(using innerhtml and non-standard html for speed concerns)
+//preview a file.
 imce.setPreview = function (fid) {
   var row, html = '';
   imce.vars.prvid = fid;
   if (fid && (row = imce.fileId[fid])) {
     var width = parseInt(row.cells[2].innerHTML);
     html = width ? ('<img src="'+ imce.getURL(fid) +'" width="'+ width +'" height="'+ row.cells[3].innerHTML +'" alt="">') : unescape(fid);
-    html = '<a href="#" onclick="imce.send(\''+ fid +'\'); return false;" title="'+ (imce.vars.ptitle||'') +'">'+ html +'</a>';
+    html = '<a href="#" onclick="imce.send(\''+ fid +'\'); return false;" title="'+ (imce.vars.prvtitle||'') +'">'+ html +'</a>';
   }
   imce.el('image-preview').innerHTML = html;
 };
@@ -578,14 +581,14 @@ imce.send = function (fid) {
 };
 
 //add an operation for an external application to which the files are send.
-imce.setSendTo = function (name, func) {
-  imce.send = function (fid){func(imce.fileGet(fid));};
+imce.setSendTo = function (title, func) {
+  imce.send = function (fid) {func(imce.fileGet(fid), window);};
   var newfunc = function () {
     if (imce.vars.selcount != 1) return alert(Drupal.t('Please select a single file.'));
     imce.send(imce.vars.prvid);
   }
-  imce.vars.ptitle = Drupal.t('Send to @app',{'@app': name});
-  return imce.opAdd({'title': imce.vars.ptitle, 'func': newfunc});
+  imce.vars.prvtitle = title;
+  return imce.opAdd({'title': title, 'func': newfunc});
 };
 
 /**************** LOG MESSAGES  ********************/

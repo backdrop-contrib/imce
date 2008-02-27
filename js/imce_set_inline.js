@@ -4,14 +4,17 @@ var imceInline = {};
 
 imceInline.initiate = function() {
   $('#imce-inline-wrapper').show().find('a').click(function() {
-    imceInline.activeTextarea = $('#'+this.name.split('-IMCE-')[0]).get(0);
-    imceInline.activeType = this.name.split('-IMCE-')[1];
+    var i = this.name.indexOf('-IMCE-');
+    imceInline.activeTextarea = $('#'+ this.name.substr(0, i)).get(0);
+    imceInline.activeType = this.name.substr(i+6);
+ 
     if (typeof imceInline.pop == 'undefined' || imceInline.pop.closed) {
-      imceInline.pop = window.open(this.href, '', 'width='+ 760 +', height='+ 580 +', resizable=1');
-      $(imceInline.pop).load(function() {
-        this.imce.setSendTo(Drupal.t('textarea'), imceInline.insert);
-      });
+      imceInline.pop = window.open(this.href, '', 'width='+ 760 +',height='+ 560 +',resizable=1');
+      imceInline.pop['imceOnLoad'] = function (win) {//set a function to be executed when imce loads.
+        win.imce.setSendTo(Drupal.t('Send to @app', {'@app': Drupal.t('textarea')}), imceInline.insert);
+      }
     }
+
     imceInline.pop.focus();
     return false;
   });
@@ -38,11 +41,11 @@ imceInline.insertAtCursor = function (field, txt, type) {
 };
 
 //sendTo function
-imceInline.insert = function (file) {
+imceInline.insert = function (file, win) {
   var type = imceInline.activeType == 'link' ? 'link' : (file.width ? 'image' : 'link');
   var html = type=='image' ? ('<img src="'+ file.url +'" width="'+ file.width +'" height="'+ file.height +'" alt="'+ file.name +'" />') : ('<a href="'+ file.url +'">'+ file.name +' ('+ file.size +')</a>');
   imceInline.activeType = null;
-  imceInline.pop.blur();
+  win.blur();
   imceInline.insertAtCursor(imceInline.activeTextarea, html, type);
 };
 

@@ -91,19 +91,24 @@ function imce_file_download($file) {
  * Implementation of hook_elements().
  */
 function imce_elements() {
-  $type = array();
-  if (variable_get('imce_settings_textarea', '') && imce_access()) {
-    $type['textarea']['#process'] = array('imce_process_textarea');
-  }
-  return $type;
+  return array('textarea' => array('#process' => array('imce_textarea')));
 }
 
 /**
  * Inline image/link insertion to textareas.
  */
-function imce_process_textarea($element) {
-  $ids = explode(',', str_replace(' ', '', variable_get('imce_settings_textarea', '')));
-  if (in_array($element['#id'], $ids)) {
+function imce_textarea($element) {
+  static $ids;
+  if (!isset($ids)) {
+    $ids = FALSE;
+    if (imce_access() && $setting = str_replace(' ', '', variable_get('imce_settings_textarea', ''))) {
+      $ids = array();
+      foreach (explode(',', $setting) as $id) {
+        $ids[$id] = 1;
+      }
+    }
+  }
+  if ($ids && isset($ids[$element['#id']])) {
     drupal_add_js(drupal_get_path('module', 'imce').'/js/imce_set_inline.js');
     $element['#description'] .= '<div id="imce-inline-wrapper" style="display:none">'. t('Insert !image or !link.', array('!image' => l(t('image'), 'imce', array('attributes' => array('name' => $element['#id'].'-IMCE-image', 'class' => 'imce-inline-image'))), '!link' => l(t('link'), 'imce', array('attributes' => array('name' => $element['#id'].'-IMCE-link', 'class' => 'imce-inline-link'))))) .'</div>';
   }
@@ -119,44 +124,13 @@ function imce_user_profile($user) {
     return $profiles[1];
   }
   else {
-    foreach (imce_sorted_roles() as $rid => $role) {
+    foreach (variable_get('imce_roles_profiles', array()) as $rid => $role) {
       if (isset($user->roles[$rid]) && isset($profiles[$role['pid']])) {
         return $profiles[$role['pid']];
       }
     }
   }
   return FALSE;
-}
-
-/**
- * Sort roles according to their weights.
- */
-function imce_sorted_roles() {
-  static $sorted;
-  if (!isset($sorted)) {
-    $sorted = array();
-    $roles = user_roles();
-    $profiles = variable_get('imce_profiles', array());
-    $irp = variable_get('imce_roles_profiles', array());
-    $irp[DRUPAL_ANONYMOUS_RID]['weight'] = 12;
-    $irp[DRUPAL_AUTHENTICATED_RID]['weight'] = 11;
-    foreach ($roles as $rid=>$rname) {
-      $sorted[$rid] = array(
-        'name' => $rname,
-        'weight' => isset($irp[$rid]['weight']) ? $irp[$rid]['weight'] : 0,
-        'pid' => isset($irp[$rid]['pid']) && isset($profiles[$irp[$rid]['pid']]) ? $irp[$rid]['pid'] : 0,
-      );
-    }
-    uasort($sorted, 'imce_rolesort');
-  }
-  return $sorted;
-}
-
-/**
- * Sorting function for roles.
- */
-function imce_rolesort($r1, $r2) {
-  return $r1['weight']-$r2['weight'];
 }
 
 /**

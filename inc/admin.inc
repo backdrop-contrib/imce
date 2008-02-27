@@ -55,7 +55,7 @@ function imce_admin_form($form_state) {
     '#type' => 'textfield',
     '#title' => t('Enable inline image/file insertion into plain textareas'),
     '#default_value' => variable_get('imce_settings_textarea', ''),
-    '#maxlength' => 255,
+    '#maxlength' => NULL,
     '#description' => t('This feature allows you to add your images or files as <strong>html code into any plain textarea</strong>. Enter <strong>comma separated textarea IDs</strong> if you want to enable this feature. Otherwise, leave it blank. Hint: ID of Body fields in most node types is edit-body.'),
   );
   $form['common']['absurls'] = array(
@@ -75,33 +75,30 @@ function imce_admin_form($form_state) {
  * Admin form themed.
  */
 function imce_admin_theme($form = array()) {
-  $header = array(t('User role'), t('Assigned profile'));
-  $rows = array();
-
-  //user #1
   $u1p = imce_user1_profile();
-  $rows[] = array(t('user #1'), $u1p['name']);
+  $header = array(t('User role'), t('Assigned profile'));
+  $keys = array('name', 'pid');
+  $rows[0] = array(t('user #1'), $u1p['name']);
+  $info = '';
 
-  //roles
-  foreach (element_children($form['roles']) as $rid) {
-    $row = array(drupal_render($form['roles'][$rid]['name']), drupal_render($form['roles'][$rid]['pid']));
-    if ($form['#weighted']) {
-      $row[] = drupal_render($form['roles'][$rid]['weight']);
-    }
-    $rows[] = $row;
-  }
-
-  $info = '<div class="form-item"><div class="description">'. t('Assign profiles to user roles.');
   if ($form['#weighted']) {
     $header[] = t('Weight');
+    $keys[] = 'weight';
     $rows[0][] = t('n/a');
-    $info .= ' '. t('For users who have <strong>multiple roles</strong>, <strong>weight</strong> property will determine the assigned profile. Lighter roles that are placed upper will take the precedence. So, an administrator role should be placed over other roles by having a smaller weight, ie. -10.');
+    $info = t('For users who have <strong>multiple roles</strong>, <strong>weight</strong> property will determine the assigned profile. Lighter roles that are placed upper will take the precedence. So, an administrator role should be placed over other roles by having a smaller weight, ie. -10.');
   }
-  $info .= '</div></div>';
+
+  foreach (element_children($form['roles']) as $rid) {
+    $cells = array();
+    foreach ($keys as $key) {
+      $cells[] = drupal_render($form['roles'][$rid][$key]);
+    }
+    $rows[] = $cells;
+  }
 
   $output = '<h2 class="title">'. t('Role-profile assignments'). '</h2>';
   $output .= theme('table', $header, $rows);
-  $output .= $info;
+  $output .= '<div class="form-item"><div class="description">'. t('Assign profiles to user roles.') .' '. $info .'</div></div>';
   $output .= drupal_render($form['common']);
   $output .= drupal_render($form);
   return $output;
@@ -111,7 +108,11 @@ function imce_admin_theme($form = array()) {
  * Submit admin form.
  */
 function imce_admin_submit($form, &$form_state) {
-  variable_set('imce_roles_profiles', $form_state['values']['roles']);
+  $roles = $form_state['values']['roles'];
+  if (count($roles) > 3) {
+    uasort($roles, 'imce_rolesort');
+  }
+  variable_set('imce_roles_profiles', $roles);
   variable_set('imce_settings_textarea', $form_state['values']['textarea']);
   variable_set('imce_settings_absurls', $form_state['values']['absurls']);
   drupal_set_message(t('Changes have been saved.'));
@@ -543,6 +544,37 @@ function imce_clean_profile_fields(&$profile) {
 function imce_load_profile($pid) {
   $profiles = variable_get('imce_profiles', array());
   return isset($profiles[$pid]) ? $profiles[$pid] : NULL;
+}
+
+/**
+ * Sort roles according to their weights.
+ */
+function imce_sorted_roles() {
+  static $sorted;
+  if (!isset($sorted)) {
+    $sorted = array();
+    $roles = user_roles();
+    $profiles = variable_get('imce_profiles', array());
+    $irp = variable_get('imce_roles_profiles', array());
+    $irp[DRUPAL_ANONYMOUS_RID]['weight'] = 12;
+    $irp[DRUPAL_AUTHENTICATED_RID]['weight'] = 11;
+    foreach ($roles as $rid=>$rname) {
+      $sorted[$rid] = array(
+        'name' => $rname,
+        'weight' => isset($irp[$rid]['weight']) ? $irp[$rid]['weight'] : 0,
+        'pid' => isset($irp[$rid]['pid']) && isset($profiles[$irp[$rid]['pid']]) ? $irp[$rid]['pid'] : 0,
+      );
+    }
+    uasort($sorted, 'imce_rolesort');
+  }
+  return $sorted;
+}
+
+/**
+ * Sorting function for roles.
+ */
+function imce_rolesort($r1, $r2) {
+  return $r1['weight']-$r2['weight'];
 }
 
 //Include core profile functions.
