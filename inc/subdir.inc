@@ -16,7 +16,7 @@ function imce_form_subdirectory(&$form_state) {
     '#maxlength' => 255,
     '#field_prefix' => file_directory_path() .'/',
   );
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Create'),);
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Create'));
   return $form;
 }
 
@@ -80,7 +80,7 @@ function imce_get_subdirectories($dir, $expr = '') {
   $directories = array();
 
   if ($handle = @opendir($dir)) {
-    while(($file = readdir($handle)) !== FALSE) {
+    while (($file = readdir($handle)) !== FALSE) {
       if ($file != '.' && $file != '..' && is_dir($dir .'/'. $file) && preg_match('/^'. $expr .'$/', $file)) {
         $directories[] = $dir .'/'. $file;
       }

@@ -283,7 +283,7 @@ function imce_resize_submit($form, &$form_state) {
   $resized = imce_process_files($form_state['values']['filenames'], $imce, 'imce_resize_image', array($width, $height, $form_state['values']['copy']));
 
   if (!empty($resized)) {
-    drupal_set_message(t('File resizing successful: %files.', array('%files' => utf8_encode(implode(', ',$resized)))));
+    drupal_set_message(t('File resizing successful: %files.', array('%files' => utf8_encode(implode(', ', $resized)))));
   }
 
 }
@@ -759,7 +759,7 @@ function imce_scan_directory($dirname) {
   }
 
   $exclude = array('.' => 1, '..' => 1, 'CVS' => 1, '.svn' => 1, '.htaccess' => 1);
-  while(($file = readdir($handle)) !== FALSE) {
+  while (($file = readdir($handle)) !== FALSE) {
     if ($exclude[$file]) {
       continue;
     }

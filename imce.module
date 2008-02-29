@@ -109,8 +109,8 @@ function imce_textarea($element) {
     }
   }
   if ($ids && isset($ids[$element['#id']])) {
-    drupal_add_js(drupal_get_path('module', 'imce').'/js/imce_set_inline.js');
-    $element['#description'] .= '<div id="imce-inline-wrapper" style="display:none">'. t('Insert !image or !link.', array('!image' => l(t('image'), 'imce', array('attributes' => array('name' => $element['#id'].'-IMCE-image', 'class' => 'imce-inline-image'))), '!link' => l(t('link'), 'imce', array('attributes' => array('name' => $element['#id'].'-IMCE-link', 'class' => 'imce-inline-link'))))) .'</div>';
+    drupal_add_js(drupal_get_path('module', 'imce') .'/js/imce_set_inline.js');
+    $element['#description'] .= '<div id="imce-inline-wrapper" style="display:none">'. t('Insert !image or !link.', array('!image' => l(t('image'), 'imce', array('attributes' => array('name' => $element['#id'] .'-IMCE-image', 'class' => 'imce-inline-image'))), '!link' => l(t('link'), 'imce', array('attributes' => array('name' => $element['#id'] .'-IMCE-link', 'class' => 'imce-inline-link'))))) .'</div>';
   }
   return $element;
 }

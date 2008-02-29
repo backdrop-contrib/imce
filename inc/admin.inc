@@ -65,7 +65,7 @@ function imce_admin_form($form_state) {
     '#description' => t('Check if you want IMCE to return absolute file URLs.'),
   );
 
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'),);
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
   $form['#theme'] = 'imce_admin';
   $form['#submit'][] = 'imce_admin_submit';
   return $form;
@@ -96,7 +96,7 @@ function imce_admin_theme($form = array()) {
     $rows[] = $cells;
   }
 
-  $output = '<h2 class="title">'. t('Role-profile assignments'). '</h2>';
+  $output = '<h2 class="title">'. t('Role-profile assignments') .'</h2>';
   $output .= theme('table', $header, $rows);
   $output .= '<div class="form-item"><div class="description">'. t('Assign profiles to user roles.') .' '. $info .'</div></div>';
   $output .= drupal_render($form['common']);
@@ -222,7 +222,7 @@ function imce_profile_form($form_state, $pid = 0) {
 
   $form = array('profile' => $form);
   $form['pid'] = array('#type' => 'hidden', '#value' => $pid);
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'),);
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
   //$form['#action'] = url('admin/settings/imce/profile/'. $pid);
   $form['#submit'][] = 'imce_profile_submit';
   return $form;
@@ -317,7 +317,7 @@ function imce_directories_theme($form = array()) {
 
   array_unshift($header, t('Directory path'));
 
-  $output = '<h3 class="title">'. t('Directories'). '</h3>';
+  $output = '<h3 class="title">'. t('Directories') .'</h3>';
   $output .= theme('table', $header, $rows);
   $output .= '<div class="form-item"><div class="description">'. t('Define directories that users of this profile can access.
 <ul>
@@ -381,7 +381,7 @@ function imce_thumbnails_theme($form = array()) {
     );
   }
 
-  $output = '<h3 class="title">'. t('Thumbnails'). '</h3>';
+  $output = '<h3 class="title">'. t('Thumbnails') .'</h3>';
   $output .= theme('table', $header, $rows);
   $output .= '<div class="form-item"><div class="description">'. t('You may create a list of thumbnail options that users can choose from.
 <ul>
@@ -558,7 +558,7 @@ function imce_sorted_roles() {
     $irp = variable_get('imce_roles_profiles', array());
     $irp[DRUPAL_ANONYMOUS_RID]['weight'] = 12;
     $irp[DRUPAL_AUTHENTICATED_RID]['weight'] = 11;
-    foreach ($roles as $rid=>$rname) {
+    foreach ($roles as $rid => $rname) {
       $sorted[$rid] = array(
         'name' => $rname,
         'weight' => isset($irp[$rid]['weight']) ? $irp[$rid]['weight'] : 0,
