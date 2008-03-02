@@ -2,16 +2,9 @@
 // $Id$
 
 /**
- * Ajax operation: browse
+ * Ajax operation: navigate
  */
 function imce_js_navigate(&$imce) {
-  if ($imce['error']) {
-    $errors = drupal_get_messages('error', FALSE);
-    if (empty($errors)) {
-      drupal_set_message(t('An unknown error occured!'), 'error');
-    }
-    return array('error' => TRUE);
-  }
   $imce['files'] = theme('imce_file_list', array('imce' => &$imce));
   $imce['dir'] = str_replace('%2F', '/', rawurlencode($imce['dir']));
   $imce['dirsize'] = format_size($imce['dirsize']);
