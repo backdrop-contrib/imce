@@ -134,7 +134,7 @@ function imce_user_profile($user) {
 }
 
 /**
- * imce acess.
+ * Check if the user has access to imce.
  */
 function imce_access($user = FALSE) {
   if ($user === FALSE) {
@@ -164,4 +164,17 @@ function imce_user_page_access($account, $user = FALSE) {
   }
 
   return $user->uid == 1 || ($account->uid == $user->uid && imce_access($user));
+}
+
+/**
+ * Check if the directory name is regular.
+ */
+function imce_reg_dir($dirname) {
+  if (!is_string($dirname) || trim($dirname) == '') {
+    return FALSE;
+  }
+  if ($dirname == '.') {
+    return TRUE;
+  }
+  return !preg_match('/(^\/)|\.\.|\\\\|\.\/|\/\.|(\/$)/', $dirname);
 }
