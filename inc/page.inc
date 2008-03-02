@@ -18,20 +18,20 @@ function imce_user_page($account) {
 }
 
 /**
- * Contents of the file browser.
+ * Content of the file browser.
  */
 function imce_content($user, $jsop = '') {
+
+  //execute ajax calls.
+  if ($jsop) {
+    return imce_js($user, $jsop);
+  }
 
   //initiate configuration profile
   if (!$imce = imce_initiate_profile($user)) {
     return '';
   }
-  imce_process_profile($imce);
-
-  //execute ajax calls.
-  if ($jsop) {
-    return imce_js($imce, $jsop);
-  }
+  imce_process_profile($imce);//get active directory content
 
   //reference imce inside an array so it will stay referenced during argument copy of drupal_get_form
   //when php4-support drops(dr7?), use an object with no reference.
@@ -55,16 +55,25 @@ function imce_content($user, $jsop = '') {
 }
 
 /**
- * Ajax operations. q = imce/js/{op}
+ * Ajax operations. q = imce&jsop={op}
  */
-function imce_js(&$imce, $jsop = '') {
-  include_once './'. drupal_get_path('module', 'imce') .'/inc/js.inc';
-  $return = array();
-  if (function_exists($func = 'imce_js_'. $jsop)) {
-    $return['data'] = $func($imce);
+function imce_js($user, $jsop = '') {
+  $response = array();
+
+  //data
+  if ($imce = imce_initiate_profile($user)) {
+    imce_process_profile($imce);
+    if (!$imce['error']) {
+      include_once './'. drupal_get_path('module', 'imce') .'/inc/js.inc';
+      if (function_exists($func = 'imce_js_'. $jsop)) {
+        $response['data'] = $func($imce);
+      }
+    }
   }
-  $return['messages'] = drupal_get_messages();
-  print drupal_to_js($return);
+  //messages
+  $response['messages'] = drupal_get_messages();
+
+  print drupal_to_js($response);
   exit();
 }
 
@@ -568,44 +577,38 @@ function imce_initiate_profile($user) {
       }
       $imce['filesize'] *= 1048576;//convert from Mb to byte
       $imce['quota'] *= 1048576;
+      $imce['filenum'] = (int) $imce['filenum'];
+      //check and set the active directory
+      if ($info = imce_working_directory($imce)) {
+        $imce['directories'][$info['name']] = $info;
+        $imce['dir'] = $info['name'];
+        $imce['perm'] = $info;//copy permissions of the active directory.
+        unset($imce['perm']['name']);
+      }
+      else {
+        drupal_set_message(t('Unable to get a working directory for the file browser!'), 'error');
+        $imce['dir'] = FALSE;
+        $imce['error'] = TRUE;
+      }
       return $imce;
     }
   }
 
   //can't initiate profile.
-  drupal_set_message(t('IMCE is not configured properly!'), 'error');
+  drupal_set_message(t('File browser is not configured properly!'), 'error');
   return FALSE;
 }
 
 /**
- * Return ready-to-use profile.
+ * Get files and folders of the actve directory.
  */
 function imce_process_profile(&$imce) {
-
-  //check and set the active directory
-  if ($info = imce_working_directory($imce)) {
-    $imce['directories'][$info['name']] = $info;
-    $imce['dir'] = $info['name'];
-    $imce['perm'] = $info;//copy permissions of the active directory.
-    unset($imce['perm']['name']);
-  }
-  else {
-    $imce['dir'] = FALSE;
-  }
-
   //get directory content
   $imce += imce_scan_directory($imce['dir']);
   //set subdirectories
-  if (!$imce['error'] && !imce_subdirectories_accessible($imce['subdirectories'], $imce)) {
+  if (!$imce['error'] && !imce_subdirectories_accessible($imce)) {
     $imce['subdirectories'] = array();
   }
-
-  foreach (array('filenum') as $key) {
-    $imce[$key] = (int)$imce[$key];
-  }
-  //shrink directories to contain only names
-  //$imce['directories'] = array_keys($imce['directories']);
-
 }
 
 /**
@@ -638,9 +641,16 @@ function imce_process_directories($directories, $user) {
 function imce_working_directory($imce) {
   //check GET.
   if (isset($_GET['dir'])) {
-    $info = imce_directory_info($_GET['dir'], $imce);
-    if ($info && imce_check_directory($info['name'])) {
-      $_SESSION['imce_directory'] = rawurlencode($info['name']);
+    if ($info = imce_directory_info($_GET['dir'], $imce)) {
+      if (imce_check_directory($_GET['dir'])) {
+        $_SESSION['imce_directory'] = rawurlencode($info['name']);
+      }
+      else {
+        $info = FALSE;
+      }
+    }
+    else {
+      imce_inaccessible_directory($_GET['dir']);
     }
     return $info;
   }
@@ -654,6 +664,7 @@ function imce_working_directory($imce) {
       }
     }
   }
+
   //or the whole list.
   foreach ($imce['directories'] as $dirname => $info) {
     if (imce_check_directory($dirname)) {
@@ -670,17 +681,20 @@ function imce_working_directory($imce) {
  */
 function imce_check_directory($dirname) {
 
-  if (trim($dirname) == '') {
-    return FALSE;
-  }
+  $root = file_directory_path();
+  $dirpath = $root .'/'. $dirname;
 
-  $path = $root = file_directory_path();
-  $parts = explode('/', $dirname);
-  foreach ($parts as $part) {
-    $path .= '/'. $part;
-    if (!file_check_location($path, $root) || !file_check_directory($path, FILE_CREATE_DIRECTORY)) {
-      return imce_inaccessible_directory($dirname);
+  if (!file_check_directory($dirpath)) {//directory does not exist. try to create it.
+    $path = $root;
+    foreach (explode('/', $dirname) as $arg) {
+      $path .= '/'. $arg;
+      if (!file_check_location($path, $root) || !file_check_directory($path, FILE_CREATE_DIRECTORY)) {
+        return imce_inaccessible_directory($dirname);
+      }
     }
+  }
+  else if (!file_check_location($dirpath, $root)) {//directory exists outside of root.
+    return imce_inaccessible_directory($dirname);
   }
 
   return TRUE;
@@ -690,10 +704,12 @@ function imce_check_directory($dirname) {
  * Generate and log a directory access error.
  */
 function imce_inaccessible_directory($dirname) {
-  $msg = 'Directory "%dir" is not accessible under file system!';
-  $token = array('%dir' => utf8_encode($dirname));
-  drupal_set_message(t($msg, $token), 'error');
-  watchdog('imce', $msg, $token, WATCHDOG_ERROR);
+  if (is_string($dirname)) {
+    $msg = 'Directory "%dir" is not accessible under file system!';
+    $token = array('%dir' => utf8_encode($dirname));
+    drupal_set_message(t($msg, $token), 'error');
+    watchdog('imce', $msg, $token, WATCHDOG_ERROR);
+  }
   return FALSE;
 }
 
@@ -702,7 +718,7 @@ function imce_inaccessible_directory($dirname) {
  * A child of a predefined directory in the directory list takes its parent's properties.
  * If it has multiple parents, it gets the properties of the latter in the list.
  */
-function imce_directory_info($dirname, &$imce) {
+function imce_directory_info($dirname, $imce) {
 
   if (isset($imce['directories'][$dirname])) {
     return $imce['directories'][$dirname];
@@ -711,7 +727,7 @@ function imce_directory_info($dirname, &$imce) {
   $info = FALSE;
   $root = file_directory_path();
   $dirpath = $root .'/'. $dirname;
-  if (file_check_location($dirpath, $root) && file_check_directory($dirpath)) {
+  if (imce_reg_dir($dirname) && file_check_directory($dirpath)) {
     foreach ($imce['directories'] as $name => $prop) {
       if ($prop['subnav'] && file_check_location($dirpath, $root .'/'. $name)) {
         $info = $prop;
@@ -726,12 +742,12 @@ function imce_directory_info($dirname, &$imce) {
 /**
  * Detect if the subdirectories are accessible through any directory(not just the current one) in the list.
  */
-function imce_subdirectories_accessible($subdirectories, $imce) {
+function imce_subdirectories_accessible($imce) {
 
-  if (!empty($subdirectories)) {
+  if (!empty($imce['subdirectories'])) {
     $root = file_directory_path() .'/';
     //checking only the first one is sufficient.
-    $dirpath = $root . $imce['dir'] .'/'. $subdirectories[0];
+    $dirpath = $root . $imce['dir'] .'/'. $imce['subdirectories'][0];
 
     //check if any setting is applicable for this subdirectory through any directory in the list.
     foreach ($imce['directories'] as $name => $info) {
@@ -832,8 +848,7 @@ function imce_create_tree(&$imce) {
 }
 
 /**
- * Create directory tree.
- * This is not themable because it is complex and needs to be proper for js processing.
+ * Return tree html.
  */
 function imce_tree_html(&$imce, $paths, $q = '?', $prefix = '', $eprefix = '') {
   unset($paths[':access:'], $paths[':active:']);
