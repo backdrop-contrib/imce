@@ -14,9 +14,9 @@ if ($imce['perm']['browse'] && !empty($imce['files'])) {
     <td class="date" id="<?php print $file['date']; ?>"><?php print format_date($file['date'], 'small'); ?></td>
   </tr><?php
   }
-  drupal_set_message(t('Contents of %dir are loaded.', $token));
+  drupal_set_message(t('%dir directory content loaded.', $token));
 }
-else {
+else if (!$imce['error']) {
   drupal_set_message($imce['perm']['browse'] ? t('Directory %dir is empty.', $token) : t('File browsing is disabled in directory %dir.', $token), 'error');
 }?>
 </tbody></table>

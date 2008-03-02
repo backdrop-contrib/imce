@@ -11,7 +11,7 @@
 </head>
 
 <body>
-<div id="imce-messages" class="js-hide"><?php print theme('status_messages'); ?></div>
+<div id="imce-messages"><?php print theme('status_messages'); ?></div>
 <?php print $content; ?>
 </body>
 </html>
