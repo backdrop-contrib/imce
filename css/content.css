@@ -188,7 +188,7 @@ ul#ops-list {/*also has classes .secondary and .tabs)*/
   font-size: 0.9em;
 }
 #log-wrapper span.time {
-  color: #000;
+  color: #444;
 }
 #log-wrapper .status {}
 #log-wrapper .warning {}
@@ -196,12 +196,16 @@ ul#ops-list {/*also has classes .secondary and .tabs)*/
 
 /*resizers*/
 .y-resizer {
-  height: 0.2em;
+  height: 3px;
   cursor: n-resize;
-  background-color: #ccc;
+  background: #d4d0c8 url(y-grippie.png) no-repeat center top;
 }
 .x-resizer {
-  width: 0.2em;
+  width: 3px;
   cursor: e-resize;
-  background-color: #ccc;
+  background: #d4d0c8 url(x-grippie.png) no-repeat left center;
+}
+
+.imce-hide {
+  display: none;
 }
