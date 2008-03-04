@@ -17,6 +17,6 @@ if ($imce['perm']['browse'] && !empty($imce['files'])) {
   drupal_set_message(t('%dir directory content loaded.', $token));
 }
 else if (!$imce['error']) {
-  drupal_set_message($imce['perm']['browse'] ? t('Directory %dir is empty.', $token) : t('File browsing is disabled in directory %dir.', $token), 'error');
+  drupal_set_message($imce['perm']['browse'] ? t('Directory %dir is empty.', $token) : t('File browsing is disabled in directory %dir.', $token), 'warning');
 }?>
 </tbody></table>
