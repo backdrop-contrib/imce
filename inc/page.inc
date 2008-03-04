@@ -87,18 +87,21 @@ function imce_upload_form(&$form_state, $ref) {
     '#title' => t('Choose a file to upload'),
     '#size' => 30,
   );
-  $form['thumbnails'] = array(
-    '#type' => 'checkboxes',
-    '#title' => t('Create thumbnails'),
-    '#options' => imce_thumbnail_options($imce['thumbnails']),
-  );
+  if (!empty($imce['thumbnails'])) {
+    $form['thumbnails'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Create thumbnails'),
+      '#options' => imce_thumbnail_options($imce['thumbnails']),
+    );
+  }
   $form['upload'] = array(
     '#type' => 'submit',
     '#value' => t('Upload'),
-    '#submit' => $imce['perm']['upload'] ? array('imce_upload_submit') : NULL,
+    '#submit' => $imce['perm']['upload'] ? array('imce_upload_submit') : NULL,//check permission
   );
   $form = array('fset_upload' => array('#type' => 'fieldset', '#title' => t('Upload file')) + $form);
   $form['#attributes']['enctype'] = 'multipart/form-data';
+  $form['#attributes']['class'] = $imce['perm']['upload'] ? '' : 'imce-hide';
   $form['#action'] = $imce['url'];
   return $form;
 }
@@ -114,19 +117,24 @@ function imce_fileop_form(&$form_state, $ref) {
     '#maxlength' => $imce['filenum'] ? $imce['filenum']*255 : NULL,
   );
   //thumbnail
-  $form['fset_thumb'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Create thumbnails'),
-  ) + imce_thumb_form($imce);
+  if (!empty($imce['thumbnails'])) {
+    $form['fset_thumb'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Create thumbnails'),
+      '#attributes' => array('class' => $imce['perm']['thumb'] ? '' : 'imce-hide'),
+    ) + imce_thumb_form($imce);
+  }
   //delete
   $form['fset_delete'] = array(
     '#type' => 'fieldset',
     '#title' => t('Delete'),
+    '#attributes' => array('class' => $imce['perm']['delete'] ? '' : 'imce-hide'),
   ) + imce_delete_form($imce);
   //resize
   $form['fset_resize'] = array(
     '#type' => 'fieldset',
     '#title' => t('Resize'),
+    '#attributes' => array('class' => $imce['perm']['resize'] ? '' : 'imce-hide'),
   ) + imce_resize_form($imce);
 
   $form['#action'] = $imce['url'];
@@ -145,7 +153,7 @@ function imce_thumb_form(&$imce) {
   $form['thumb'] = array(
     '#type' => 'submit',
     '#value' => t('Create'),
-    '#submit' => $imce['perm']['thumb'] ? array('imce_thumb_submit') : NULL,
+    '#submit' => $imce['perm']['thumb'] ? array('imce_thumb_submit') : NULL,//check permission
   );
   return $form;
 }
@@ -157,7 +165,7 @@ function imce_delete_form(&$imce) {
   $form['delete'] = array(
     '#type' => 'submit',
     '#value' => t('Delete'),
-    '#submit' => $imce['perm']['delete'] ? array('imce_delete_submit') : NULL,
+    '#submit' => $imce['perm']['delete'] ? array('imce_delete_submit') : NULL,//check permission
   );
   return $form;
 }
@@ -182,7 +190,7 @@ function imce_resize_form(&$imce) {
   $form['resize'] = array(
     '#type' => 'submit',
     '#value' => t('Resize'),
-    '#submit' => $imce['perm']['resize'] ? array('imce_resize_submit') : NULL,
+    '#submit' => $imce['perm']['resize'] ? array('imce_resize_submit') : NULL,//check permission
   );
   return $form;
 }
@@ -376,6 +384,11 @@ function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $de
     return FALSE;
   }
 
+  if (substr($op, 0, 5) == 'scale' && !($width < $img['width'] || $height < $img['height'])) {
+    drupal_set_message(t('Scaling up is not allowed.'), 'error', FALSE);
+    return FALSE;
+  }
+
   //create file object
   $file = new stdClass();
   $file->filepath = $dirpath .'/'. $dest;
@@ -386,7 +399,7 @@ function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $de
 
   //check if a file having the same properties exists already.
   if (($f = $imce['files'][$file->filename]) && $f['width'] == $width && $f['height'] == $height) {
-    drupal_set_message(t('%filename(%dimensions) exists already.', array('%filename' => utf8_encode($file->filename), '%dimensions' => $width .'x'. $height)), 'error');
+    drupal_set_message(t('%filename(%dimensions) already exists.', array('%filename' => utf8_encode($file->filename), '%dimensions' => $width .'x'. $height)), 'error');
     return FALSE;
   }
 
@@ -402,9 +415,6 @@ function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $de
   $function = 'image_'. $op;
   if (!$function($filepath, $temp, $width, $height)) {
     drupal_set_message(t('%filename cannot be resized to %dimensions', array('%filename' => utf8_encode($filename), '%dimensions' => $width .'x'. $height)), 'error', FALSE);
-    if ($op == 'scale' && !($width < $img['width'] && $height < $img['height'])) {
-      drupal_set_message(t('Scaling up is not allowed.'), 'error', FALSE);
-    }
     return FALSE;
   }
 
@@ -509,8 +519,8 @@ function imce_validate_all(&$file, $imce) {
   if ($imce['quota']) {//quota validation
     $errors = array_merge($errors, imce_validate_quota($file, $imce['quota'], $imce['dirsize']));
   }
-  if ($imce['extensions'] != '*') {//extension validation
-    $errors = array_merge($errors, file_validate_extensions($file, $imce['extensions']));
+  if ($imce['extensions'] != '*' && !preg_match('/\.('. str_replace(' ', '|', $imce['extensions']) .')$/i', $file->filename)) {
+    $errors[] = t('Only files with the following extensions are allowed: %files-allowed.', array('%files-allowed' => $imce['extensions']));
   }
   return $errors;
 }
@@ -538,7 +548,7 @@ function imce_validate_quota($file, $quota = 0, $dirsize = 0) {
 }
 
 /**
- * Check if the file is an image and return 
+ * Check if the file is an image and return info.
  */
 function imce_image_info($file) {
   if (is_file($file) && ($info = @getimagesize($file)) && in_array($info[2], array(IMG_GIF, IMG_JPG, IMG_PNG)) ) {
