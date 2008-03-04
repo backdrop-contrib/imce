@@ -330,7 +330,8 @@ function imce_directories_theme($form = array()) {
   A multi-level directory example <strong>php: return date(\'Y\', $user->created).\'/\'.date(\'m\', $user->created).\'/\'.$user->uid;</strong> defines <strong>MEMBERSHIP-YEAR/MONTH/USER-ID</strong> as the directory path, resulting in self-categorized user directories based on membership date.<br />
   Note that you should use the $user variable instead of $GLOBALS[\'user\'] since they are not always the same object.</li>
 </ul>
-If you need more fields, just fill all and save, and you will get two more on the next page.') .'</div></div>';
+<p>Note that thumbnails permission does not affect thumbnail creation on upload. See thumbnails decription below.</p>
+<p>If you need more fields, just fill all and save, and you will get two more on the next page.</p>') .'</div></div>';
   $output .= drupal_render($form);
   return $output;
 }
@@ -383,14 +384,15 @@ function imce_thumbnails_theme($form = array()) {
 
   $output = '<h3 class="title">'. t('Thumbnails') .'</h3>';
   $output .= theme('table', $header, $rows);
-  $output .= '<div class="form-item"><div class="description">'. t('You may create a list of thumbnail options that users can choose from.
+  $output .= '<div class="form-item"><div class="description">'. t('You may create a list of thumbnail options that users can choose from. 
 <ul>
   <li>Use alphanumeric characters as thumbnail names.</li>
   <li>Specify dimensions as <strong>WidthxHeight</strong>.</li>
   <li>Prefix and suffix are strings that are added to original file name to create the thumbnail name.</li>
   <li>An example thumbnail: Name = <strong>Small</strong>, Dimensions = <strong>80x80</strong>, Prefix = <strong>small_</strong></li>
 </ul>
-If you need more fields, just fill all and save, and you will get two more on the next page.') .'</div></div>';
+<p>Note that users will always be able to create thumbnails on file upload no matter what the thumbnail permission is. To disable thumbnail creation on file upload you should not define any thumbnails here.</p>
+<p>If you need more fields, just fill all and save, and you will get two more on the next page.</p>') .'</div></div>';
   $output .= drupal_render($form);
   return $output;
 }
@@ -526,16 +528,33 @@ function imce_update_profiles($pid, $profile = NULL) {
  * Unset empty fields in thumbnails and directory paths.
  */
 function imce_clean_profile_fields(&$profile) {
-  foreach (array('thumbnails', 'directories') as $key) {
-    $clean = array();
-    foreach ($profile[$key] as $item) {
-      $item['name'] = trim($item['name'], '\\ \/');
-      if ($item['name'] != '') {
-        $clean[] = $item;
-      }
+  $clean = array();
+  foreach ($profile['thumbnails'] as $thumb) {
+    if (trim($thumb['name']) != '' && preg_match('/^\d+x\d+$/', $thumb['dimensions'])) {
+      $clean[] = $thumb;
     }
-    $profile[$key] = $clean;
   }
+  $profile['thumbnails'] = $clean;
+
+  $clean = array();
+  $names = array();
+  foreach ($profile['directories'] as $dir) {
+    $dir['name'] = trim($dir['name'], '/ ');
+    if ($dir['name'] == '') {
+      continue;
+    }
+    if (isset($names[$dir['name']])) {
+      drupal_set_message(t('Duplicate directory paths are not allowed.'), 'error');
+      continue;
+    }
+    if (!imce_reg_dir($dir['name'])) {
+      drupal_set_message(t('%dirname is not accepted as a proper directory name.', array('%dirname' => $dir['name'])), 'error');
+      continue;
+    }
+    $clean[] = $dir;
+    $names[$dir['name']] = 1;
+  }
+  $profile['directories'] = $clean;
 }
 
 /**
