@@ -176,5 +176,5 @@ function imce_reg_dir($dirname) {
   if ($dirname == '.') {
     return TRUE;
   }
-  return !preg_match('/(^\/)|\.\.|\\\\|\.\/|\/\.|(\/$)/', $dirname);
+  return !preg_match('/(^\/)|(\.\.)|(\/\/)|(\\\\)|(^\.\/)|(\/\.\/)|(\/\.$)|(^ )|( $)|(\/$)/', $dirname);
 }
