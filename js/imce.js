@@ -345,6 +345,9 @@ imce.navigate = function(dir) {
       imce.updateStat();
       imce.refreshOps();
       imce.setPreview();
+      if (imce.vars.cid != 0 || imce.vars.dsc) {
+        imce.columnSort(imce.vars.cid, imce.vars.dsc);
+      }
     }
     if (response.messages) {
       imce.resMsgs(response.messages);
@@ -486,8 +489,8 @@ imce.initiateSorting = function() {
 
 //sort file list according to column index.
 imce.columnSort = function(cid, dsc) {
-  if (imce.fileIndex.length < 2 || (cid == imce.vars.cid && dsc == imce.vars.dsc)) return;
-  if (cid == imce.vars.cid) {
+  if (imce.fileIndex.length < 2) return;
+  if (cid == imce.vars.cid && dsc != imce.vars.dsc) {
     imce.fileIndex.reverse();
   }
   else {
