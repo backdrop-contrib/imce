@@ -377,10 +377,6 @@ imce.uploadSuccess = function (response) {
   response = Drupal.parseJson(response);
   if (response.data && response.data.added) {
     imce.resData(response.data);
-    var fid = response.data.added[0].name;
-    if (imce.vars.prvid != fid) imce.fileClick(fid);
-    var flw = imce.el('file-list-wrapper');
-    $(flw).animate({'scrollTop': flw.scrollHeight});
   }
   if (response.messages) {
     imce.resMsgs(response.messages);
@@ -413,11 +409,22 @@ imce.fopValidate = function(fop) {
   if (!imce.commonValidate()) return false;
   switch (fop) {
     case 'thumb':
+      if (!$('#op-content-thumb input:checked').size()) {
+        alert(Drupal.t('Please select a thumbnail.'));
+        return false;
+      }
       break;
     case 'delete':
       return confirm(Drupal.t('Delete selected files?'));
       break;
     case 'resize':
+      var w = imce.el('edit-width').value, h = imce.el('edit-height').value;
+      var maxDim = imce.conf.dimensions.split('x');
+      var maxW = parseInt(maxDim[0]), maxH = maxW ? parseInt(maxDim[1]) : 0;
+      if (w.search(/^[1-9][0-9]*$/) < 0 || h.search(/^[1-9][0-9]*$/) < 0 || (maxW && (maxW < w*1 || maxH < h*1))) {
+        alert(Drupal.t('Please specify dimensions within the allowed range that is from 1x1 to @dimensions.', {'@dimensions': maxW ? imce.conf.dimensions : Drupal.t('unlimited')}));
+        return false;
+      }
       break;
   }
   return true;
@@ -430,7 +437,7 @@ imce.commonValidate = function () {
     return false;
   }
   if (imce.conf.filenum && imce.vars.selcount > imce.conf.filenum) {
-    alert(Drupal.t('You are not allowed to operate on more than !num files.', {'!num': imce.conf.filenum*1}));
+    alert(Drupal.t('You are not allowed to operate on more than @num files.', {'@num': imce.conf.filenum}));
     return false;
   }
   return true;
@@ -452,8 +459,19 @@ imce.processResponse = function (response) {
 };
 //process response data
 imce.resData = function (data) {
-  if (data.added) for (var i in data.added) {
-    imce.fileAdd(data.added[i]);
+  if (data.added) {
+    var cnt = imce.fileIndex.length;
+    for (var i in data.added) {//add new files or update existing
+      imce.fileAdd(data.added[i]);
+    }
+    if (data.added.length == 1) {//if it is a single file operation
+      var fid = data.added[0].name;
+      if (imce.vars.prvid != fid) imce.fileClick(fid);//highlight
+    }
+    if (imce.fileIndex.length != cnt) {//if new files added
+      var flw = imce.el('file-list-wrapper');
+      $(flw).animate({'scrollTop': flw.scrollHeight});//scroll to bottom.
+    }
   }
   if (data.removed) for (var i in data.removed) {
     imce.fileRemove(data.removed[i]);
