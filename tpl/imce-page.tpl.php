@@ -8,6 +8,7 @@
   <?php print drupal_get_html_head(); ?>
   <?php print drupal_get_css(); ?>
   <?php print drupal_get_js(); ?>
+  <?php print isset($_GET['app']) ? '<script type="text/javascript" src="'. $directory .'/js/imce_set_app.js"></script>' : ''; ?>
   <style media="all" type="text/css">/*Overwrite css*/
     body {
       margin: 0.1em 0.3em;
