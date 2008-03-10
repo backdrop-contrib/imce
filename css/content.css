@@ -176,8 +176,8 @@ ul#ops-list {/*also has classes .secondary and .tabs)*/
 .op-content label, .op-content .form-checkboxes, .op-content .form-checkboxes .form-item {
   display: inline;
 }
-.op-content .form-submit, .op-content .form-item {
-  margin: 0.2em;
+.op-content .form-submit, .op-content .form-item, .op-content form {
+  margin: 0.2em !important;
 }
 
 #log-wrapper div {
