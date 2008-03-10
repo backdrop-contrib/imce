@@ -84,8 +84,15 @@ function imce_upload_form(&$form_state, $ref) {
   $imce =& $ref['imce'];
   $form['imce'] = array(
     '#type' => 'file',
-    '#title' => t('Choose a file to upload'),
+    '#title' => t('File'),
     '#size' => 30,
+    '#prefix' => '<div class="container-inline">',
+  );
+  $form['upload'] = array(
+    '#type' => 'submit',
+    '#value' => t('Upload'),
+    '#submit' => $imce['perm']['upload'] ? array('imce_upload_submit') : NULL,//check permission
+    '#suffix' => '</div>',
   );
   if (!empty($imce['thumbnails'])) {
     $form['thumbnails'] = array(
@@ -94,11 +101,6 @@ function imce_upload_form(&$form_state, $ref) {
       '#options' => imce_thumbnail_options($imce['thumbnails']),
     );
   }
-  $form['upload'] = array(
-    '#type' => 'submit',
-    '#value' => t('Upload'),
-    '#submit' => $imce['perm']['upload'] ? array('imce_upload_submit') : NULL,//check permission
-  );
   $form = array('fset_upload' => array('#type' => 'fieldset', '#title' => t('Upload file')) + $form);
   $form['#attributes']['enctype'] = 'multipart/form-data';
   $form['#attributes']['class'] = $imce['perm']['upload'] ? '' : 'imce-hide';
@@ -176,21 +178,25 @@ function imce_delete_form(&$imce) {
 function imce_resize_form(&$imce) {
   $form['width'] = array(
     '#type' => 'textfield',
-    '#title' => t('Width'),
+    '#title' => t('Width x Height'),
+    '#size' => 5,
+    '#prefix' => '<div class="container-inline">',
   );
   $form['height'] = array(
     '#type' => 'textfield',
-    '#title' => t('Height'),
-  );
-  $form['copy'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Create a new image'),
-    '#default_value' => 1,
+    '#size' => 5,
+    '#prefix' => 'x',
   );
   $form['resize'] = array(
     '#type' => 'submit',
     '#value' => t('Resize'),
     '#submit' => $imce['perm']['resize'] ? array('imce_resize_submit') : NULL,//check permission
+    '#suffix' => '</div>',
+  );
+  $form['copy'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Create a new image'),
+    '#default_value' => 1,
   );
   return $form;
 }
@@ -211,7 +217,7 @@ function imce_fileop_form_validate($form, &$form_state) {
   $cnt = count($filenames);
   //check the number of files.
   if ($imce['filenum'] && $cnt > $imce['filenum']) {
-    return form_error($form['filenames'], t('You are not allowed to operate on more than !num files.', array('!num' => $imce['filenum'])));
+    return form_error($form['filenames'], t('You are not allowed to operate on more than @num files.', array('@num' => $imce['filenum'])));
   }
 
   //check if there is any illegal choice
