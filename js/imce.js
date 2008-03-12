@@ -42,7 +42,7 @@ imce.updateTree = function() {
     $(branch.li).removeClass('leaf').addClass('expanded');
     $(branch.ul).show();
   }
-  else {//no subdirs->leaf
+  else if (!branch.ul){//no subdirs->leaf
     $(branch.li).removeClass('expanded').addClass('leaf');
   }
 };
@@ -110,6 +110,7 @@ imce.initiateList = function() {
   imce.tbody = imce.el('file-list').tBodies[0];
   imce.fileIndex = [];
   imce.fileId = {};
+  var token = {'%dir': imce.conf.dir == '.' ? imce.jsTree['.'].a.firstChild.data : unescape(imce.conf.dir)};
   if (imce.tbody.rows.length) {
     for (var i=0; row = imce.tbody.rows[i]; i++) {
       var fid = imce.fid(row);
@@ -117,7 +118,10 @@ imce.initiateList = function() {
       imce.fileIndex[i] = imce.fileId[fid] = row;
       $(row).click(function(e) {imce.fileClick(this, e.ctrlKey, e.shiftKey)});
     }
+    imce.setMessage(Drupal.t('Directory %dir is loaded.', token));
   }
+  else if (imce.conf.perm.browse) imce.setMessage(Drupal.t('Directory %dir is empty.', token), 'warning');
+  else imce.setMessage(Drupal.t('File browsing is disabled in directory %dir.', token), 'error');
 };
 
 //add a file to the list. (having properties name,size,formatted size,width,height,date,formatted date)
@@ -332,8 +336,18 @@ imce.opDisable = function(name) {
 
 //navigate to dir
 imce.navigate = function(dir) {
-  if (dir == imce.conf.dir && !confirm(Drupal.t('Do you want to refresh the current directory?'))) return;
-  $.getJSON(imce.conf.url + (imce.conf.clean ? '?' :'&') +'jsop=navigate&dir='+ dir, null, function(response, status) {
+  if (!imce.vars.nownav && (dir != imce.conf.dir || confirm(Drupal.t('Do you want to refresh the current directory?')))) {
+    $.ajax(imce.navSet(dir));
+  }
+};
+//ajax navigation settings
+imce.navSet = function (dir) {
+  $(imce.jsTree[dir].li).addClass('loading');
+  imce.vars.nownav = dir;
+  return {'url': imce.conf.url + (imce.conf.clean ? '?' :'&') +'jsop=navigate&dir='+ dir,
+  'type': 'GET',
+  'dataType': 'json',
+  'success': function(response) {
     if (response.data && !response.data.error) {
       imce.dirActivate(dir);
       imce.conf = response.data;
@@ -352,7 +366,12 @@ imce.navigate = function(dir) {
     if (response.messages) {
       imce.resMsgs(response.messages);
     }
-  });
+  },
+  'complete': function () {
+    $(imce.jsTree[dir].li).removeClass('loading');
+    imce.vars.nownav = null;
+  }
+  };
 };
 
 /**************** UPLOAD  ********************/
@@ -369,41 +388,16 @@ imce.uploadValidate = function (data, form) {
   }
   var sep = path.indexOf('/') == -1 ? '\\' : '/';
   imce.setMessage(Drupal.t('Uploading %filename...', {'%filename': path.substr(path.lastIndexOf(sep) + 1)}));
+  imce.loading('upload', true);
   return true;
-};
-
-//run on successful upload operation.
-imce.uploadSuccess = function (response) {
-  response = Drupal.parseJson(response);
-  if (response.data && response.data.added) {
-    imce.resData(response.data);
-  }
-  if (response.messages) {
-    imce.resMsgs(response.messages);
-  }
 };
 
 //settings for upload
 imce.uploadSettings = function () {
-  return {'url': imce.conf.url +'&jsop=upload', 'beforeSubmit': imce.uploadValidate, 'success': imce.uploadSuccess, 'resetForm': true};
+  return {'url': imce.conf.url +'&jsop=upload', 'beforeSubmit': imce.uploadValidate, 'success': function (response) {imce.processResponse(Drupal.parseJson(response));}, 'complete': function () {imce.loading('upload', false);}, 'resetForm': true};
 };
 
 /**************** FILE OPS  ********************/
-//wrapper for default ops submit
-imce.fopSubmit = function(fop) {
-  switch (fop) {
-    case 'thumb': case 'delete': case 'resize':  return imce.commonSubmit(fop);
-  }
-  var func = fop +'OpSubmit';
-  if (imce[func]) imce[func]();
-};
-
-//common submit function shared by default ops
-imce.commonSubmit = function(fop) {
-  if (!imce.fopValidate(fop)) return false;
-  $.ajax(imce.fopSettings(fop));
-};
-
 //validate default ops(delete, thumb, resize)
 imce.fopValidate = function(fop) {
   if (!imce.commonValidate()) return false;
@@ -430,6 +424,22 @@ imce.fopValidate = function(fop) {
   return true;
 };
 
+//submit wrapper for default ops
+imce.fopSubmit = function(fop) {
+  switch (fop) {
+    case 'thumb': case 'delete': case 'resize':  return imce.commonSubmit(fop);
+  }
+  var func = fop +'OpSubmit';
+  if (imce[func]) imce[func]();
+};
+
+//common submit function shared by default ops
+imce.commonSubmit = function(fop) {
+  if (!imce.fopValidate(fop)) return false;
+  imce.loading(fop, true);
+  $.ajax(imce.fopSettings(fop));
+};
+
 //common validation for any file op.
 imce.commonValidate = function () {
   if (!imce.vars.selcount) {
@@ -445,7 +455,7 @@ imce.commonValidate = function () {
 
 //settings for default file operations
 imce.fopSettings = function (fop) {
-  var settings = {'url': imce.conf.url, 'type': 'POST', 'dataType': 'json', 'success': imce.processResponse, 'data': imce.vars.opform +'&filenames='+ imce.serialNames() +'&jsop='+ fop};
+  var settings = {'url': imce.conf.url, 'type': 'POST', 'dataType': 'json', 'success': imce.processResponse, 'complete': function (response) {imce.fopComplete(response, fop);}, 'data': imce.vars.opform +'&filenames='+ imce.serialNames() +'&jsop='+ fop};
   if (imce.el('op-content-'+ fop)) {
     settings.data += '&'+ $('#op-content-'+ fop +' input').serialize();
   }
@@ -457,6 +467,7 @@ imce.processResponse = function (response) {
   if (response.data) imce.resData(response.data);
   if (response.messages) imce.resMsgs(response.messages);
 };
+
 //process response data
 imce.resData = function (data) {
   if (data.added) {
@@ -479,11 +490,29 @@ imce.resData = function (data) {
   imce.conf.dirsize = data.dirsize;
   imce.updateStat();
 };
+
 //set response messages
 imce.resMsgs = function (msgs) {
   for (var type in msgs) for (var i in msgs[type]) {
     imce.setMessage(msgs[type][i], type);
   }
+};
+
+//add remove loading 
+imce.loading = function(fop, state) {
+  var el = imce.el('edit-'+ fop), func = state ? 'addClass' : 'removeClass'
+  if (el) {
+    $(el)[func]('loading').attr('disabled', state);
+  }
+  else {
+    $(imce.el('op-item-'+ fop))[func]('loading');
+    imce.ops[fop].disabled = state;
+  }
+};
+
+//complete file operation
+imce.fopComplete = function (response, fop) {
+  imce.loading(fop, false);
 };
 
 //global ajax error function
@@ -535,49 +564,52 @@ imce.columnSort = function(cid, dsc) {
 //set resizers for resizable areas.
 imce.initiateResizeBars = function () {
   imce.setResizer('navigation-resizer', 'X', 'navigation-wrapper', null, 1);
-  imce.setResizer('preview-resizer', 'Y', 'file-list-wrapper', 'image-preview', 1);
-  imce.setResizer('browse-resizer', 'Y', 'browse-wrapper', 'log-wrapper', 20, imce.resizeBrowse);
-  imce.setResizer('log-resizer', 'Y', 'log-wrapper', null, 20);
+  imce.setResizer('file-list-resizer', 'Y', 'file-list-wrapper', 'log-prv-wrapper', 1);
+  imce.setResizer('log-resizer', 'X', 'log-wrapper', null, 1, imce.setRatio);
+  imce.setResizer('browse-resizer', 'Y', 'browse-wrapper', null, 20, imce.resizeList);
 };
 
 //set a resize bar
 imce.setResizer = function (resizer, axis, area1, area2, Min, endF) {
   var O = axis == 'X' ? {'pos': 'pageX', 'func': 'width'} : {'pos': 'pageY', 'func': 'height'};
   var Min = Min || 0;
-  $('#'+ resizer).mousedown(function(e) {
+  $(imce.el(resizer)).mousedown(function(e) {
     var pos = e[O.pos];
-    var val2 = val1 = $('#'+ area1)[O.func]();
-    var Max = area2 ? (val1 + $('#'+ area2)[O.func]()) : 1200;
+    var end = start = $(imce.el(area1))[O.func]();
+    var Max = area2 ? (start + $(imce.el(area2))[O.func]()) : 1200;
     $(document).mousemove(doDrag).mouseup(endDrag);
     function doDrag(e) {
-      val2 = Math.min(Max - Min, Math.max(val1 + e[O.pos] - pos, Min));
-      $('#'+ area1)[O.func](val2);
+      end = Math.min(Max - Min, Math.max(start + e[O.pos] - pos, Min));
+      $(imce.el(area1))[O.func](end);
       if (area2) {
-        $('#'+ area2)[O.func](Max - val2);
+        $(imce.el(area2))[O.func](Max - end);
       }
       return false;
     }
     function endDrag(e) {
       $(document).unbind("mousemove", doDrag).unbind("mouseup", endDrag);
       if (endF) {
-        endF(val2, val2 - val1);
+        endF(area1, area2, end, Max-end, end-start, O.func);
       }
     }
-  });
+  }).mousedown();
+  $(document).mouseup();
 };
 
-//resize work area and other flexible areas in it.
-imce.resizeBrowse = function(newH, diff) {
-  if (typeof diff == 'undefined') {
-    var el = $(imce.el('browse-wrapper')), h = el.height();
-    var diff = newH - h;
-    el.height(newH);
-  }
+//set ratios for resizable areas.
+imce.setRatio = function(area1, area2, val1, val2, diff, func) {
+  var total = $(imce.el(area1).parentNode)[func]();
+  $(imce.el(area1))[func](Math.round(val1 * 100 / total) + '%');
+  if (area2) $(imce.el(area2))[func](Math.round(val2 * 100 / total) + '%');
+};
+
+//set heights of file-list and log-prv.
+imce.resizeList = function(area1, area2, val1, val2, diff, func) {
   var el1 = $(imce.el('file-list-wrapper')), h1 = el1.height();
-  var el2 = $(imce.el('image-preview')), h2 = el2.height();
+  var el2 = $(imce.el('log-prv-wrapper')), h2 = el2.height();
   var r = h1 / (h1 + h2);
-  h1 += parseInt(diff * r);
-  h2 += parseInt(diff * (1 - r));
+  h1 += Math.round(diff * r);
+  h2 += Math.round(diff * (1 - r));
   el1.height(h1 < 1 ? 1 : h1);
   el2.height(h2 < 1 ? 1 : h2);
 };
@@ -593,7 +625,7 @@ imce.setPreview = function (fid) {
     html = width ? ('<img src="'+ imce.getURL(fid) +'" width="'+ width +'" height="'+ row.cells[3].innerHTML +'" alt="">') : unescape(fid);
     html = '<a href="#" onclick="imce.send(\''+ fid +'\'); return false;" title="'+ (imce.vars.prvtitle||'') +'">'+ html +'</a>';
   }
-  imce.el('image-preview').innerHTML = html;
+  imce.el('file-preview').innerHTML = html;
 };
 
 //default file send function. sends the file to the new window.
