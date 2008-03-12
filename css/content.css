@@ -11,17 +11,6 @@
   border: 0.2em solid #ccc;
 }
 #browse-resizer {}
-.js #log-wrapper {
-  height: 5em;
-  padding: 0.2em 20%;
-  overflow: auto;
-  background-color: #ddd;
-}
-#log-resizer {}
-a#log-clearer {
-  display: none;
-  font-size: 0.9em;
-}
 .js #forms-wrapper {
   display: none;
 }
@@ -57,12 +46,34 @@ a#log-clearer {
   font-size: 0.9em;
   height: 2em;
   padding: 0em 0.5em;
+  border-top: 1px solid #ccc;
 }
-#preview-resizer {}
-#image-preview {
-  overflow: auto;
+#file-list-resizer {}
+#log-prv-wrapper {
   height: 14em;
+  overflow: hidden;
+}
+#log-wrapper {
+  height: 99%;
+  width: 50%;
+  float: left;
+  overflow: auto;
+  background-color: #ddd;
+}
+#log-resizer {
+  height: 99%;
+  float: left;
+}
+#preview-wrapper {
+  height: 99%;
+  overflow: auto;
+}
+#file-preview {
   text-align: center;
+}
+a#log-clearer {
+  display: none;
+  font-size: 0.9em;
 }
 
 /*Navigation tree (ul)*/
@@ -87,6 +98,10 @@ a#log-clearer {
 }
 #navigation-tree li.leaf {
   background-image: url(leaf.png);
+}
+#navigation-tree li.loading {
+  background-image: url(loading.gif);
+  background-position: 0em 0.2em;
 }
 #navigation-tree li span.expander {
   font-size: 12px;
@@ -179,10 +194,16 @@ ul#ops-list {/*also has classes .secondary and .tabs)*/
 .op-content .form-submit, .op-content .form-item, .op-content form {
   margin: 0.2em !important;
 }
+#ops-list li.loading a, .op-content input.loading {
+  background-image: url(loading.gif);
+  background-repeat: no-repeat;
+  background-position: center right;
+  padding-right: 18px;
+}
 
 #log-wrapper div {
   padding: 0em;
-  margin: 0.1em;
+  margin: 0.1em 0.5em;
   border: none;
   background: none;
   font-size: 0.9em;
