@@ -6,11 +6,10 @@ drupal_add_js('misc/jquery.form.js');
 //orginal files reside in drupal_get_path('module', 'imce').
 drupal_add_js($directory .'/js/imce.js');
 drupal_add_css($directory .'/css/content.css');
-
 ?>
 <!--[if IE]><style type="text/css">#file-list-wrapper{padding-right: 2em}#file-list{margin-right: -2em}</style><![endif]-->
-<!--[if IE 6]><style type="text/css">#image-preview{width: 99%;}.y-resizer{font-size: 0.2em;}#sub-browse-wrapper {float: left; clear: right;}</style><![endif]-->
-<noscript><?php print t('You should use a javascript-enabled browser in order to experince a much more user-friendly interface. You can still upload files or operate on them by manually entering the names into the selected files field.'); ?></noscript>
+<!--[if IE 6]><style type="text/css">.y-resizer{font-size: 0.2em;}#sub-browse-wrapper{float: left; clear: right;}#preview-wrapper{overflow: visible;}#file-preview{width: 99%; height: 99%; overflow: auto;}</style><![endif]-->
+<noscript><?php print t('You should use a javascript-enabled browser in order to experince a much more user-friendly interface.'); ?></noscript>
 
 <div id="imce-content">
 
@@ -46,18 +45,20 @@ drupal_add_css($directory .'/css/content.css');
       )); ?>
     </div>
     
-    <div id="preview-resizer" class="y-resizer"></div>
-
-    <div id="image-preview"></div>
+    <div id="file-list-resizer" class="y-resizer"></div>
+    
+    
+    <div id="log-prv-wrapper">
+      <div id="log-wrapper"></div>
+      <div id="log-resizer" class="x-resizer"></div>
+      <div id="preview-wrapper"><div id="file-preview"></div></div>
+    </div>
 
   </div>
 </div>
 
 <div id="browse-resizer" class="y-resizer"></div>
 
-<div id="log-wrapper"></div>
-
-<div id="log-resizer" class="y-resizer"></div>
 <a href="#" id="log-clearer"><?php print t('Clear log'); ?></a>
 
 <div id="forms-wrapper"><?php print $forms; ?></div>
