@@ -11,7 +11,7 @@ drupal_add_css($directory .'/css/content.css');
 <!--[if IE 6]><style type="text/css">.y-resizer{font-size: 0.2em;}#sub-browse-wrapper{float: left; clear: right;}#preview-wrapper{overflow: visible;}#file-preview{width: 99%; height: 99%; overflow: auto;}</style><![endif]-->
 <noscript><?php print t('You should use a javascript-enabled browser in order to experince a much more user-friendly interface.'); ?></noscript>
 
-<div id="imce-content">
+<div id="imce-content"><div id="resizable-content">
 
 <div id="browse-wrapper">
 
@@ -45,7 +45,7 @@ drupal_add_css($directory .'/css/content.css');
       )); ?>
     </div>
 
-  </div>
+  </div><!-- sub-browse-wrapper -->
 </div><!-- browse-wrapper -->
 
 <div id="browse-resizer" class="y-resizer"></div>
@@ -75,7 +75,7 @@ drupal_add_css($directory .'/css/content.css');
       <li><?php print t('Use Shift+click to create a range selection. Click to start the range and shift+click to end it.'); ?></li>
     </ul>
     <?php print t('Limitations'); ?>:
-    <ul class="limits">
+    <ul class="tips">
       <li><?php print t('Maximum file size per upload') .': '. ($imce['filesize'] ? format_size($imce['filesize']) : t('unlimited')); ?></li>
       <li><?php print t('Permitted file extensions') .': '. ($imce['extensions'] != '*' ? $imce['extensions'] : t('all')); ?></li>
       <li><?php print t('Maximum image resolution') .': '. ($imce['dimensions'] ? $imce['dimensions'] : t('unlimited')); ?></li>
@@ -84,11 +84,11 @@ drupal_add_css($directory .'/css/content.css');
     </div>
   </div>
 
-</div>
+</div><!-- ops-wrapper -->
 
-</div><!-- end:imce-content -->
-
+</div><!-- resizable-content -->
 <div id="content-resizer" class="y-resizer"></div>
-
 <a href="#" id="log-clearer" class="imce-hide"><?php print t('Clear log'); ?></a>
+
+</div><!-- imce-content -->
 
