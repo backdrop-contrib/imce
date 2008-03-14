@@ -48,7 +48,7 @@ function imce_content($user, $jsop = '') {
   $content = theme('imce_content', imce_create_tree($imce), $forms, $imce_ref);
   //make necessary changes for js conversion
   $imce['dir'] = str_replace('%2F', '/', rawurlencode($imce['dir']));
-  unset($imce['files'], $imce['name'], $imce['directories'], $imce['subdirectories']);
+  unset($imce['files'], $imce['name'], $imce['directories'], $imce['subdirectories'], $imce['filesize'], $imce['quota'], $imce['thumbnails'], $imce['uid']);
   drupal_add_js('imce.conf = '. drupal_to_js($imce), 'inline');
 
   return $content;
@@ -217,7 +217,7 @@ function imce_fileop_form_validate($form, &$form_state) {
   $cnt = count($filenames);
   //check the number of files.
   if ($imce['filenum'] && $cnt > $imce['filenum']) {
-    return form_error($form['filenames'], t('You are not allowed to operate on more than @num files.', array('@num' => $imce['filenum'])));
+    return form_error($form['filenames'], t('You are not allowed to operate on more than %num files.', array('%num' => $imce['filenum'])));
   }
 
   //check if there is any illegal choice
@@ -386,7 +386,7 @@ function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $de
 
   //check if the file is an image
   if (!$imce['files'][$filename]['width'] || !$img = imce_image_info($filepath)) {
-    drupal_set_message(t('%filename is not resizable.', array('%filename' => utf8_encode($filename))), 'error', FALSE);
+    drupal_set_message(t('%filename is not an image.', array('%filename' => utf8_encode($filename))), 'error', FALSE);
     return FALSE;
   }
 
@@ -608,10 +608,12 @@ function imce_initiate_profile($user) {
       }
       return $imce;
     }
+    drupal_set_message(t('There is no valid directory specified for the file browser!'), 'error');
+  }
+  else {
+    drupal_set_message(t('You don\'t have access to any configuration profile to use the file browser!'), 'error');
   }
 
-  //can't initiate profile.
-  drupal_set_message(t('File browser is not configured properly!'), 'error');
   return FALSE;
 }
 
