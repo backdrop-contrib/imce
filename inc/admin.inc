@@ -65,7 +65,7 @@ function imce_admin_form($form_state) {
     '#description' => t('Check if you want IMCE to return absolute file URLs.'),
   );
 
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Save configuration'));
   $form['#theme'] = 'imce_admin';
   $form['#submit'][] = 'imce_admin_submit';
   return $form;
@@ -222,7 +222,7 @@ function imce_profile_form($form_state, $pid = 0) {
 
   $form = array('profile' => $form);
   $form['pid'] = array('#type' => 'hidden', '#value' => $pid);
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Save configuration'));
   //$form['#action'] = url('admin/settings/imce/profile/'. $pid);
   $form['#submit'][] = 'imce_profile_submit';
   return $form;
