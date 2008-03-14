@@ -9,7 +9,7 @@ function imce_js_navigate(&$imce) {
   $imce['dir'] = str_replace('%2F', '/', rawurlencode($imce['dir']));
   $imce['dirsize'] = format_size($imce['dirsize']);
   $imce['subdirectories'] = array_map('rawurlencode', $imce['subdirectories']);
-  unset($imce['name'], $imce['directories']);
+  unset($imce['name'], $imce['directories'], $imce['filesize'], $imce['quota'], $imce['thumbnails'], $imce['uid']);
   return $imce;
 }
 
