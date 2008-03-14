@@ -44,22 +44,17 @@ drupal_add_css($directory .'/css/content.css');
         '!quota' => '<span id="dir-quota">'. ($imce['quota'] ? format_size($imce['quota']) : t('unlimited quota')) .'</span>'
       )); ?>
     </div>
-    
-    <div id="file-list-resizer" class="y-resizer"></div>
-    
-    
-    <div id="log-prv-wrapper">
-      <div id="log-wrapper"></div>
-      <div id="log-resizer" class="x-resizer"></div>
-      <div id="preview-wrapper"><div id="file-preview"></div></div>
-    </div>
 
   </div>
-</div>
+</div><!-- browse-wrapper -->
 
 <div id="browse-resizer" class="y-resizer"></div>
 
-<a href="#" id="log-clearer"><?php print t('Clear log'); ?></a>
+<div id="log-prv-wrapper">
+  <div id="log-wrapper"></div>
+  <div id="log-resizer" class="x-resizer"></div>
+  <div id="preview-wrapper"><div id="file-preview"></div></div>
+</div>
 
 <div id="forms-wrapper"><?php print $forms; ?></div>
 
@@ -92,4 +87,8 @@ drupal_add_css($directory .'/css/content.css');
 </div>
 
 </div><!-- end:imce-content -->
+
+<div id="content-resizer" class="y-resizer"></div>
+
+<a href="#" id="log-clearer" class="imce-hide"><?php print t('Clear log'); ?></a>
 

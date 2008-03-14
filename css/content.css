@@ -1,19 +1,28 @@
 /* $Id$ */
 
 /*Main container*/
-#imce-content {}
+#imce-content {
+  font-size: 11px;
+  font-family: Verdana, Tahoma;
+}
 
 /*Main sections under imce-content*/
 #ops-wrapper {}
 #browse-wrapper {
   overflow: hidden;
-  height: 36em;
-  border: 0.2em solid #ccc;
+  height: 24em;
+  border: 0.1em solid #ccc;
+  border-bottom: none;
 }
 #browse-resizer {}
-.js #forms-wrapper {
-  display: none;
+#log-prv-wrapper {
+  height: 12em;
+  border-left: 0.1em solid #ccc;
+  border-right: 0.1em solid #ccc;
+  overflow: hidden;
 }
+#forms-wrapper {}
+#content-resizer {}
 
 /*columns of browse-wrapper*/
 #navigation-wrapper {
@@ -31,6 +40,23 @@
   overflow: hidden;
 }
 
+/*columns of log-prv-wrapper*/
+#log-wrapper {
+  height: 100%;
+  width: 50%;
+  float: left;
+  overflow: auto;
+  background-color: #eee;
+}
+#log-resizer {
+  height: 100%;
+  float: left;
+}
+#preview-wrapper {
+  height: 100%;
+  overflow: auto;
+}
+
 /*rows of sub-browse wrapper*/
 #file-header-wrapper {
   height: 2em;
@@ -38,42 +64,15 @@
   padding: 0.1em 2em 0em 0.1em;
 }
 #file-list-wrapper {
-  height: 18em;
+  height: 20.2em;
   overflow: auto;
   padding: 0.1em 1em 0em 0.1em;
 }
 #dir-stat {
   font-size: 0.9em;
-  height: 2em;
+  height: 1.8em;
   padding: 0em 0.5em;
-  border-top: 1px solid #ccc;
-}
-#file-list-resizer {}
-#log-prv-wrapper {
-  height: 14em;
-  overflow: hidden;
-}
-#log-wrapper {
-  height: 99%;
-  width: 50%;
-  float: left;
-  overflow: auto;
-  background-color: #ddd;
-}
-#log-resizer {
-  height: 99%;
-  float: left;
-}
-#preview-wrapper {
-  height: 99%;
-  overflow: auto;
-}
-#file-preview {
-  text-align: center;
-}
-a#log-clearer {
-  display: none;
-  font-size: 0.9em;
+  background-color: #f5f5f5;
 }
 
 /*Navigation tree (ul)*/
@@ -106,13 +105,14 @@ a#log-clearer {
 #navigation-tree li span.expander {
   font-size: 12px;
   cursor: pointer;
+  margin-right: 0.1em;
 }
 #navigation-tree li a {
   display: inline;
 }
 #navigation-tree li a.folder {
   margin-left: 0.2em;
-  padding-left: 20px;
+  padding-left: 18px;
   background: transparent url(folder.png) no-repeat 0em 0em;
 }
 #navigation-tree li a.active {
@@ -128,8 +128,8 @@ table.files {
 }
 table.files td {
   overflow: hidden;
-  border-top: 1px solid #9cc;
-  border-bottom: 1px solid #9cc;
+  border-top: 1px solid #cc9;
+  border-bottom: 1px solid #cc9;
   padding: 0.1em 0.2em;
 }
 table.files td.name {
@@ -166,15 +166,15 @@ table.files tbody {
   color: #f63;
 }
 #file-list tr:hover {
-  background-color: #cfc;
+  background-color: #f5f5f5;
 }
 #file-list tr.selected {}
 
 
-/*File operations. List and contents*/
+/*File operations*/
 #op-items {}
 #op-contents {}
-ul#ops-list {/*also has classes .secondary and .tabs)*/
+ul#ops-list {/*has classes .secondary and .tabs)*/
   margin: 0.4em;
   padding: 0;
   float: none;
@@ -185,7 +185,6 @@ ul#ops-list {/*also has classes .secondary and .tabs)*/
   margin: 0em 20%;
   text-align: left;
   padding: 0.3em;
-  font-size: 0.9em;
   display: none;
 }
 .op-content label, .op-content .form-checkboxes, .op-content .form-checkboxes .form-item {
@@ -194,6 +193,9 @@ ul#ops-list {/*also has classes .secondary and .tabs)*/
 .op-content .form-submit, .op-content .form-item, .op-content form {
   margin: 0.2em !important;
 }
+.op-content .form-submit {
+  font-size: 1em;
+}
 #ops-list li.loading a, .op-content input.loading {
   background-image: url(loading.gif);
   background-repeat: no-repeat;
@@ -201,12 +203,12 @@ ul#ops-list {/*also has classes .secondary and .tabs)*/
   padding-right: 18px;
 }
 
+/*Log messages*/
 #log-wrapper div {
   padding: 0em;
   margin: 0.1em 0.5em;
   border: none;
   background: none;
-  font-size: 0.9em;
 }
 #log-wrapper span.time {
   color: #444;
@@ -214,19 +216,25 @@ ul#ops-list {/*also has classes .secondary and .tabs)*/
 #log-wrapper .status {}
 #log-wrapper .warning {}
 #log-wrapper .error {}
+a#log-clearer {
+  font-size: 0.9em;
+}
 
 /*resizers*/
 .y-resizer {
-  height: 3px;
+  height: 1px;
   cursor: n-resize;
   background: #d4d0c8 url(y-grippie.png) no-repeat center top;
 }
 .x-resizer {
-  width: 3px;
+  width: 1px;
   cursor: e-resize;
   background: #d4d0c8 url(x-grippie.png) no-repeat left center;
 }
 
-.imce-hide {
+#file-preview {
+  text-align: center;
+}
+.imce-hide, .js #forms-wrapper {
   display: none;
 }
