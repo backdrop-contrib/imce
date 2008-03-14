@@ -466,14 +466,17 @@ imce.fopComplete = function (response, fop) {
 
 //prepare column sorting
 imce.initiateSorting = function() {
+  imce.vars.cid = imce.cookie('icid')*1;
+  imce.vars.dsc = imce.cookie('idsc')*1;
   imce.cols = imce.el('file-header').rows[0].cells;
-  if (typeof(imce.vars.cid) != 'undefined' && (imce.vars.cid != 0 || imce.vars.dsc)) {
+  if (imce.vars.cid || imce.vars.dsc) {
     imce.columnSort(imce.vars.cid, imce.vars.dsc);
   }
   else {
-    $(imce.cols[imce.vars.cid = 0]).addClass('asc');
+    $(imce.cols[0]).addClass('asc');
   }
   $(imce.cols).click(function () {imce.columnSort(this.cellIndex, !this.dsc);});
+  $(window).unload(function() {imce.cookie('icid', imce.vars.cid); imce.cookie('idsc', imce.vars.dsc ? 1 : 0);});
 };
 
 //sort file list according to column index.
@@ -508,7 +511,7 @@ imce.initiateResizeBars = function () {
   imce.setResizer('navigation-resizer', 'X', 'navigation-wrapper', null, 1);
   imce.setResizer('log-resizer', 'X', 'log-wrapper', null, 1);
   imce.setResizer('browse-resizer', 'Y', 'browse-wrapper', 'log-prv-wrapper', 50, imce.resizeList);
-  imce.setResizer('content-resizer', 'Y', 'imce-content', null, 150, imce.resizeRows);
+  imce.setResizer('content-resizer', 'Y', 'resizable-content', null, 150, imce.resizeRows);
 };
 
 //set a resize bar
@@ -714,6 +717,13 @@ imce.fid = function (row) {
 //el. by id
 imce.el = function (id) {
   return document.getElementById(id);
+};
+//cookie get & set
+imce.cookie = function (name, value) {
+  if (typeof(value) == 'undefined') {//get
+    return unescape((document.cookie.match(new RegExp('(^|;) *'+ name +'=([^;]*)(;|$)')) || ['', '', ''])[2]);
+  }
+  document.cookie = name +'='+ escape(value) +'; expires='+ (new Date(new Date()*1 + 30*86400000)).toGMTString() +'; path=/';//set
 };
 //sorters
 imce.sortStrAsc = function(a, b) {return a.toLowerCase() < b.toLowerCase() ? -1 : 1;};
