@@ -382,44 +382,40 @@ imce.uploadValidate = function (data, form) {
   if (imce.conf.extensions != '*') {
     var ext = path.substr(path.lastIndexOf('.') + 1);
     if ((' '+ imce.conf.extensions +' ').indexOf(' '+ ext +' ') == -1) {
-      imce.setMessage(Drupal.t('Only files with the following extensions are allowed: %files-allowed.', {'%files-allowed': imce.conf.extensions}), 'error');
-      return false;
+      return imce.setMessage(Drupal.t('Only files with the following extensions are allowed: %files-allowed.', {'%files-allowed': imce.conf.extensions}), 'error');
     }
   }
   var sep = path.indexOf('/') == -1 ? '\\' : '/';
   imce.setMessage(Drupal.t('Uploading %filename...', {'%filename': path.substr(path.lastIndexOf(sep) + 1)}));
-  imce.loading('upload', true);
+  imce.fopLoading('upload', true);
   return true;
 };
 
 //settings for upload
 imce.uploadSettings = function () {
-  return {'url': imce.conf.url +'&jsop=upload', 'beforeSubmit': imce.uploadValidate, 'success': function (response) {imce.processResponse(Drupal.parseJson(response));}, 'complete': function () {imce.loading('upload', false);}, 'resetForm': true};
+  return {'url': imce.conf.url +'&jsop=upload', 'beforeSubmit': imce.uploadValidate, 'success': function (response) {imce.processResponse(Drupal.parseJson(response));}, 'complete': function () {imce.fopLoading('upload', false);}, 'resetForm': true};
 };
 
 /**************** FILE OPS  ********************/
 //validate default ops(delete, thumb, resize)
 imce.fopValidate = function(fop) {
-  if (!imce.commonValidate()) return false;
+  if (!imce.validateCount()) return false;
   switch (fop) {
     case 'thumb':
       if (!$('#op-content-thumb input:checked').size()) {
-        alert(Drupal.t('Please select a thumbnail.'));
-        return false;
+        return imce.setMessage(Drupal.t('Please select a thumbnail.'), 'error');
       }
-      break;
+      return imce.validateImage();
     case 'delete':
       return confirm(Drupal.t('Delete selected files?'));
-      break;
     case 'resize':
       var w = imce.el('edit-width').value, h = imce.el('edit-height').value;
       var maxDim = imce.conf.dimensions.split('x');
       var maxW = parseInt(maxDim[0]), maxH = maxW ? parseInt(maxDim[1]) : 0;
-      if (w.search(/^[1-9][0-9]*$/) < 0 || h.search(/^[1-9][0-9]*$/) < 0 || (maxW && (maxW < w*1 || maxH < h*1))) {
-        alert(Drupal.t('Please specify dimensions within the allowed range that is from 1x1 to @dimensions.', {'@dimensions': maxW ? imce.conf.dimensions : Drupal.t('unlimited')}));
-        return false;
+      if (w.search(/^[1-9][0-9]*$/) == -1 || h.search(/^[1-9][0-9]*$/) == -1 || (maxW && (maxW < w*1 || maxH < h*1))) {
+        return imce.setMessage(Drupal.t('Please specify dimensions within the allowed range that is from 1x1 to @dimensions.', {'@dimensions': maxW ? imce.conf.dimensions : Drupal.t('unlimited')}), 'error');
       }
-      break;
+      return imce.validateImage();
   }
   return true;
 };
@@ -436,21 +432,8 @@ imce.fopSubmit = function(fop) {
 //common submit function shared by default ops
 imce.commonSubmit = function(fop) {
   if (!imce.fopValidate(fop)) return false;
-  imce.loading(fop, true);
+  imce.fopLoading(fop, true);
   $.ajax(imce.fopSettings(fop));
-};
-
-//common validation for any file op.
-imce.commonValidate = function () {
-  if (!imce.vars.selcount) {
-    alert(Drupal.t('Please select a file.'));
-    return false;
-  }
-  if (imce.conf.filenum && imce.vars.selcount > imce.conf.filenum) {
-    alert(Drupal.t('You are not allowed to operate on more than @num files.', {'@num': imce.conf.filenum}));
-    return false;
-  }
-  return true;
 };
 
 //settings for default file operations
@@ -462,44 +445,8 @@ imce.fopSettings = function (fop) {
   return settings;
 };
 
-//process response
-imce.processResponse = function (response) {
-  if (response.data) imce.resData(response.data);
-  if (response.messages) imce.resMsgs(response.messages);
-};
-
-//process response data
-imce.resData = function (data) {
-  if (data.added) {
-    var cnt = imce.fileIndex.length;
-    for (var i in data.added) {//add new files or update existing
-      imce.fileAdd(data.added[i]);
-    }
-    if (data.added.length == 1) {//if it is a single file operation
-      var fid = data.added[0].name;
-      if (imce.vars.prvid != fid) imce.fileClick(fid);//highlight
-    }
-    if (imce.fileIndex.length != cnt) {//if new files added
-      var flw = imce.el('file-list-wrapper');
-      $(flw).animate({'scrollTop': flw.scrollHeight});//scroll to bottom.
-    }
-  }
-  if (data.removed) for (var i in data.removed) {
-    imce.fileRemove(data.removed[i]);
-  }
-  imce.conf.dirsize = data.dirsize;
-  imce.updateStat();
-};
-
-//set response messages
-imce.resMsgs = function (msgs) {
-  for (var type in msgs) for (var i in msgs[type]) {
-    imce.setMessage(msgs[type][i], type);
-  }
-};
-
-//add remove loading 
-imce.loading = function(fop, state) {
+//toggle loading state
+imce.fopLoading = function(fop, state) {
   var el = imce.el('edit-'+ fop), func = state ? 'addClass' : 'removeClass'
   if (el) {
     $(el)[func]('loading').attr('disabled', state);
@@ -512,12 +459,7 @@ imce.loading = function(fop, state) {
 
 //complete file operation
 imce.fopComplete = function (response, fop) {
-  imce.loading(fop, false);
-};
-
-//global ajax error function
-imce.ajaxError = function (e, response, settings, thrown) {
-  imce.setMessage(Drupal.ahahError(response, settings.url).replace('\n', '<br />'), 'error');
+  imce.fopLoading(fop, false);
 };
 
 /**************** SORTING ********************/
@@ -564,9 +506,9 @@ imce.columnSort = function(cid, dsc) {
 //set resizers for resizable areas.
 imce.initiateResizeBars = function () {
   imce.setResizer('navigation-resizer', 'X', 'navigation-wrapper', null, 1);
-  imce.setResizer('file-list-resizer', 'Y', 'file-list-wrapper', 'log-prv-wrapper', 1);
-  imce.setResizer('log-resizer', 'X', 'log-wrapper', null, 1, imce.setRatio);
-  imce.setResizer('browse-resizer', 'Y', 'browse-wrapper', null, 20, imce.resizeList);
+  imce.setResizer('log-resizer', 'X', 'log-wrapper', null, 1);
+  imce.setResizer('browse-resizer', 'Y', 'browse-wrapper', 'log-prv-wrapper', 50, imce.resizeList);
+  imce.setResizer('content-resizer', 'Y', 'imce-content', null, 150, imce.resizeRows);
 };
 
 //set a resize bar
@@ -589,29 +531,29 @@ imce.setResizer = function (resizer, axis, area1, area2, Min, endF) {
     function endDrag(e) {
       $(document).unbind("mousemove", doDrag).unbind("mouseup", endDrag);
       if (endF) {
-        endF(area1, area2, end, Max-end, end-start, O.func);
+        endF(start, end, Max);
       }
     }
   }).mousedown();
   $(document).mouseup();
 };
 
-//set ratios for resizable areas.
-imce.setRatio = function(area1, area2, val1, val2, diff, func) {
-  var total = $(imce.el(area1).parentNode)[func]();
-  $(imce.el(area1))[func](Math.round(val1 * 100 / total) + '%');
-  if (area2) $(imce.el(area2))[func](Math.round(val2 * 100 / total) + '%');
+//set height file-list area
+imce.resizeList = function(start, end, Max) {
+  var el = $(imce.el('file-list-wrapper')), h = el.height() + end - start;
+  el.height(h < 1 ? 1 : h);
 };
 
-//set heights of file-list and log-prv.
-imce.resizeList = function(area1, area2, val1, val2, diff, func) {
-  var el1 = $(imce.el('file-list-wrapper')), h1 = el1.height();
+//set heights of browse and log-prv areas.
+imce.resizeRows = function(start, end, Max) {
+  var el1 = $(imce.el('browse-wrapper')), h = h1 = el1.height();
   var el2 = $(imce.el('log-prv-wrapper')), h2 = el2.height();
-  var r = h1 / (h1 + h2);
-  h1 += Math.round(diff * r);
-  h2 += Math.round(diff * (1 - r));
-  el1.height(h1 < 1 ? 1 : h1);
-  el2.height(h2 < 1 ? 1 : h2);
+  var diff = end - start, r1 = h1 / (h1 + h2), d1 = Math.round(diff * r1);
+  h1 = Math.max(h+d1, 50);
+  h2 += diff - (h1-h);
+  el1.height(h1);
+  el2.height(h2);
+  imce.resizeList(h, h1);
 };
 
 /**************** PREVIEW & EXTERNAL APP  ********************/
@@ -668,6 +610,7 @@ imce.setMessage = function (msg, type) {
   var type = type || 'status';
   var msg = '<span class="time">'+ imce.logTime() +'</span> ' + msg;
   $(logs).append($(document.createElement('div')).addClass(type).html(msg)).animate({'scrollTop': logs.scrollHeight}, 'slow');
+  return false;
 };
 
 //return time in HH:MM:SS format for log
@@ -681,8 +624,67 @@ imce.logTime = function () {
   return arr.join(':');
 };
 
-/**************** HELPER FUNCTIONS  ********************/
-
+/**************** OTHER HELPER FUNCTIONS  ********************/
+//process response
+imce.processResponse = function (response) {
+  if (response.data) imce.resData(response.data);
+  if (response.messages) imce.resMsgs(response.messages);
+};
+//process response data
+imce.resData = function (data) {
+  if (data.added) {
+    var cnt = imce.fileIndex.length;
+    for (var i in data.added) {//add new files or update existing
+      imce.fileAdd(data.added[i]);
+    }
+    if (data.added.length == 1) {//if it is a single file operation
+      var fid = data.added[0].name;
+      if (imce.vars.prvid != fid) imce.fileClick(fid);//highlight
+    }
+    if (imce.fileIndex.length != cnt) {//if new files added
+      var flw = imce.el('file-list-wrapper');
+      $(flw).animate({'scrollTop': flw.scrollHeight});//scroll to bottom.
+    }
+  }
+  if (data.removed) for (var i in data.removed) {
+    imce.fileRemove(data.removed[i]);
+  }
+  imce.conf.dirsize = data.dirsize;
+  imce.updateStat();
+};
+//set response messages
+imce.resMsgs = function (msgs) {
+  for (var type in msgs) for (var i in msgs[type]) {
+    imce.setMessage(msgs[type][i], type);
+  }
+};
+//check if the file is an image
+imce.isImage = function (fid) {
+  return parseInt(imce.fileId[fid].cells[2].innerHTML);
+};
+//find the first non-image in the selection
+imce.getNonImage = function (selected) {
+  for (var fid in selected) {
+    if (!imce.isImage(fid)) return fid;
+  }
+  return false;
+};
+//validate current selection for images
+imce.validateImage = function () {
+  var nonImg = imce.getNonImage(imce.selected);
+  return nonImg ? imce.setMessage(Drupal.t('%filename is not an image.', {'%filename': nonImg}), 'error') : true;
+};
+//validate number of selected files
+imce.validateCount = function () {
+  if (!imce.vars.selcount) {
+    alert(Drupal.t('Please select a file.'));
+    return false;
+  }
+  if (imce.conf.filenum && imce.vars.selcount > imce.conf.filenum) {
+    return imce.setMessage(Drupal.t('You are not allowed to operate on more than %num files.', {'%num': imce.conf.filenum}), 'error');
+  }
+  return true;
+};
 //update file count and dir size
 imce.updateStat = function () {
   imce.el('file-count').innerHTML = imce.fileIndex.length;
@@ -718,6 +720,11 @@ imce.sortStrAsc = function(a, b) {return a.toLowerCase() < b.toLowerCase() ? -1 
 imce.sortStrDsc = function(a, b) {return b.toLowerCase() < a.toLowerCase() ? -1 : 1;};
 imce.sortNumAsc = function(a, b) {return a-b;};
 imce.sortNumDsc = function(a, b) {return b-a};
+
+//global ajax error function
+imce.ajaxError = function (e, response, settings, thrown) {
+  imce.setMessage(Drupal.ahahError(response, settings.url).replace('\n', '<br />'), 'error');
+};
 
 //initiate
 $(document).ready(imce.initiate).ajaxError(imce.ajaxError);
