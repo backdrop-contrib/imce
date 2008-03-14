@@ -170,11 +170,5 @@ function imce_user_page_access($account, $user = FALSE) {
  * Check if the directory name is regular.
  */
 function imce_reg_dir($dirname) {
-  if (!is_string($dirname) || trim($dirname) == '') {
-    return FALSE;
-  }
-  if ($dirname == '.') {
-    return TRUE;
-  }
-  return !preg_match('/(^\/)|(\.\.)|(\/\/)|(\\\\)|(^\.\/)|(\/\.\/)|(\/\.$)|(^ )|( $)|(\/$)/', $dirname);
+  return $dirname == '.' || (is_string($dirname) && $dirname != '' && !preg_match('@(^\s)|(^/)|(^\./)|(\s$)|(/$)|(/\.$)|(\.\.)|(//)|(\\\\)|(/\./)@', $dirname));
 }
