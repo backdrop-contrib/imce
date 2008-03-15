@@ -1,7 +1,7 @@
 // $Id$
 
 //Global container.
-var imce = {'jsTree': {}, 'fileIndex': [], 'fileId': {}, 'selected': {}, 'conf': {}, 'ops': {}, 'vars': {'selcount': 0}};
+var imce = {'jsTree': {}, 'fileIndex': [], 'fileId': {}, 'selected': {}, 'conf': {}, 'ops': {}, 'vars': {'previewImages': 1}};
 
 //initiate imce.
 imce.initiate = function() {
@@ -107,9 +107,8 @@ imce.dirCollapsible = function (branch) {
 
 //process file list
 imce.initiateList = function() {
+  imce.fileIndex = []; imce.fileId = {}; imce.selected = {}; imce.vars.selcount = 0;
   imce.tbody = imce.el('file-list').tBodies[0];
-  imce.fileIndex = [];
-  imce.fileId = {};
   var token = {'%dir': imce.conf.dir == '.' ? imce.jsTree['.'].a.firstChild.data : unescape(imce.conf.dir)};
   if (imce.tbody.rows.length) {
     for (var i=0; row = imce.tbody.rows[i]; i++) {
@@ -129,9 +128,7 @@ imce.fileAdd = function(file) {
   var row, i = imce.fileIndex.length, attr = ['name', 'size', 'width', 'height', 'date'];
   if (!(row = imce.fileId[file.name])) {
     row = imce.fileIndex[i] = imce.fileId[file.name] = imce.tbody.insertRow(i);
-    for (i in attr) {
-      row.insertCell(i).className = attr[i];
-    }
+    for (i in attr) row.insertCell(i).className = attr[i];
     row.cells[0].innerHTML = unescape(file.name); row.cells[0].id = file.name;
     $(row).click(function(e) {imce.fileClick(this, e.ctrlKey, e.shiftKey)});
   }
@@ -292,8 +289,7 @@ imce.opAdd = function (op) {
 //perform op click
 imce.opClick = function(name) {
   if (!imce.ops[name] || imce.ops[name].disabled) {
-    alert(Drupal.t('You can\'t perform this operation.'));
-    return false;
+    return imce.setMessage(Drupal.t('You can\'t perform this operation.'), 'error');
   }
   if (imce.ops[name].div) {
     if (imce.vars.op) {
@@ -352,8 +348,6 @@ imce.navSet = function (dir) {
       imce.dirActivate(dir);
       imce.conf = response.data;
       $(imce.el('file-list-wrapper')).html(imce.conf.files);
-      imce.selected = {};
-      imce.vars.selcount = 0;
       imce.initiateList();
       imce.updateTree();
       imce.updateStat();
@@ -506,12 +500,13 @@ imce.columnSort = function(cid, dsc) {
 
 /**************** RESIZE-BARS  ********************/
 
-//set resizers for resizable areas.
+//set resizers for resizable areas and recall previous dimensions
 imce.initiateResizeBars = function () {
   imce.setResizer('navigation-resizer', 'X', 'navigation-wrapper', null, 1);
   imce.setResizer('log-resizer', 'X', 'log-wrapper', null, 1);
   imce.setResizer('browse-resizer', 'Y', 'browse-wrapper', 'log-prv-wrapper', 50, imce.resizeList);
   imce.setResizer('content-resizer', 'Y', 'resizable-content', null, 150, imce.resizeRows);
+  imce.recallDimensions();
 };
 
 //set a resize bar
@@ -521,24 +516,19 @@ imce.setResizer = function (resizer, axis, area1, area2, Min, endF) {
   $(imce.el(resizer)).mousedown(function(e) {
     var pos = e[O.pos];
     var end = start = $(imce.el(area1))[O.func]();
-    var Max = area2 ? (start + $(imce.el(area2))[O.func]()) : 1200;
+    var Max = area2 ? (start + $(imce.el(area2))[O.func]()) : $(document)[O.func]();
     $(document).mousemove(doDrag).mouseup(endDrag);
     function doDrag(e) {
       end = Math.min(Max - Min, Math.max(start + e[O.pos] - pos, Min));
       $(imce.el(area1))[O.func](end);
-      if (area2) {
-        $(imce.el(area2))[O.func](Max - end);
-      }
+      if (area2) $(imce.el(area2))[O.func](Max - end);
       return false;
     }
     function endDrag(e) {
       $(document).unbind("mousemove", doDrag).unbind("mouseup", endDrag);
-      if (endF) {
-        endF(start, end, Max);
-      }
+      if (endF) endF(start, end, Max);
     }
-  }).mousedown();
-  $(document).mouseup();
+  });
 };
 
 //set height file-list area
@@ -559,6 +549,26 @@ imce.resizeRows = function(start, end, Max) {
   imce.resizeList(h, h1);
 };
 
+//get area dimensions of the last session from the cookie
+imce.recallDimensions = function() {
+  var h1 = imce.cookie('ih1')*1, h2 = imce.cookie('ih2')*1, w1 = imce.cookie('iw1')*1, w2 = imce.cookie('iw2')*1;
+  if (h1) {
+    var el = $(imce.el('browse-wrapper')), h0 = el.height();
+    el.height(h1);
+    imce.resizeList(h0, h1);
+  }
+  if (h2) $(imce.el('log-prv-wrapper')).height(h2);
+  if (w1) $(imce.el('navigation-wrapper')).width(Math.min(w1, 99) +'%');
+  if (w2) $(imce.el('log-wrapper')).width(Math.min(w2, 99) +'%');
+  $(window).unload(function() {
+    imce.cookie('ih1', $(imce.el('browse-wrapper')).height());
+    imce.cookie('ih2', $(imce.el('log-prv-wrapper')).height());
+    var el1 = imce.el('navigation-wrapper'), el2 = imce.el('log-wrapper');
+    imce.cookie('iw1', Math.max(Math.round($(el1).width() * 100 / $(el1.parentNode).width()), 1));
+    imce.cookie('iw2', Math.max(Math.round($(el2).width() * 100 / $(el2.parentNode).width()), 1));
+  });
+}
+
 /**************** PREVIEW & EXTERNAL APP  ********************/
 
 //preview a file.
@@ -567,7 +577,7 @@ imce.setPreview = function (fid) {
   imce.vars.prvid = fid;
   if (fid && (row = imce.fileId[fid])) {
     var width = parseInt(row.cells[2].innerHTML);
-    html = width ? ('<img src="'+ imce.getURL(fid) +'" width="'+ width +'" height="'+ row.cells[3].innerHTML +'" alt="">') : unescape(fid);
+    html = imce.vars.previewImages && width ? ('<img src="'+ imce.getURL(fid) +'" width="'+ width +'" height="'+ row.cells[3].innerHTML +'" alt="">') : unescape(fid);
     html = '<a href="#" onclick="imce.send(\''+ fid +'\'); return false;" title="'+ (imce.vars.prvtitle||'') +'">'+ html +'</a>';
   }
   imce.el('file-preview').innerHTML = html;
@@ -680,8 +690,7 @@ imce.validateImage = function () {
 //validate number of selected files
 imce.validateCount = function () {
   if (!imce.vars.selcount) {
-    alert(Drupal.t('Please select a file.'));
-    return false;
+    return imce.setMessage(Drupal.t('Please select a file.'), 'error');
   }
   if (imce.conf.filenum && imce.vars.selcount > imce.conf.filenum) {
     return imce.setMessage(Drupal.t('You are not allowed to operate on more than %num files.', {'%num': imce.conf.filenum}), 'error');
