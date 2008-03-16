@@ -91,7 +91,7 @@ function imce_upload_form(&$form_state, $ref) {
   $form['upload'] = array(
     '#type' => 'submit',
     '#value' => t('Upload'),
-    '#submit' => $imce['perm']['upload'] ? array('imce_upload_submit') : NULL,//check permission
+    '#submit' => $imce['perm']['upload'] ? array('imce_upload_submit') : NULL,//permission for submission
     '#suffix' => '</div>',
   );
   if (!empty($imce['thumbnails'])) {
@@ -155,7 +155,7 @@ function imce_thumb_form(&$imce) {
   $form['thumb'] = array(
     '#type' => 'submit',
     '#value' => t('Create'),
-    '#submit' => $imce['perm']['thumb'] ? array('imce_thumb_submit') : NULL,//check permission
+    '#submit' => $imce['perm']['thumb'] ? array('imce_thumb_submit') : NULL,//permission for submission
   );
   return $form;
 }
@@ -167,7 +167,7 @@ function imce_delete_form(&$imce) {
   $form['delete'] = array(
     '#type' => 'submit',
     '#value' => t('Delete'),
-    '#submit' => $imce['perm']['delete'] ? array('imce_delete_submit') : NULL,//check permission
+    '#submit' => $imce['perm']['delete'] ? array('imce_delete_submit') : NULL,//permission for submission
   );
   return $form;
 }
@@ -190,7 +190,7 @@ function imce_resize_form(&$imce) {
   $form['resize'] = array(
     '#type' => 'submit',
     '#value' => t('Resize'),
-    '#submit' => $imce['perm']['resize'] ? array('imce_resize_submit') : NULL,//check permission
+    '#submit' => $imce['perm']['resize'] ? array('imce_resize_submit') : NULL,//permission for submission
     '#suffix' => '</div>',
   );
   $form['copy'] = array(
@@ -510,7 +510,7 @@ function imce_remove_file($filename, &$imce) {
 }
 
 /**
- * Validate uploaded file for.
+ * Validate uploaded file.
  */
 function imce_validate_all(&$file, $imce) {
   $errors = array();
@@ -794,7 +794,7 @@ function imce_scan_directory($dirname) {
 
   $exclude = array('.' => 1, '..' => 1, 'CVS' => 1, '.svn' => 1, '.htaccess' => 1);
   while (($file = readdir($handle)) !== FALSE) {
-    if ($exclude[$file]) {
+    if (isset($exclude[$file])) {
       continue;
     }
 
