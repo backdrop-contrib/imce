@@ -56,6 +56,11 @@ drupal_add_css($directory .'/css/content.css');
   <div id="preview-wrapper"><div id="file-preview"></div></div>
 </div>
 
+</div><!-- resizable-content -->
+
+<div id="content-resizer" class="y-resizer"></div>
+<a href="#" id="log-clearer" class="imce-hide"><?php print t('Clear log'); ?></a>
+
 <div id="forms-wrapper"><?php print $forms; ?></div>
 
 <div id="ops-wrapper"><!-- This will be moved to top by js -->
@@ -86,9 +91,4 @@ drupal_add_css($directory .'/css/content.css');
 
 </div><!-- ops-wrapper -->
 
-</div><!-- resizable-content -->
-<div id="content-resizer" class="y-resizer"></div>
-<a href="#" id="log-clearer" class="imce-hide"><?php print t('Clear log'); ?></a>
-
 </div><!-- imce-content -->
-
