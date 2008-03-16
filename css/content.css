@@ -13,14 +13,15 @@
 #browse-wrapper {
   overflow: hidden;
   height: 24em;
-  border: 0.1em solid #ccc;
-  border-bottom: none;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-top: 1px solid #ccc;
 }
 #browse-resizer {}
 #log-prv-wrapper {
   height: 12em;
-  border-left: 0.1em solid #ccc;
-  border-right: 0.1em solid #ccc;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
   overflow: hidden;
 }
 #forms-wrapper {}
@@ -61,14 +62,13 @@
 
 /*rows of sub-browse wrapper*/
 #file-header-wrapper {
-  height: 2em;
-  overflow: hidden;
-  padding: 0.1em 2em 0em 0.1em;
+  height: 2.2em;
+  padding: 0px 22px 0px 1px;
 }
 #file-list-wrapper {
   height: 20.2em;
   overflow: auto;
-  padding: 0.1em 1em 0em 0.1em;
+  padding: 0px 11px 0px 1px;
 }
 #dir-stat {
   font-size: 0.9em;
@@ -126,7 +126,7 @@
 table.files {
   table-layout: fixed;
   width: 99%;
-  margin: 0em;
+  margin: 0.1em 0em 0em 0em;
 }
 table.files td {
   overflow: hidden;
@@ -136,6 +136,7 @@ table.files td {
 }
 table.files td.name {
   min-width: 15em;
+  white-space: nowrap;
 }
 table.files td.size {
   width: 6.5em;
@@ -150,6 +151,7 @@ table.files td.height {
 }
 table.files td.date {
   width: 12.5em;
+  text-align: center;
 }
 table.files tr {
   border: none;
