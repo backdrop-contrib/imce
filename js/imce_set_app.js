@@ -1,13 +1,15 @@
 // $Id$
-//When imce url contains &app=appName|fileProperty1@correspondingFiledId1|fileProperty2@correspondingFiledId2...
+//When imce url contains &app=appName|fileProperty1@correspondingFieldId1|fileProperty2@correspondingFieldId2|...
 //the specified fields are filled with the specified properties of the selected file.
 
 var imceAppFields = {};
+var imceOldLoad = imceOnLoad || function(){};
 
 //executed when imce loads.
-function imceOnLoad (win) {
+ var imceOnLoad = function(win) {
+  imceOldLoad(win);
   var data = location.href.substr(location.href.lastIndexOf('app=')+4).split('|');
-  var appname = data.shift();
+  var appname = decodeURIComponent(data.shift());
   for (var i in data) {
     var arr = data[i].split('@');
     imceAppFields[arr[0]] = arr[1];
@@ -23,7 +25,7 @@ function imceOnLoad (win) {
 }
 
 //sendTo function
-function imceAppFinish (file, win) {
+var imceAppFinish = function(file, win) {
   var doc = $(window.opener.document);
   for (var i in imceAppFields) {
     doc.find('#'+ imceAppFields[i]).val(file[i]);
