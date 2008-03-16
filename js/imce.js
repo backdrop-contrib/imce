@@ -516,7 +516,7 @@ imce.setResizer = function (resizer, axis, area1, area2, Min, endF) {
   $(imce.el(resizer)).mousedown(function(e) {
     var pos = e[O.pos];
     var end = start = $(imce.el(area1))[O.func]();
-    var Max = area2 ? (start + $(imce.el(area2))[O.func]()) : $(document)[O.func]();
+    var Max = area2 ? (start + $(imce.el(area2))[O.func]()) : 1200;
     $(document).mousemove(doDrag).mouseup(endDrag);
     function doDrag(e) {
       end = Math.min(Max - Min, Math.max(start + e[O.pos] - pos, Min));
@@ -539,34 +539,30 @@ imce.resizeList = function(start, end, Max) {
 
 //set heights of browse and log-prv areas.
 imce.resizeRows = function(start, end, Max) {
-  var el1 = $(imce.el('browse-wrapper')), h = h1 = el1.height();
-  var el2 = $(imce.el('log-prv-wrapper')), h2 = el2.height();
-  var diff = end - start, r1 = h1 / (h1 + h2), d1 = Math.round(diff * r1);
-  h1 = Math.max(h+d1, 50);
-  h2 += diff - (h1-h);
-  el1.height(h1);
-  el2.height(h2);
+  var el = $(imce.el('browse-wrapper')), h = el.height();
+  var diff = end - start, r = h / start, d = Math.round(diff * r), h1 = Math.max(h + d, 50);
+  el.height(h1);
+  $(imce.el('log-prv-wrapper')).height(end - h1 - $(imce.el('browse-resizer')).height() - 1);
   imce.resizeList(h, h1);
 };
 
 //get area dimensions of the last session from the cookie
 imce.recallDimensions = function() {
-  var h1 = imce.cookie('ih1')*1, h2 = imce.cookie('ih2')*1, w1 = imce.cookie('iw1')*1, w2 = imce.cookie('iw2')*1;
-  if (h1) {
-    var el = $(imce.el('browse-wrapper')), h0 = el.height();
-    el.height(h1);
-    imce.resizeList(h0, h1);
-  }
-  if (h2) $(imce.el('log-prv-wrapper')).height(h2);
-  if (w1) $(imce.el('navigation-wrapper')).width(Math.min(w1, 99) +'%');
-  if (w2) $(imce.el('log-wrapper')).width(Math.min(w2, 99) +'%');
   $(window).unload(function() {
     imce.cookie('ih1', $(imce.el('browse-wrapper')).height());
     imce.cookie('ih2', $(imce.el('log-prv-wrapper')).height());
-    var el1 = imce.el('navigation-wrapper'), el2 = imce.el('log-wrapper');
-    imce.cookie('iw1', Math.max(Math.round($(el1).width() * 100 / $(el1.parentNode).width()), 1));
-    imce.cookie('iw2', Math.max(Math.round($(el2).width() * 100 / $(el2.parentNode).width()), 1));
+    imce.cookie('iw1', Math.max($(imce.el('navigation-wrapper')).width(), 1));
+    imce.cookie('iw2', Math.max($(imce.el('log-wrapper')).width(), 1));
   });
+  if (h1 = imce.cookie('ih1')*1) {
+    var h2 = imce.cookie('ih2')*1, w1 = imce.cookie('iw1')*1, w2 = imce.cookie('iw2')*1;
+    var el = $(imce.el('browse-wrapper')), h = el.height(), w = el.width();
+    $(imce.el('navigation-wrapper')).width(Math.min(w1, w-5));
+    $(imce.el('log-wrapper')).width(Math.min(w2, w-5));
+    el.height(h1);
+    imce.resizeList(h, h1);
+    $(imce.el('log-prv-wrapper')).height(h2);
+  }
 }
 
 /**************** PREVIEW & EXTERNAL APP  ********************/
