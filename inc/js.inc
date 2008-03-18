@@ -5,12 +5,12 @@
  * Ajax operation: navigate
  */
 function imce_js_navigate(&$imce) {
-  $imce['files'] = theme('imce_file_list', array('imce' => &$imce));
-  $imce['dir'] = str_replace('%2F', '/', rawurlencode($imce['dir']));
-  $imce['dirsize'] = format_size($imce['dirsize']);
-  $imce['subdirectories'] = array_map('rawurlencode', $imce['subdirectories']);
-  unset($imce['name'], $imce['directories'], $imce['filesize'], $imce['quota'], $imce['thumbnails'], $imce['uid']);
-  return $imce;
+  return array(
+    'files' => theme('imce_file_list', array('imce' => &$imce)),
+    'dirsize' => format_size($imce['dirsize']),
+    'subdirectories' => array_map('rawurlencode', $imce['subdirectories']),
+    'perm' => $imce['perm']
+  );
 }
 
 /**

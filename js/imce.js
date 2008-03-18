@@ -1,7 +1,7 @@
 // $Id$
 
 //Global container.
-var imce = {'jsTree': {}, 'fileIndex': [], 'fileId': {}, 'selected': {}, 'conf': {}, 'ops': {}, 'vars': {'previewImages': 1}};
+var imce = {'jsTree': {}, 'fileIndex': [], 'fileId': {}, 'selected': {}, 'conf': {}, 'ops': {}, 'vars': {'previewImages': 1, 'cache': 1}, 'cache': {}};
 
 //initiate imce.
 imce.initiate = function() {
@@ -29,22 +29,6 @@ imce.initiateTree = function() {
     if (a.href) imce.dirClickable(branch);
     imce.dirCollapsible(branch);
   });
-};
-
-//update navigation tree after getting subdirectories.
-imce.updateTree = function() {
-  var branch = imce.jsTree[imce.conf.dir];
-  if (imce.conf.subdirectories.length) {
-    var prefix = imce.conf.dir == '.' ? '' : imce.conf.dir +'/';
-    for (var i in imce.conf.subdirectories) {//add subdirectories
-      imce.dirAdd(prefix + imce.conf.subdirectories[i], branch, true);
-    }
-    $(branch.li).removeClass('leaf').addClass('expanded');
-    $(branch.ul).show();
-  }
-  else if (!branch.ul){//no subdirs->leaf
-    $(branch.li).removeClass('expanded').addClass('leaf');
-  }
 };
 
 //Add a dir to the tree under parent
@@ -103,18 +87,41 @@ imce.dirCollapsible = function (branch) {
   return branch;
 };
 
+//update navigation tree after getting subdirectories.
+imce.dirUpdate = function(dir, subdirs) {
+  var branch = imce.jsTree[dir];
+  if (subdirs && subdirs.length) {
+    var prefix = dir == '.' ? '' : dir +'/';
+    for (var i in subdirs) {//add subdirectories
+      imce.dirAdd(prefix + subdirs[i], branch, true);
+    }
+    $(branch.li).removeClass('leaf').addClass('expanded');
+    $(branch.ul).show();
+  }
+  else if (!branch.ul){//no subdirs->leaf
+    $(branch.li).removeClass('expanded').addClass('leaf');
+  }
+};
+
 /**************** FILES ********************/
 
 //process file list
-imce.initiateList = function() {
+imce.initiateList = function(cached) {
   imce.fileIndex = []; imce.fileId = {}; imce.selected = {}; imce.vars.selcount = 0;
   imce.tbody = imce.el('file-list').tBodies[0];
   var token = {'%dir': imce.conf.dir == '.' ? imce.jsTree['.'].a.firstChild.data : unescape(imce.conf.dir)};
   if (imce.tbody.rows.length) {
     for (var i=0; row = imce.tbody.rows[i]; i++) {
       var fid = imce.fid(row);
-      $(row.cells[0]).text(unescape(fid));
       imce.fileIndex[i] = imce.fileId[fid] = row;
+      if (cached) {
+        if (row.className && (' '+ row.className +' ').indexOf(' selected ') != -1) {
+          imce.selected[fid] = row;
+          imce.vars.selcount++;
+        }
+        continue;
+      }
+      $(row.cells[0]).text(unescape(fid));
       $(row).click(function(e) {imce.fileClick(this, e.ctrlKey, e.shiftKey)});
     }
     imce.setMessage(Drupal.t('Directory %dir is loaded.', token));
@@ -156,11 +163,11 @@ imce.fileGet = function (fid) {
   var file = {'name': unescape(fid)};
   file.url = imce.getURL(fid);
   file.size = row.cells[1].innerHTML;
-  file.bytes = parseInt(row.cells[1].id);
-  file.width = parseInt(row.cells[2].innerHTML);
-  file.height = parseInt(row.cells[3].innerHTML);
+  file.bytes = row.cells[1].id * 1;
+  file.width = row.cells[2].innerHTML * 1;
+  file.height = row.cells[3].innerHTML * 1;
   file.date = row.cells[4].innerHTML;
-  file.time = parseInt(row.cells[4].id);
+  file.time = row.cells[4].id * 1;
   return file;
 };
 
@@ -332,40 +339,62 @@ imce.opDisable = function(name) {
 
 //navigate to dir
 imce.navigate = function(dir) {
-  if (!imce.vars.nownav && (dir != imce.conf.dir || confirm(Drupal.t('Do you want to refresh the current directory?')))) {
-    $.ajax(imce.navSet(dir));
+  if (imce.vars.navbusy || (dir == imce.conf.dir && !confirm(Drupal.t('Do you want to refresh the current directory?')))) return;
+  var cache = imce.vars.cache && dir != imce.conf.dir;
+  var set = imce.navSet(dir, cache);
+  if (cache && imce.cache[dir]) {//load from the cache
+    set.success({'data': imce.cache[dir]});
+    set.complete();
   }
+  else $.ajax(set);//live load
 };
 //ajax navigation settings
-imce.navSet = function (dir) {
+imce.navSet = function (dir, cache) {
+  var d = new Date();
   $(imce.jsTree[dir].li).addClass('loading');
-  imce.vars.nownav = dir;
+  imce.vars.navbusy = dir;
   return {'url': imce.conf.url + (imce.conf.clean ? '?' :'&') +'jsop=navigate&dir='+ dir,
   'type': 'GET',
   'dataType': 'json',
   'success': function(response) {
     if (response.data && !response.data.error) {
-      imce.dirActivate(dir);
-      imce.conf = response.data;
-      $(imce.el('file-list-wrapper')).html(imce.conf.files);
-      imce.initiateList();
-      imce.updateTree();
-      imce.updateStat();
-      imce.refreshOps();
-      imce.setPreview();
-      if (imce.vars.cid != 0 || imce.vars.dsc) {
-        imce.columnSort(imce.vars.cid, imce.vars.dsc);
-      }
+      if (cache) imce.navCache();//cache the current dir
+      imce.navUpdate(response.data, dir);
     }
-    if (response.messages) {
-      imce.resMsgs(response.messages);
-    }
+    imce.processResponse(response);
   },
   'complete': function () {
     $(imce.jsTree[dir].li).removeClass('loading');
-    imce.vars.nownav = null;
+    imce.vars.navbusy = null;
+    imce.setMessage(new Date()-d);
   }
   };
+};
+
+//update directory using the given data
+imce.navUpdate = function(data, dir) {
+  var cached = data == imce.cache[dir];
+  cached ? imce.navCache(dir) : (imce.el('file-list-wrapper').innerHTML = data.files);
+  imce.dirActivate(dir);
+  imce.dirUpdate(dir, data.subdirectories);
+  $.extend(imce.conf.perm, data.perm);
+  imce.refreshOps();
+  imce.setPreview();
+  imce.initiateList(cached);
+  if (!cached && (imce.vars.cid || imce.vars.dsc)) imce.columnSort(imce.vars.cid, imce.vars.dsc);
+};
+
+//set get cache
+imce.navCache = function (dir) {
+  if (C = imce.cache[dir]) {//content from the cache
+    $(imce.el('cached-list-'+ dir)).attr('id', 'file-list').appendTo(imce.el('file-list-wrapper'));
+    imce.updateSortState(C.cid, C.dsc);
+  }
+  else {//content to the cache
+    imce.cache[imce.conf.dir] = {'size': imce.el('dir-size').innerHTML, 'cid': imce.vars.cid, 'dsc': imce.vars.dsc, 'perm': $.extend({}, imce.conf.perm)};
+    imce.fileDeSelect(imce.vars.prvid);
+    $(imce.el('file-list')).attr('id', 'cached-list-'+ imce.conf.dir).appendTo(imce.el('forms-wrapper'));
+  }
 };
 
 /**************** UPLOAD  ********************/
@@ -393,7 +422,7 @@ imce.uploadSettings = function () {
 /**************** FILE OPS  ********************/
 //validate default ops(delete, thumb, resize)
 imce.fopValidate = function(fop) {
-  if (!imce.validateCount()) return false;
+  if (!imce.validateSelCount(1, imce.conf.filenum)) return false;
   switch (fop) {
     case 'thumb':
       if (!$('#op-content-thumb input:checked').size()) {
@@ -405,7 +434,7 @@ imce.fopValidate = function(fop) {
     case 'resize':
       var w = imce.el('edit-width').value, h = imce.el('edit-height').value;
       var maxDim = imce.conf.dimensions.split('x');
-      var maxW = parseInt(maxDim[0]), maxH = maxW ? parseInt(maxDim[1]) : 0;
+      var maxW = maxDim[0]*1, maxH = maxW ? maxDim[1]*1 : 0;
       if (w.search(/^[1-9][0-9]*$/) == -1 || h.search(/^[1-9][0-9]*$/) == -1 || (maxW && (maxW < w*1 || maxH < h*1))) {
         return imce.setMessage(Drupal.t('Please specify dimensions within the allowed range that is from 1x1 to @dimensions.', {'@dimensions': maxW ? imce.conf.dimensions : Drupal.t('unlimited')}), 'error');
       }
@@ -492,6 +521,10 @@ imce.columnSort = function(cid, dsc) {
   for (var i=0; row = imce.fileIndex[i]; i++) {
     imce.tbody.appendChild(row);
   }
+  imce.updateSortState(cid, dsc);
+};
+//update column states
+imce.updateSortState = function(cid, dsc) {
   $(imce.cols[imce.vars.cid]).removeClass(imce.vars.dsc ? 'desc' : 'asc');
   $(imce.cols[cid]).addClass(dsc ? 'desc' : 'asc');
   imce.vars.cid = cid;
@@ -563,7 +596,7 @@ imce.recallDimensions = function() {
     imce.resizeList(h, h1);
     $(imce.el('log-prv-wrapper')).height(h2);
   }
-}
+};
 
 /**************** PREVIEW & EXTERNAL APP  ********************/
 
@@ -572,7 +605,7 @@ imce.setPreview = function (fid) {
   var row, html = '';
   imce.vars.prvid = fid;
   if (fid && (row = imce.fileId[fid])) {
-    var width = parseInt(row.cells[2].innerHTML);
+    var width = row.cells[2].innerHTML * 1;
     html = imce.vars.previewImages && width ? ('<img src="'+ imce.getURL(fid) +'" width="'+ width +'" height="'+ row.cells[3].innerHTML +'" alt="">') : unescape(fid);
     html = '<a href="#" onclick="imce.send(\''+ fid +'\'); return false;" title="'+ (imce.vars.prvtitle||'') +'">'+ html +'</a>';
   }
@@ -667,9 +700,10 @@ imce.resMsgs = function (msgs) {
     imce.setMessage(msgs[type][i], type);
   }
 };
+
 //check if the file is an image
 imce.isImage = function (fid) {
-  return parseInt(imce.fileId[fid].cells[2].innerHTML);
+  return imce.fileId[fid].cells[2].innerHTML * 1;
 };
 //find the first non-image in the selection
 imce.getNonImage = function (selected) {
@@ -684,15 +718,16 @@ imce.validateImage = function () {
   return nonImg ? imce.setMessage(Drupal.t('%filename is not an image.', {'%filename': nonImg}), 'error') : true;
 };
 //validate number of selected files
-imce.validateCount = function () {
-  if (!imce.vars.selcount) {
-    return imce.setMessage(Drupal.t('Please select a file.'), 'error');
+imce.validateSelCount = function (Min, Max) {
+  if (Min && imce.vars.selcount < Min) {
+    return imce.setMessage(Min == 1 ? Drupal.t('Please select a file.') : Drupal.t('You must select at least %num files.', {'%num': Min}), 'error');
   }
-  if (imce.conf.filenum && imce.vars.selcount > imce.conf.filenum) {
-    return imce.setMessage(Drupal.t('You are not allowed to operate on more than %num files.', {'%num': imce.conf.filenum}), 'error');
+  if (Max && Max < imce.vars.selcount) {
+    return imce.setMessage(Drupal.t('You are not allowed to operate on more than %num files.', {'%num': Max}), 'error');
   }
   return true;
 };
+
 //update file count and dir size
 imce.updateStat = function () {
   imce.el('file-count').innerHTML = imce.fileIndex.length;
