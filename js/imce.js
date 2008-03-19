@@ -13,6 +13,7 @@ imce.initiate = function() {
   imce.refreshOps();
   imce.initiateSorting();//sorting
   imce.initiateResizeBars();//activate resize-bars
+  $(imce.el('file-list-wrapper')).attr('tabindex', '0').keydown(imce.shortCut);//shortcuts
   if (window['imceOnLoad']) {//run functions set by external applications.
     window['imceOnLoad'](window);
   }
@@ -112,7 +113,7 @@ imce.initiateList = function(cached) {
   var token = {'%dir': imce.conf.dir == '.' ? imce.jsTree['.'].a.firstChild.data : unescape(imce.conf.dir)};
   if (imce.tbody.rows.length) {
     for (var i=0; row = imce.tbody.rows[i]; i++) {
-      var fid = imce.fid(row);
+      var fid = row.id;
       imce.fileIndex[i] = imce.fileId[fid] = row;
       if (cached) {
         if (row.className && (' '+ row.className +' ').indexOf(' selected ') != -1) {
@@ -136,14 +137,14 @@ imce.fileAdd = function(file) {
   if (!(row = imce.fileId[file.name])) {
     row = imce.fileIndex[i] = imce.fileId[file.name] = imce.tbody.insertRow(i);
     for (i in attr) row.insertCell(i).className = attr[i];
-    row.cells[0].innerHTML = unescape(file.name); row.cells[0].id = file.name;
+    row.cells[0].innerHTML = unescape(row.id = file.name);
     $(row).click(function(e) {imce.fileClick(this, e.ctrlKey, e.shiftKey)});
   }
   row.cells[1].innerHTML = file.fsize; row.cells[1].id = file.size;
   row.cells[2].innerHTML = file.width;
   row.cells[3].innerHTML = file.height;
   row.cells[4].innerHTML = file.fdate; row.cells[4].id = file.date;
-  if (imce.vars.prvid == file.name) imce.setPreview(file.name);
+  if (imce.vars.prvfid == file.name) imce.setPreview(file.name);
 };
 
 //remove a file from the list
@@ -153,7 +154,7 @@ imce.fileRemove = function(fid) {
   imce.fileIndex.splice(imce.fileId[fid].rowIndex, 1);
   $(imce.fileId[fid]).remove();
   delete imce.fileId[fid];
-  if (imce.vars.prvid == fid) imce.setPreview();
+  if (imce.vars.prvfid == fid) imce.setPreview();
 };
 
 //return a file object containing all properties.
@@ -173,18 +174,19 @@ imce.fileGet = function (fid) {
 
 //simulate row click. selection-highlighting
 imce.fileClick = function(row, ctrl, shft) {
-  var fid = typeof(row) == 'string' ? row : imce.fid(row);
+  if (!row) return;
+  var fid = typeof(row) == 'string' ? row : row.id;
   if (ctrl) {
     imce.fileToggleSelect(fid);
   }
   else if (shft) {
-    for (var last in imce.selected);
+    var last = imce.lastFid();
     var start = last ? imce.fileId[last].rowIndex : -1;
     var end = imce.fileId[fid].rowIndex;
     var step = start > end ? -1 : 1;
     while (start != end) {
       start += step;
-      imce.fileSelect(imce.fid(imce.fileIndex[start]));
+      imce.fileSelect(imce.fileIndex[start].id);
     }
   }
   else {
@@ -197,20 +199,19 @@ imce.fileClick = function(row, ctrl, shft) {
     }
   }
   //set preview
-  fid = null;
-  if (imce.vars.selcount == 1) for (fid in imce.selected);//get the first(only) fid
-  imce.setPreview(fid);
+  imce.setPreview(imce.vars.selcount == 1 ? imce.lastFid() : null);
 };
 
 //file select/deselect functions
 imce.fileSelect = function (fid) {
   if (imce.selected[fid] || !imce.fileId[fid]) return;
-  imce.selected[fid] = imce.fileId[fid];
+  imce.selected[fid] = imce.fileId[imce.vars.lastfid=fid];
   $(imce.selected[fid]).addClass('selected');
   imce.vars.selcount++;
 };
 imce.fileDeSelect = function (fid) {
   if (!imce.selected[fid] || !imce.fileId[fid]) return;
+  if (imce.vars.lastfid == fid) imce.vars.lastfid = null;
   $(imce.selected[fid]).removeClass('selected');
   delete imce.selected[fid];
   imce.vars.selcount--;
@@ -350,7 +351,6 @@ imce.navigate = function(dir) {
 };
 //ajax navigation settings
 imce.navSet = function (dir, cache) {
-  var d = new Date();
   $(imce.jsTree[dir].li).addClass('loading');
   imce.vars.navbusy = dir;
   return {'url': imce.conf.url + (imce.conf.clean ? '?' :'&') +'jsop=navigate&dir='+ dir,
@@ -366,7 +366,6 @@ imce.navSet = function (dir, cache) {
   'complete': function () {
     $(imce.jsTree[dir].li).removeClass('loading');
     imce.vars.navbusy = null;
-    imce.setMessage(new Date()-d);
   }
   };
 };
@@ -392,7 +391,7 @@ imce.navCache = function (dir) {
   }
   else {//content to the cache
     imce.cache[imce.conf.dir] = {'size': imce.el('dir-size').innerHTML, 'cid': imce.vars.cid, 'dsc': imce.vars.dsc, 'perm': $.extend({}, imce.conf.perm)};
-    imce.fileDeSelect(imce.vars.prvid);
+    imce.fileDeSelect(imce.vars.prvfid);
     $(imce.el('file-list')).attr('id', 'cached-list-'+ imce.conf.dir).appendTo(imce.el('forms-wrapper'));
   }
 };
@@ -512,9 +511,7 @@ imce.columnSort = function(cid, dsc) {
     var func = 'sort'+ (cid == 0 ? 'Str' : 'Num') + (dsc ? 'Dsc' : 'Asc');
     var prop = cid == 2 || cid == 3 ? 'innerHTML' : 'id';
     //sort rows
-    imce.fileIndex.sort(function(r1, r2) {
-      return imce[func](r1.cells[cid][prop], r2.cells[cid][prop]);
-    });
+    imce.fileIndex.sort(cid ? function(r1, r2) {return imce[func](r1.cells[cid][prop], r2.cells[cid][prop])} : function(r1, r2) {return imce[func](r1.id, r2.id)});
   }
   //insert sorted rows
   var row;
@@ -603,7 +600,7 @@ imce.recallDimensions = function() {
 //preview a file.
 imce.setPreview = function (fid) {
   var row, html = '';
-  imce.vars.prvid = fid;
+  imce.vars.prvfid = fid;
   if (fid && (row = imce.fileId[fid])) {
     var width = row.cells[2].innerHTML * 1;
     html = imce.vars.previewImages && width ? ('<img src="'+ imce.getURL(fid) +'" width="'+ width +'" height="'+ row.cells[3].innerHTML +'" alt="">') : unescape(fid);
@@ -614,18 +611,18 @@ imce.setPreview = function (fid) {
 
 //default file send function. sends the file to the new window.
 imce.send = function (fid) {
-  window.open(imce.getURL(fid));
+  if (fid) window.open(imce.getURL(fid));
 };
 
 //add an operation for an external application to which the files are send.
 imce.setSendTo = function (title, func) {
-  imce.send = function (fid) {func(imce.fileGet(fid), window);};
-  var newfunc = function () {
+  imce.send = function (fid) { if(fid) func(imce.fileGet(fid), window);};
+  var opFunc = function () {
     if (imce.vars.selcount != 1) return alert(Drupal.t('Please select a single file.'));
-    imce.send(imce.vars.prvid);
-  }
+    imce.send(imce.vars.prvfid);
+  };
   imce.vars.prvtitle = title;
-  return imce.opAdd({'title': title, 'func': newfunc});
+  return imce.opAdd({'title': title, 'func': opFunc});
 };
 
 /**************** LOG MESSAGES  ********************/
@@ -667,6 +664,23 @@ imce.logTime = function () {
 };
 
 /**************** OTHER HELPER FUNCTIONS  ********************/
+imce.shortCut = function (e) {
+  var fid, index;
+  switch (e.keyCode) {
+    case 40://down
+      index = (fid = imce.lastFid()) ? imce.fileId[fid].rowIndex+1 : 0;
+      imce.fileClick(imce.fileIndex[index], e.ctrlKey, e.shiftKey);
+      break;
+    case 38://up
+      index = (fid = imce.lastFid()) ? imce.fileId[fid].rowIndex-1 : imce.fileIndex.length;
+      imce.fileClick(imce.fileIndex[index], e.ctrlKey, e.shiftKey);
+      break;
+    case 13:case 45://enter or insert
+      imce.send(imce.vars.prvfid); return false;
+    case 46://delete
+      imce.opClick('delete'); return false;
+  }
+};
 //process response
 imce.processResponse = function (response) {
   if (response.data) imce.resData(response.data);
@@ -681,7 +695,7 @@ imce.resData = function (data) {
     }
     if (data.added.length == 1) {//if it is a single file operation
       var fid = data.added[0].name;
-      if (imce.vars.prvid != fid) imce.fileClick(fid);//highlight
+      if (imce.vars.prvfid != fid) imce.fileClick(fid);//highlight
     }
     if (imce.fileIndex.length != cnt) {//if new files added
       var flw = imce.el('file-list-wrapper');
@@ -750,10 +764,6 @@ imce.getURL = function (fid) {
 imce.rwURL = function (url) {
   return url.replace(/%(23|26)/g, '%25$1');
 };
-//get fid from the row
-imce.fid = function (row) {
-  return row.cells ? row.cells[0].id : null;
-};
 //el. by id
 imce.el = function (id) {
   return document.getElementById(id);
@@ -764,6 +774,12 @@ imce.cookie = function (name, value) {
     return unescape((document.cookie.match(new RegExp('(^|;) *'+ name +'=([^;]*)(;|$)')) || ['', '', ''])[2]);
   }
   document.cookie = name +'='+ escape(value) +'; expires='+ (new Date(new Date()*1 + 30*86400000)).toGMTString() +'; path=/';//set
+};
+//find the latest selected fid
+imce.lastFid = function () {
+  if (imce.vars.lastfid) return imce.vars.lastfid;
+  for (var fid in imce.selected);
+  return fid;
 };
 //sorters
 imce.sortStrAsc = function(a, b) {return a.toLowerCase() < b.toLowerCase() ? -1 : 1;};
