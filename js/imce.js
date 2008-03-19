@@ -353,7 +353,7 @@ imce.navigate = function(dir) {
 imce.navSet = function (dir, cache) {
   $(imce.jsTree[dir].li).addClass('loading');
   imce.vars.navbusy = dir;
-  return {'url': imce.conf.url + (imce.conf.clean ? '?' :'&') +'jsop=navigate&dir='+ dir,
+  return {'url': imce.ajaxURL('navigate', dir),
   'type': 'GET',
   'dataType': 'json',
   'success': function(response) {
@@ -415,7 +415,7 @@ imce.uploadValidate = function (data, form) {
 
 //settings for upload
 imce.uploadSettings = function () {
-  return {'url': imce.conf.url +'&jsop=upload', 'beforeSubmit': imce.uploadValidate, 'success': function (response) {imce.processResponse(Drupal.parseJson(response));}, 'complete': function () {imce.fopLoading('upload', false);}, 'resetForm': true};
+  return {'url': imce.ajaxURL('upload'), 'beforeSubmit': imce.uploadValidate, 'success': function (response) {imce.processResponse(Drupal.parseJson(response));}, 'complete': function () {imce.fopLoading('upload', false);}, 'resetForm': true};
 };
 
 /**************** FILE OPS  ********************/
@@ -460,7 +460,7 @@ imce.commonSubmit = function(fop) {
 
 //settings for default file operations
 imce.fopSettings = function (fop) {
-  var settings = {'url': imce.conf.url, 'type': 'POST', 'dataType': 'json', 'success': imce.processResponse, 'complete': function (response) {imce.fopComplete(response, fop);}, 'data': imce.vars.opform +'&filenames='+ imce.serialNames() +'&jsop='+ fop};
+  var settings = {'url': imce.ajaxURL(fop), 'type': 'POST', 'dataType': 'json', 'success': imce.processResponse, 'complete': function (response) {imce.fopComplete(response, fop);}, 'data': imce.vars.opform +'&filenames='+ imce.serialNames() +'&jsop='+ fop};
   if (imce.el('op-content-'+ fop)) {
     settings.data += '&'+ $('#op-content-'+ fop +' input').serialize();
   }
@@ -780,6 +780,10 @@ imce.lastFid = function () {
   if (imce.vars.lastfid) return imce.vars.lastfid;
   for (var fid in imce.selected);
   return fid;
+};
+//create ajax url
+imce.ajaxURL = function (op, dir) {
+  return imce.conf.url + (imce.conf.clean ? '?' :'&') +'jsop='+ op +'&dir='+ (dir||imce.conf.dir);
 };
 //sorters
 imce.sortStrAsc = function(a, b) {return a.toLowerCase() < b.toLowerCase() ? -1 : 1;};
