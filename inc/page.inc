@@ -243,6 +243,7 @@ function imce_upload_submit($form, &$form_state) {
 
   //save uploaded file.
   if ($file = file_save_upload('imce', $validators, $dirpath, FILE_EXISTS_REPLACE)) {
+    @chmod($file->filepath, 0664);//make it readable by everyone. core misses this.
     file_set_status($file, FILE_STATUS_PERMANENT);
     drupal_set_message(t('%filename is uploaded.', array('%filename' => $file->filename)));
 
