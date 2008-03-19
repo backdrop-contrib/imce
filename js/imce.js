@@ -1,7 +1,7 @@
 // $Id$
 
 //Global container.
-var imce = {'jsTree': {}, 'fileIndex': [], 'fileId': {}, 'selected': {}, 'conf': {}, 'ops': {}, 'vars': {'previewImages': 1, 'cache': 1}, 'cache': {}};
+var imce = {'tree': {}, 'fileIndex': [], 'fileId': {}, 'selected': {}, 'conf': {}, 'ops': {}, 'vars': {'previewImages': 1, 'cache': 1}, 'cache': {}};
 
 //initiate imce.
 imce.initiate = function() {
@@ -13,7 +13,8 @@ imce.initiate = function() {
   imce.refreshOps();
   imce.initiateSorting();//sorting
   imce.initiateResizeBars();//activate resize-bars
-  $(imce.el('file-list-wrapper')).attr('tabindex', '0').keydown(imce.shortCut);//shortcuts
+  $(imce.el('navigation-wrapper')).attr('tabindex', '0').keydown(imce.dirShortCut);//shortcuts
+  $(imce.el('file-list-wrapper')).attr('tabindex', '0').keydown(imce.fileShortCut);//shortcuts
   if (window['imceOnLoad']) {//run functions set by external applications.
     window['imceOnLoad'](window);
   }
@@ -26,7 +27,7 @@ imce.initiateTree = function() {
   $('#navigation-tree li').each(function(i) {
     var a = this.firstChild;
     a.firstChild.data = unescape(a.firstChild.data);
-    var branch = imce.jsTree[a.title] = {'a': a, 'li': this, 'ul': this.lastChild.tagName == 'UL' ? this.lastChild : null};
+    var branch = imce.tree[a.title] = {'a': a, 'li': this, 'ul': this.lastChild.tagName == 'UL' ? this.lastChild : null};
     if (a.href) imce.dirClickable(branch);
     imce.dirCollapsible(branch);
   });
@@ -34,8 +35,8 @@ imce.initiateTree = function() {
 
 //Add a dir to the tree under parent
 imce.dirAdd = function(dir, parent, clickable) {
-  if (imce.jsTree[dir]) return clickable ? imce.dirClickable(imce.jsTree[dir]) : imce.jsTree[dir];
-  var parent = parent || imce.jsTree['.'];
+  if (imce.tree[dir]) return clickable ? imce.dirClickable(imce.tree[dir]) : imce.tree[dir];
+  var parent = parent || imce.tree['.'];
   parent.ul = parent.ul ? parent.ul : parent.li.appendChild(document.createElement('ul'));
   var branch = imce.dirCreate(dir, unescape(dir.substr(dir.lastIndexOf('/')+1)), clickable);
   parent.ul.appendChild(branch.li);
@@ -44,8 +45,8 @@ imce.dirAdd = function(dir, parent, clickable) {
 
 //create list item for navigation tree
 imce.dirCreate = function(dir, text, clickable) {
-  if (imce.jsTree[dir]) return imce.jsTree[dir];
-  var branch = imce.jsTree[dir] = {'li': document.createElement('li'), 'a': document.createElement('a')};
+  if (imce.tree[dir]) return imce.tree[dir];
+  var branch = imce.tree[dir] = {'li': document.createElement('li'), 'a': document.createElement('a')};
   $(branch.a).addClass('folder').text(text).attr('title', dir).appendTo(branch.li);
   imce.dirCollapsible(branch);
   return clickable ? imce.dirClickable(branch) : branch;
@@ -54,13 +55,13 @@ imce.dirCreate = function(dir, text, clickable) {
 //change currently active directory
 imce.dirActivate = function(dir) {
   if (dir != imce.conf.dir) {
-    if (imce.jsTree[imce.conf.dir]){
-      $(imce.jsTree[imce.conf.dir].a).removeClass('active');
+    if (imce.tree[imce.conf.dir]){
+      $(imce.tree[imce.conf.dir].a).removeClass('active');
     }
-    $(imce.jsTree[dir].a).addClass('active');
+    $(imce.tree[dir].a).addClass('active');
     imce.conf.dir = dir;
   }
-  return imce.jsTree[imce.conf.dir];
+  return imce.tree[imce.conf.dir];
 };
 
 //make a dir accessible
@@ -74,8 +75,7 @@ imce.dirClickable = function(branch) {
 //sub-directories expand-collapse ability
 imce.dirCollapsible = function (branch) {
   if (branch.clpsbl) return branch;
-  $(document.createElement('span')).addClass('expander').html('&nbsp; &nbsp;').bind('click', branch.a.title, function(e) {
-    var branch = imce.jsTree[e.data];
+  $(document.createElement('span')).addClass('expander').html('&nbsp; &nbsp;').click(function() {
     if (branch.ul) {
       $(branch.ul).toggle();
       $(branch.li).toggleClass('expanded');
@@ -90,7 +90,7 @@ imce.dirCollapsible = function (branch) {
 
 //update navigation tree after getting subdirectories.
 imce.dirUpdate = function(dir, subdirs) {
-  var branch = imce.jsTree[dir];
+  var branch = imce.tree[dir];
   if (subdirs && subdirs.length) {
     var prefix = dir == '.' ? '' : dir +'/';
     for (var i in subdirs) {//add subdirectories
@@ -104,13 +104,41 @@ imce.dirUpdate = function(dir, subdirs) {
   }
 };
 
+//shortcuts for directories
+imce.dirShortCut = function (e) {
+  switch (e.keyCode) {
+    case 40://down
+      var B = imce.tree[imce.conf.dir], L = B.li, U = B.ul;
+      if (U && $(L).hasClass('expanded')) $(U.firstChild.childNodes[1]).click().focus();
+      else do {if (L.nextSibling) return $(L.nextSibling.childNodes[1]).click().focus();
+      }while ((L = L.parentNode.parentNode).tagName == 'LI');
+      break;
+    case 38://up
+      var B = imce.tree[imce.conf.dir];
+      if (L = B.li.previousSibling) {
+        while ($(L).hasClass('expanded')) L = L.lastChild.lastChild;
+        $(L.childNodes[1]).click().focus();
+      }
+      else if ((L = B.li.parentNode.parentNode) && L.tagName == 'LI') $(L.childNodes[1]).click().focus();
+      break;
+    case 37:case 39://left-right
+      var L, B = imce.tree[imce.conf.dir];
+      if (B.ul && (e.keyCode == 39 ^ $(L = B.li).hasClass('expanded')) ) $(L.firstChild).click();
+      break;
+    case 35:case 36://end-home
+      var L = imce.tree['.'].li;
+      if (e.keyCode == 35) while ($(L).hasClass('expanded')) L = L.lastChild.lastChild;
+      $(L.childNodes[1]).click().focus();
+  }
+};
+
 /**************** FILES ********************/
 
 //process file list
 imce.initiateList = function(cached) {
   imce.fileIndex = []; imce.fileId = {}; imce.selected = {}; imce.vars.selcount = 0;
   imce.tbody = imce.el('file-list').tBodies[0];
-  var token = {'%dir': imce.conf.dir == '.' ? imce.jsTree['.'].a.firstChild.data : unescape(imce.conf.dir)};
+  var token = {'%dir': imce.conf.dir == '.' ? $(imce.tree['.'].a).text() : unescape(imce.conf.dir)};
   if (imce.tbody.rows.length) {
     for (var i=0; row = imce.tbody.rows[i]; i++) {
       var fid = row.id;
@@ -218,6 +246,22 @@ imce.fileDeSelect = function (fid) {
 };
 imce.fileToggleSelect = function (fid) {
   imce['file'+ (imce.selected[fid] ? 'De' : '') +'Select'](fid);
+};
+
+//shortcuts for files
+imce.fileShortCut = function (e) {
+  switch (e.keyCode) {
+    case 38:case 40://up-down
+      var fid = imce.lastFid(), i = fid ? imce.fileId[fid].rowIndex+e.keyCode-39 : 0;
+      imce.fileClick(imce.fileIndex[i], e.ctrlKey, e.shiftKey);
+      break;
+    case 35:case 36://end-home
+      imce.fileClick(imce.fileIndex[e.keyCode == 35 ? imce.fileIndex.length-1 : 0], e.ctrlKey, e.shiftKey); break;
+    case 13:case 45://enter-insert
+      imce.send(imce.vars.prvfid); return false;
+    case 46://delete
+      imce.opClick('delete'); return false;
+  }
 };
 
 /**************** OPERATIONS ********************/
@@ -351,7 +395,7 @@ imce.navigate = function(dir) {
 };
 //ajax navigation settings
 imce.navSet = function (dir, cache) {
-  $(imce.jsTree[dir].li).addClass('loading');
+  $(imce.tree[dir].li).addClass('loading');
   imce.vars.navbusy = dir;
   return {'url': imce.ajaxURL('navigate', dir),
   'type': 'GET',
@@ -364,7 +408,7 @@ imce.navSet = function (dir, cache) {
     imce.processResponse(response);
   },
   'complete': function () {
-    $(imce.jsTree[dir].li).removeClass('loading');
+    $(imce.tree[dir].li).removeClass('loading');
     imce.vars.navbusy = null;
   }
   };
@@ -664,23 +708,6 @@ imce.logTime = function () {
 };
 
 /**************** OTHER HELPER FUNCTIONS  ********************/
-imce.shortCut = function (e) {
-  var fid, index;
-  switch (e.keyCode) {
-    case 40://down
-      index = (fid = imce.lastFid()) ? imce.fileId[fid].rowIndex+1 : 0;
-      imce.fileClick(imce.fileIndex[index], e.ctrlKey, e.shiftKey);
-      break;
-    case 38://up
-      index = (fid = imce.lastFid()) ? imce.fileId[fid].rowIndex-1 : imce.fileIndex.length;
-      imce.fileClick(imce.fileIndex[index], e.ctrlKey, e.shiftKey);
-      break;
-    case 13:case 45://enter or insert
-      imce.send(imce.vars.prvfid); return false;
-    case 46://delete
-      imce.opClick('delete'); return false;
-  }
-};
 //process response
 imce.processResponse = function (response) {
   if (response.data) imce.resData(response.data);
