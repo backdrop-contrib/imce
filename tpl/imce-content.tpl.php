@@ -2,10 +2,13 @@
 // $Id$
 $imce =& $imce_ref['imce'];
 drupal_add_js('misc/jquery.form.js');
+
+drupal_add_js($directory .'/js/imce.js');//Main js file. 
+drupal_add_css($directory .'/css/content.css');//Main css file
+drupal_add_js($directory .'/js/imce_extras.js');//Keyboard shortcuts, file sorting, resizebars. (Safe to delete)
+
 //make sure the paths are correct when you move this tpl file to another $directory.
 //orginal files reside in drupal_get_path('module', 'imce').
-drupal_add_js($directory .'/js/imce.js');
-drupal_add_css($directory .'/css/content.css');
 ?>
 <!--[if IE]><style type="text/css">#file-list-wrapper{padding-right: 2em}#file-list{margin-right: -2em}</style><![endif]-->
 <!--[if IE 6]><style type="text/css">.y-resizer{font-size: 0.2em;}#sub-browse-wrapper{float: left; clear: right;}#preview-wrapper{overflow: visible;}#file-preview{width: 99%; height: 99%; overflow: auto;}</style><![endif]-->
@@ -35,7 +38,7 @@ drupal_add_css($directory .'/css/content.css');
     </div>
 
     <div id="file-list-wrapper">
-      <?php print theme('imce_file_list', $imce_ref); ?>
+      <?php print theme('imce_file_list', $imce_ref); /*see imce-file-list-tpl.php*/?>
     </div>
 
     <div id="dir-stat"><?php print t('!num files using !dirsize of !quota', array(

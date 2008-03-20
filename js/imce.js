@@ -6,15 +6,12 @@ var imce = {'tree': {}, 'fileIndex': [], 'fileId': {}, 'selected': {}, 'conf': {
 //initiate imce.
 imce.initiate = function() {
   if (imce.conf.error != false) return;
+  imce.FLW = imce.el('file-list-wrapper');
   imce.prepareMsgs();//process initial status messages
   imce.initiateTree();//build js tree
   imce.initiateList();//process file list
   imce.initiateOps();//prepare operation tabs
   imce.refreshOps();
-  imce.initiateSorting();//sorting
-  imce.initiateResizeBars();//activate resize-bars
-  $(imce.el('navigation-wrapper')).attr('tabindex', '0').keydown(imce.dirShortCut);//shortcuts
-  $(imce.el('file-list-wrapper')).attr('tabindex', '0').keydown(imce.fileShortCut);//shortcuts
   if (window['imceOnLoad']) {//run functions set by external applications.
     window['imceOnLoad'](window);
   }
@@ -104,39 +101,11 @@ imce.dirUpdate = function(dir, subdirs) {
   }
 };
 
-//shortcuts for directories
-imce.dirShortCut = function (e) {
-  switch (e.keyCode) {
-    case 40://down
-      var B = imce.tree[imce.conf.dir], L = B.li, U = B.ul;
-      if (U && $(L).hasClass('expanded')) $(U.firstChild.childNodes[1]).click().focus();
-      else do {if (L.nextSibling) return $(L.nextSibling.childNodes[1]).click().focus();
-      }while ((L = L.parentNode.parentNode).tagName == 'LI');
-      break;
-    case 38://up
-      var B = imce.tree[imce.conf.dir];
-      if (L = B.li.previousSibling) {
-        while ($(L).hasClass('expanded')) L = L.lastChild.lastChild;
-        $(L.childNodes[1]).click().focus();
-      }
-      else if ((L = B.li.parentNode.parentNode) && L.tagName == 'LI') $(L.childNodes[1]).click().focus();
-      break;
-    case 37:case 39://left-right
-      var L, B = imce.tree[imce.conf.dir];
-      if (B.ul && (e.keyCode == 39 ^ $(L = B.li).hasClass('expanded')) ) $(L.firstChild).click();
-      break;
-    case 35:case 36://end-home
-      var L = imce.tree['.'].li;
-      if (e.keyCode == 35) while ($(L).hasClass('expanded')) L = L.lastChild.lastChild;
-      $(L.childNodes[1]).click().focus();
-  }
-};
-
 /**************** FILES ********************/
 
 //process file list
 imce.initiateList = function(cached) {
-  imce.fileIndex = []; imce.fileId = {}; imce.selected = {}; imce.vars.selcount = 0;
+  imce.fileIndex = [], imce.fileId = {}, imce.selected = {}, imce.vars.selcount = 0, imce.vars.lastfid = null;
   imce.tbody = imce.el('file-list').tBodies[0];
   var token = {'%dir': imce.conf.dir == '.' ? $(imce.tree['.'].a).text() : unescape(imce.conf.dir)};
   if (imce.tbody.rows.length) {
@@ -144,8 +113,8 @@ imce.initiateList = function(cached) {
       var fid = row.id;
       imce.fileIndex[i] = imce.fileId[fid] = row;
       if (cached) {
-        if (row.className && (' '+ row.className +' ').indexOf(' selected ') != -1) {
-          imce.selected[fid] = row;
+        if (imce.hasC(row, 'selected')) {
+          imce.selected[imce.vars.lastfid = fid] = row;
           imce.vars.selcount++;
         }
         continue;
@@ -204,7 +173,7 @@ imce.fileGet = function (fid) {
 imce.fileClick = function(row, ctrl, shft) {
   if (!row) return;
   var fid = typeof(row) == 'string' ? row : row.id;
-  if (ctrl) {
+  if (ctrl || fid == imce.vars.prvfid) {
     imce.fileToggleSelect(fid);
   }
   else if (shft) {
@@ -218,13 +187,10 @@ imce.fileClick = function(row, ctrl, shft) {
     }
   }
   else {
-    var alone = imce.vars.selcount == 1 && imce.selected[fid] ? true : false;
     for (var fname in imce.selected) {
       imce.fileDeSelect(fname);
     }
-    if (!alone) {
-      imce.fileSelect(fid);
-    }
+    imce.fileSelect(fid);
   }
   //set preview
   imce.setPreview(imce.vars.selcount == 1 ? imce.lastFid() : null);
@@ -248,22 +214,6 @@ imce.fileToggleSelect = function (fid) {
   imce['file'+ (imce.selected[fid] ? 'De' : '') +'Select'](fid);
 };
 
-//shortcuts for files
-imce.fileShortCut = function (e) {
-  switch (e.keyCode) {
-    case 38:case 40://up-down
-      var fid = imce.lastFid(), i = fid ? imce.fileId[fid].rowIndex+e.keyCode-39 : 0;
-      imce.fileClick(imce.fileIndex[i], e.ctrlKey, e.shiftKey);
-      break;
-    case 35:case 36://end-home
-      imce.fileClick(imce.fileIndex[e.keyCode == 35 ? imce.fileIndex.length-1 : 0], e.ctrlKey, e.shiftKey); break;
-    case 13:case 45://enter-insert
-      imce.send(imce.vars.prvfid); return false;
-    case 46://delete
-      imce.opClick('delete'); return false;
-  }
-};
-
 /**************** OPERATIONS ********************/
 
 //process file operation form and create operation tabs.
@@ -272,6 +222,7 @@ imce.initiateOps = function() {
   imce.setHtmlOps();//help
   imce.setUploadOp();//upload
   imce.setFileOps();//thumb, delete, resize
+  imce.opKeys = {'k46': 'delete', 'k82': 'resize', 'k84': 'thumb', 'k85': 'upload'};//shortcuts. delete, R, T, U
 };
 
 //process existing html ops.
@@ -326,6 +277,7 @@ imce.refreshOps = function() {
 imce.opAdd = function (op) {
   var name = op.name || ('op-'+ $('#ops-list>li').size());
   var O = imce.ops[name] = {'title': op.title||'Untitled'};
+  if (op.key) imce.opKeys['k'+ op.key] = name;
   if (op.content) {
     O.div = document.createElement('div');
     $(O.div).attr('id', 'op-content-'+ name).addClass('op-content').append(op.content).appendTo(imce.el('op-contents'));
@@ -345,18 +297,19 @@ imce.opClick = function(name) {
   }
   if (imce.ops[name].div) {
     if (imce.vars.op) {
-      $(imce.ops[imce.vars.op].div).slideUp('normal');
+      $(imce.ops[imce.vars.op].div).slideUp();
       $(imce.ops[imce.vars.op].li).removeClass('active');
       if (imce.vars.op == name) {
         imce.vars.op = null;
         return false;
       }
     }
-    $(imce.ops[name].div).slideDown('normal');
+    $(imce.ops[name].div).slideDown();
     $(imce.ops[name].li).addClass('active');
     imce.vars.op = name;
   }
   if (imce.ops[name].func) imce.ops[name].func();
+  return true;
 };
 
 //enable a file operation
@@ -417,21 +370,20 @@ imce.navSet = function (dir, cache) {
 //update directory using the given data
 imce.navUpdate = function(data, dir) {
   var cached = data == imce.cache[dir];
-  cached ? imce.navCache(dir) : (imce.el('file-list-wrapper').innerHTML = data.files);
+  cached ? imce.navCache(dir) : (imce.FLW.innerHTML = data.files);
   imce.dirActivate(dir);
   imce.dirUpdate(dir, data.subdirectories);
   $.extend(imce.conf.perm, data.perm);
   imce.refreshOps();
   imce.setPreview();
   imce.initiateList(cached);
-  if (!cached && (imce.vars.cid || imce.vars.dsc)) imce.columnSort(imce.vars.cid, imce.vars.dsc);
+  if (imce.firstSort) cached ? imce.updateSortState(data.cid, data.dsc) : imce.firstSort();
 };
 
 //set get cache
 imce.navCache = function (dir) {
-  if (C = imce.cache[dir]) {//content from the cache
-    $(imce.el('cached-list-'+ dir)).attr('id', 'file-list').appendTo(imce.el('file-list-wrapper'));
-    imce.updateSortState(C.cid, C.dsc);
+  if (dir) {//content from the cache
+    $(imce.el('cached-list-'+ dir)).attr('id', 'file-list').appendTo(imce.FLW);
   }
   else {//content to the cache
     imce.cache[imce.conf.dir] = {'size': imce.el('dir-size').innerHTML, 'cid': imce.vars.cid, 'dsc': imce.vars.dsc, 'perm': $.extend({}, imce.conf.perm)};
@@ -442,24 +394,25 @@ imce.navCache = function (dir) {
 
 /**************** UPLOAD  ********************/
 //validate upload form
-imce.uploadValidate = function (data, form) {
+imce.uploadValidate = function (data, form, options) {
   var path = data[0].value;
   if (!path) return false;
   if (imce.conf.extensions != '*') {
     var ext = path.substr(path.lastIndexOf('.') + 1);
-    if ((' '+ imce.conf.extensions +' ').indexOf(' '+ ext +' ') == -1) {
+    if ((' '+ imce.conf.extensions +' ').indexOf(' '+ ext.toLowerCase() +' ') == -1) {
       return imce.setMessage(Drupal.t('Only files with the following extensions are allowed: %files-allowed.', {'%files-allowed': imce.conf.extensions}), 'error');
     }
   }
   var sep = path.indexOf('/') == -1 ? '\\' : '/';
   imce.setMessage(Drupal.t('Uploading %filename...', {'%filename': path.substr(path.lastIndexOf(sep) + 1)}));
+  options.url = imce.ajaxURL('upload');//make url contain current dir.
   imce.fopLoading('upload', true);
   return true;
 };
 
 //settings for upload
 imce.uploadSettings = function () {
-  return {'url': imce.ajaxURL('upload'), 'beforeSubmit': imce.uploadValidate, 'success': function (response) {imce.processResponse(Drupal.parseJson(response));}, 'complete': function () {imce.fopLoading('upload', false);}, 'resetForm': true};
+  return {'beforeSubmit': imce.uploadValidate, 'success': function (response) {imce.processResponse(Drupal.parseJson(response));}, 'complete': function () {imce.fopLoading('upload', false);}, 'resetForm': true};
 };
 
 /**************** FILE OPS  ********************/
@@ -467,13 +420,13 @@ imce.uploadSettings = function () {
 imce.fopValidate = function(fop) {
   if (!imce.validateSelCount(1, imce.conf.filenum)) return false;
   switch (fop) {
+    case 'delete':
+      return confirm(Drupal.t('Delete selected files?'));
     case 'thumb':
-      if (!$('#op-content-thumb input:checked').size()) {
+      if (!$('input:checked', imce.ops['thumb'].div).size()) {
         return imce.setMessage(Drupal.t('Please select a thumbnail.'), 'error');
       }
       return imce.validateImage();
-    case 'delete':
-      return confirm(Drupal.t('Delete selected files?'));
     case 'resize':
       var w = imce.el('edit-width').value, h = imce.el('edit-height').value;
       var maxDim = imce.conf.dimensions.split('x');
@@ -504,11 +457,7 @@ imce.commonSubmit = function(fop) {
 
 //settings for default file operations
 imce.fopSettings = function (fop) {
-  var settings = {'url': imce.ajaxURL(fop), 'type': 'POST', 'dataType': 'json', 'success': imce.processResponse, 'complete': function (response) {imce.fopComplete(response, fop);}, 'data': imce.vars.opform +'&filenames='+ imce.serialNames() +'&jsop='+ fop};
-  if (imce.el('op-content-'+ fop)) {
-    settings.data += '&'+ $('#op-content-'+ fop +' input').serialize();
-  }
-  return settings;
+  return {'url': imce.ajaxURL(fop), 'type': 'POST', 'dataType': 'json', 'success': imce.processResponse, 'complete': function (response) {imce.fopLoading(fop, false);}, 'data': imce.vars.opform +'&filenames='+ imce.serialNames() +'&jsop='+ fop + (imce.ops[fop].div ? '&'+ $('input', imce.ops[fop].div).serialize() : '')};
 };
 
 //toggle loading state
@@ -518,128 +467,12 @@ imce.fopLoading = function(fop, state) {
     $(el)[func]('loading').attr('disabled', state);
   }
   else {
-    $(imce.el('op-item-'+ fop))[func]('loading');
+    $(imce.ops[fop].li)[func]('loading');
     imce.ops[fop].disabled = state;
   }
 };
 
-//complete file operation
-imce.fopComplete = function (response, fop) {
-  imce.fopLoading(fop, false);
-};
-
-/**************** SORTING ********************/
-
-//prepare column sorting
-imce.initiateSorting = function() {
-  imce.vars.cid = imce.cookie('icid')*1;
-  imce.vars.dsc = imce.cookie('idsc')*1;
-  imce.cols = imce.el('file-header').rows[0].cells;
-  if (imce.vars.cid || imce.vars.dsc) {
-    imce.columnSort(imce.vars.cid, imce.vars.dsc);
-  }
-  else {
-    $(imce.cols[0]).addClass('asc');
-  }
-  $(imce.cols).click(function () {imce.columnSort(this.cellIndex, !this.dsc);});
-  $(window).unload(function() {imce.cookie('icid', imce.vars.cid); imce.cookie('idsc', imce.vars.dsc ? 1 : 0);});
-};
-
-//sort file list according to column index.
-imce.columnSort = function(cid, dsc) {
-  if (imce.fileIndex.length < 2) return;
-  if (cid == imce.vars.cid && dsc != imce.vars.dsc) {
-    imce.fileIndex.reverse();
-  }
-  else {
-    var func = 'sort'+ (cid == 0 ? 'Str' : 'Num') + (dsc ? 'Dsc' : 'Asc');
-    var prop = cid == 2 || cid == 3 ? 'innerHTML' : 'id';
-    //sort rows
-    imce.fileIndex.sort(cid ? function(r1, r2) {return imce[func](r1.cells[cid][prop], r2.cells[cid][prop])} : function(r1, r2) {return imce[func](r1.id, r2.id)});
-  }
-  //insert sorted rows
-  var row;
-  for (var i=0; row = imce.fileIndex[i]; i++) {
-    imce.tbody.appendChild(row);
-  }
-  imce.updateSortState(cid, dsc);
-};
-//update column states
-imce.updateSortState = function(cid, dsc) {
-  $(imce.cols[imce.vars.cid]).removeClass(imce.vars.dsc ? 'desc' : 'asc');
-  $(imce.cols[cid]).addClass(dsc ? 'desc' : 'asc');
-  imce.vars.cid = cid;
-  imce.vars.dsc = imce.cols[cid].dsc = dsc;
-};
-
-/**************** RESIZE-BARS  ********************/
-
-//set resizers for resizable areas and recall previous dimensions
-imce.initiateResizeBars = function () {
-  imce.setResizer('navigation-resizer', 'X', 'navigation-wrapper', null, 1);
-  imce.setResizer('log-resizer', 'X', 'log-wrapper', null, 1);
-  imce.setResizer('browse-resizer', 'Y', 'browse-wrapper', 'log-prv-wrapper', 50, imce.resizeList);
-  imce.setResizer('content-resizer', 'Y', 'resizable-content', null, 150, imce.resizeRows);
-  imce.recallDimensions();
-};
-
-//set a resize bar
-imce.setResizer = function (resizer, axis, area1, area2, Min, endF) {
-  var O = axis == 'X' ? {'pos': 'pageX', 'func': 'width'} : {'pos': 'pageY', 'func': 'height'};
-  var Min = Min || 0;
-  $(imce.el(resizer)).mousedown(function(e) {
-    var pos = e[O.pos];
-    var end = start = $(imce.el(area1))[O.func]();
-    var Max = area2 ? (start + $(imce.el(area2))[O.func]()) : 1200;
-    $(document).mousemove(doDrag).mouseup(endDrag);
-    function doDrag(e) {
-      end = Math.min(Max - Min, Math.max(start + e[O.pos] - pos, Min));
-      $(imce.el(area1))[O.func](end);
-      if (area2) $(imce.el(area2))[O.func](Max - end);
-      return false;
-    }
-    function endDrag(e) {
-      $(document).unbind("mousemove", doDrag).unbind("mouseup", endDrag);
-      if (endF) endF(start, end, Max);
-    }
-  });
-};
-
-//set height file-list area
-imce.resizeList = function(start, end, Max) {
-  var el = $(imce.el('file-list-wrapper')), h = el.height() + end - start;
-  el.height(h < 1 ? 1 : h);
-};
-
-//set heights of browse and log-prv areas.
-imce.resizeRows = function(start, end, Max) {
-  var el = $(imce.el('browse-wrapper')), h = el.height();
-  var diff = end - start, r = h / start, d = Math.round(diff * r), h1 = Math.max(h + d, 50);
-  el.height(h1);
-  $(imce.el('log-prv-wrapper')).height(end - h1 - $(imce.el('browse-resizer')).height() - 1);
-  imce.resizeList(h, h1);
-};
-
-//get area dimensions of the last session from the cookie
-imce.recallDimensions = function() {
-  $(window).unload(function() {
-    imce.cookie('ih1', $(imce.el('browse-wrapper')).height());
-    imce.cookie('ih2', $(imce.el('log-prv-wrapper')).height());
-    imce.cookie('iw1', Math.max($(imce.el('navigation-wrapper')).width(), 1));
-    imce.cookie('iw2', Math.max($(imce.el('log-wrapper')).width(), 1));
-  });
-  if (h1 = imce.cookie('ih1')*1) {
-    var h2 = imce.cookie('ih2')*1, w1 = imce.cookie('iw1')*1, w2 = imce.cookie('iw2')*1;
-    var el = $(imce.el('browse-wrapper')), h = el.height(), w = el.width();
-    $(imce.el('navigation-wrapper')).width(Math.min(w1, w-5));
-    $(imce.el('log-wrapper')).width(Math.min(w2, w-5));
-    el.height(h1);
-    imce.resizeList(h, h1);
-    $(imce.el('log-prv-wrapper')).height(h2);
-  }
-};
-
-/**************** PREVIEW & EXTERNAL APP  ********************/
+/**************** PREVIEW & SEND TO  ********************/
 
 //preview a file.
 imce.setPreview = function (fid) {
@@ -725,8 +558,7 @@ imce.resData = function (data) {
       if (imce.vars.prvfid != fid) imce.fileClick(fid);//highlight
     }
     if (imce.fileIndex.length != cnt) {//if new files added
-      var flw = imce.el('file-list-wrapper');
-      $(flw).animate({'scrollTop': flw.scrollHeight});//scroll to bottom.
+      $(imce.FLW).animate({'scrollTop': imce.FLW.scrollHeight});//scroll to bottom.
     }
   }
   if (data.removed) for (var i in data.removed) {
@@ -795,13 +627,6 @@ imce.rwURL = function (url) {
 imce.el = function (id) {
   return document.getElementById(id);
 };
-//cookie get & set
-imce.cookie = function (name, value) {
-  if (typeof(value) == 'undefined') {//get
-    return unescape((document.cookie.match(new RegExp('(^|;) *'+ name +'=([^;]*)(;|$)')) || ['', '', ''])[2]);
-  }
-  document.cookie = name +'='+ escape(value) +'; expires='+ (new Date(new Date()*1 + 30*86400000)).toGMTString() +'; path=/';//set
-};
 //find the latest selected fid
 imce.lastFid = function () {
   if (imce.vars.lastfid) return imce.vars.lastfid;
@@ -812,11 +637,10 @@ imce.lastFid = function () {
 imce.ajaxURL = function (op, dir) {
   return imce.conf.url + (imce.conf.clean ? '?' :'&') +'jsop='+ op +'&dir='+ (dir||imce.conf.dir);
 };
-//sorters
-imce.sortStrAsc = function(a, b) {return a.toLowerCase() < b.toLowerCase() ? -1 : 1;};
-imce.sortStrDsc = function(a, b) {return b.toLowerCase() < a.toLowerCase() ? -1 : 1;};
-imce.sortNumAsc = function(a, b) {return a-b;};
-imce.sortNumDsc = function(a, b) {return b-a};
+//fast class check
+imce.hasC = function (el, name) {
+  return el.className && (' '+ el.className +' ').indexOf(' '+ name +' ') != -1;
+};
 
 //global ajax error function
 imce.ajaxError = function (e, response, settings, thrown) {
