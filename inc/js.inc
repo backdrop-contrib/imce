@@ -29,7 +29,7 @@ function imce_js_upload(&$imce) {
  */
 function imce_js_thumb(&$imce) {
   if ($imce['perm']['thumb']) {
-    $_POST['op'] = t('Create');
+    $_POST['op'] = t('Create thumbnails');
     return imce_process_fileop($imce);
   }
 }

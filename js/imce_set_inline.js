@@ -43,7 +43,7 @@ imceInline.insertAtCursor = function (field, txt, type) {
 //sendTo function
 imceInline.insert = function (file, win) {
   var type = imceInline.activeType == 'link' ? 'link' : (file.width ? 'image' : 'link');
-  var html = type=='image' ? ('<img src="'+ file.url +'" width="'+ file.width +'" height="'+ file.height +'" alt="'+ file.name +'" />') : ('<a href="'+ file.url +'">'+ file.name +' ('+ file.size +')</a>');
+  var html = type == 'image' ? ('<img src="'+ file.url +'" width="'+ file.width +'" height="'+ file.height +'" alt="'+ file.name +'" />') : ('<a href="'+ file.url +'">'+ file.name +' ('+ file.size +')</a>');
   imceInline.activeType = null;
   win.blur();
   imceInline.insertAtCursor(imceInline.activeTextarea, html, type);

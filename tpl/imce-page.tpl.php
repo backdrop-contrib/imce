@@ -9,7 +9,7 @@
   <?php print drupal_get_css(); ?>
   <?php print drupal_get_js(); ?>
   <?php print isset($_GET['app']) ? '<script type="text/javascript" src="'. base_path() . $directory .'/js/imce_set_app.js"></script>' : ''; /*WYSIWYG integration*/ ?>
-  <style media="all" type="text/css">/*Overwrite css*/
+  <style media="all" type="text/css">/*Override css*/
   body {
     margin: 0.1em 0.4em;
     background-color: #fff;

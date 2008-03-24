@@ -1,6 +1,10 @@
 <?php
 // $Id$
-$imce =& $imce_ref['imce'];
+$imce =& $imce_ref['imce'];//keep this line.
+
+//Although the file list table here is avaliable for theming, it is not recommended to change the table structure, because
+//it is read and manipulated by javascript assuming this is the deafult structure. You can always change the data created by
+//format functions such as format_size or format_date, or you can do css theming which is the best practice here.
 ?>
 
 <table id="file-list" class="files"><tbody><?php

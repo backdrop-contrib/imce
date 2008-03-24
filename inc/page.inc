@@ -5,7 +5,7 @@
  * q = imce.
  */
 function imce_page() {
-  print theme('imce_page', imce_content($GLOBALS['user'], $_REQUEST['jsop']));
+  print theme('imce_page', imce_content($GLOBALS['user'], $_GET['jsop']));
   exit();
 }
 
@@ -14,7 +14,7 @@ function imce_page() {
  */
 function imce_user_page($account) {
   drupal_set_title($account->name);
-  return imce_content($account, $_REQUEST['jsop']);
+  return imce_content($account, $_GET['jsop']);
 }
 
 /**
@@ -55,7 +55,7 @@ function imce_content($user, $jsop = '') {
 }
 
 /**
- * Ajax operations. q = imce&jsop={op}
+ * Ajax operations. q=imce&jsop={op}
  */
 function imce_js($user, $jsop = '') {
   $response = array();
@@ -122,7 +122,7 @@ function imce_fileop_form(&$form_state, $ref) {
   if (!empty($imce['thumbnails'])) {
     $form['fset_thumb'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Create thumbnails'),
+      '#title' => t('Thumbnails'),
       '#attributes' => array('class' => $imce['perm']['thumb'] ? '' : 'imce-hide'),
     ) + imce_thumb_form($imce);
   }
@@ -154,7 +154,7 @@ function imce_thumb_form(&$imce) {
   );
   $form['thumb'] = array(
     '#type' => 'submit',
-    '#value' => t('Create'),
+    '#value' => t('Create thumbnails'),
     '#submit' => $imce['perm']['thumb'] ? array('imce_thumb_submit') : NULL,//permission for submission
   );
   return $form;
@@ -488,7 +488,7 @@ function imce_add_file($file, &$imce) {
     'height' => $file->height,
     'date' => $file->timestamp
   );
-  if ($_REQUEST['jsop']) {
+  if ($_GET['jsop']) {
     $add = $imce['files'][$file->filename];
     $add['name'] = rawurlencode($file->filename);
     $add['fsize'] = format_size($file->filesize);
@@ -504,7 +504,7 @@ function imce_remove_file($filename, &$imce) {
   if (isset($imce['files'][$filename])) {
     $imce['dirsize'] -= $imce['files'][$filename]['size'];
     unset($imce['files'][$filename]);
-    if ($_REQUEST['jsop']) {
+    if ($_GET['jsop']) {
       $imce['removed'][] = rawurlencode($filename);
     }
   }
@@ -586,7 +586,7 @@ function imce_initiate_profile($user) {
     if (!empty($imce['directories'])) {
       $imce['uid'] = (int)$user->uid;
       $imce['url'] = url($_GET['q']);
-      $imce['clean'] = variable_get('clean_url', '0') == 1;
+      $imce['clean'] = variable_get('clean_url', 0) == 1;
       $imce['prvt'] = variable_get('file_downloads', '') == FILE_DOWNLOADS_PRIVATE;
       $imce['furl'] = $imce['prvt'] ? url('system/files') : base_path() . file_directory_path();
       if (variable_get('imce_settings_absurls', 0)) {
@@ -829,7 +829,6 @@ function imce_scan_directory($dirname) {
 
 /**
  * Create directory tree.
- * This is not themable because it is complex and needs to be avaliable for js processing.
  */
 function imce_create_tree(&$imce) {
   $paths = array();
@@ -868,6 +867,7 @@ function imce_create_tree(&$imce) {
 
 /**
  * Return tree html.
+ * This is not themable because it is complex and needs to be in a proper format for js processing.
  */
 function imce_tree_html(&$imce, $paths, $q = '?', $prefix = '', $eprefix = '') {
   unset($paths[':access:'], $paths[':active:']);
