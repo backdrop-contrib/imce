@@ -1,0 +1,685 @@
+# $Id$
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright 2009 NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  imce.module,v 1.23.2.5 2008/07/19 13:21:02 ufku
+#  imce.info,v 1.6 2008/02/27 18:03:46 ufku
+#  admin.inc,v 1.5.2.6 2009/02/09 18:24:36 ufku
+#  js.inc,v 1.6.2.1 2008/05/04 15:29:15 ufku
+#  page.inc,v 1.10.2.23 2009/07/09 19:56:54 ufku
+#  imce-content.tpl.php,v 1.8.2.5 2009/09/21 12:10:12 ufku
+#  imce.js,v 1.15.2.10 2009/07/09 19:29:09 ufku
+#  subdir.inc,v 1.3 2008/02/29 16:57:12 ufku
+#  imce_set_app.js,v 1.3.2.9 2009/09/21 14:26:39 ufku
+#  imce_set_inline.js,v 1.3.2.5 2009/09/21 14:26:39 ufku
+#  imce-page.tpl.php,v 1.8.2.2 2008/04/21 18:36:22 ufku
+#
+msgid ""
+msgstr "Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-10-29 18:11+0100\n"
+"PO-Revision-Date: 2009-10-29 19:14+0100\n"
+"Last-Translator: Thomas Zahreddin <thomas@voicehero.com>\n"
+"Language-Team: Thomas Zahreddin <tz@it-arts.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"X-Poedit-Language: German\n"
+"X-Poedit-Country: Germany\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+#: imce.module:131
+msgid "Insert !image or !link."
+msgstr "!image oder !link einfügen."
+
+#: imce.module:131
+msgid "image"
+msgstr "Bild"
+
+#: imce.module:131
+msgid "link"
+msgstr "Link"
+
+#: imce.module:11;45
+msgid "File browser"
+msgstr "Der Datei-Browser"
+
+#: imce.module:18
+#: imce.info:0
+msgid "IMCE"
+msgstr "IMCE"
+
+#: imce.module:19
+msgid "Control how your image/file browser works."
+msgstr " Einstellungen für Bilder- bzw. Dateimanager."
+
+#: imce.module:25
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: imce.module:29
+msgid "Directory creation tool"
+msgstr "Werkzeug zur Erstellung von Verzeichnissen"
+
+#: imce.module:38
+#: inc/admin.inc:24
+msgid "Add new profile"
+msgstr "Neues Profil hinzufügen"
+
+#: imce.info:0
+msgid "An image/file uploader and browser supporting personal directories and user quota."
+msgstr "Hochladen und Verwalten von Bildern bzw. Dateien, wobei persönliche Verzeichnisse und Größenbeschränkungen genutzt werden können."
+
+#: inc/admin.inc:14;186
+msgid "Profile name"
+msgstr "Profil-Name"
+
+#: inc/admin.inc:14
+msgid "Operations"
+msgstr "Operationen"
+
+#: inc/admin.inc:19
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: inc/admin.inc:20;316;470
+#: inc/js.inc:42
+#: inc/page.inc:154;193
+msgid "Delete"
+msgstr "Löschen"
+
+#: inc/admin.inc:26
+msgid "Configuration profiles"
+msgstr "Konfigurationsprofile"
+
+#: inc/admin.inc:50
+msgid "Common settings"
+msgstr "Allgemeine Einstellungen"
+
+#: inc/admin.inc:56
+msgid "Enable inline image/file insertion into plain textareas"
+msgstr "Bilder und Dateien in Textfelder innerhalb von Zeilen einfügen als HTML - inline-Element"
+
+#: inc/admin.inc:59
+msgid "If you don't use any WYSIWYG editor, this feature will allow you to add your images or files as <strong>html code into any plain textarea</strong>. Enter <strong>comma separated textarea IDs</strong> under which you want to enable a link to IMCE. Hint: ID of Body fields in most node types is edit-body."
+msgstr "Bilder oder Dateien  als <strong>HTML-Code in Textfelder</strong> einfügen, alternativ können Sie einen WYSIWYG-Editor verwenden. Geben Sie <strong>durch Komma getrennt textarea IDs an,</strong> unter denen Sie einen Link zu IMCE ermöglichen wollen. Hinweis: die Body Felder in den meisten Arten von Inhaltstpyen sind mit edit-body bezeichnet."
+
+#: inc/admin.inc:63
+msgid "Absolute URLs"
+msgstr "Absolute URLs"
+
+#: inc/admin.inc:65
+msgid "Check if you want IMCE to return absolute file URLs."
+msgstr "Prüfen Sie, ob Sie IMCE absolute Datei-URLs verwenden lassen wollen."
+
+#: inc/admin.inc:69
+msgid "Default behaviour for existing files during file uploads"
+msgstr "Standardverhalten Upload von Dateien bei bereits vorhandene Dateien."
+
+#: inc/admin.inc:72
+msgid "Keep the existing file renaming the new one"
+msgstr "Behalten der vorhandenen Datei, umbenennen der neuen Datei"
+
+#: inc/admin.inc:73
+msgid "Keep the existing file rejecting the new one"
+msgstr "Behalten der vorhandenen Datei, die neue Datei abweisen."
+
+#: inc/admin.inc:74
+msgid "Replace the existing file with the new one"
+msgstr "Ersetzen Sie die vorhandene Datei mit der neuen."
+
+#: inc/admin.inc:79
+msgid "Default method for creating thumbnails"
+msgstr "Standard-Methode für die Erstellung von Vorschaubildern"
+
+#: inc/admin.inc:82
+msgid "Scale the image with respect to the thumbnail dimensions."
+msgstr "[fuzzy] Vorschaubild erstellen."
+
+#: inc/admin.inc:83
+msgid "First scale then crop the image to fit the thumbnail dimensions."
+msgstr "Zuerst das Bild verkleinern, dann, gegebenenfalls zuschneiden, damit die Vorschaugröße erreicht wird."
+
+#: inc/admin.inc:87;257
+msgid "Save configuration"
+msgstr "Konfiguration speichern"
+
+#: inc/admin.inc:98
+msgid "User role"
+msgstr "Rolle"
+
+#: inc/admin.inc:98
+msgid "Assigned profile"
+msgstr "Zugewiesenes Profil"
+
+#: inc/admin.inc:100
+msgid "user #1"
+msgstr "Benutzer #1"
+
+#: inc/admin.inc:104
+msgid "Weight"
+msgstr "Gewicht"
+
+#: inc/admin.inc:106
+msgid "n/a"
+msgstr "n/v"
+
+#: inc/admin.inc:107
+msgid "For users who have <strong>multiple roles</strong>, <strong>weight</strong> property will determine the assigned profile. Lighter roles that are placed upper will take the precedence. So, an administrator role should be placed over other roles by having a smaller weight, ie. -10."
+msgstr "Für Anwender, die <strong>mehrere Rollen</strong> haben, legt die <strong>Gewichtung</strong> fest, welches Profil diese zugeordnet bekommen. Leichtere Rollen haben Vorrang. Je mehr Rechte eine Rolle hat, um so stärkeren Vorrang sollte diese haben. -10."
+
+#: inc/admin.inc:118
+msgid "Role-profile assignments"
+msgstr "Role-Profil Zuordnungen"
+
+#: inc/admin.inc:120
+msgid "Assign profiles to user roles."
+msgstr "Weisen Sie Profile Benutzerrollen zu."
+
+#: inc/admin.inc:139
+msgid "Changes have been saved."
+msgstr "Änderungen wurden gespeichert."
+
+#: inc/admin.inc:175
+msgid "Settings were imported from the profile %name"
+msgstr "Einstellungen wurden aus dem Profil %name importiert"
+
+#: inc/admin.inc:188
+msgid "Give a name to this profile."
+msgstr "Es mus ein Profilname angegeben werden."
+
+#: inc/admin.inc:197
+#: tpl/imce-content.tpl.php:44
+msgid "Maximum file size per upload"
+msgstr "Maximale Dateigröße pro Upload"
+
+#: inc/admin.inc:199;206
+msgid "Set to 0 to use the maximum value avaliable."
+msgstr "Auf 0 setzen, um die maximale Wert zu verwenden."
+
+#: inc/admin.inc:199
+msgid "Your PHP settings limit the maximum file size per upload to %size."
+msgstr "Die PHP-Einstellungen beschränken die maximale Dateigröße pro Upload auf %size."
+
+#: inc/admin.inc:200;207;214
+msgid "MB"
+msgstr "MB"
+
+#: inc/admin.inc:204
+msgid "Directory quota"
+msgstr "Beschränkung der Größe für Verzeichnisse"
+
+#: inc/admin.inc:206
+msgid "Define the upload quota per directory. Total user quota is proportional to the number of directories that the user has upload access to."
+msgstr "Definieren Sie die Upload-Volumen pro Verzeichnis. Die Beschränkung für den Speicherplatz ist proportional zur Anzahl der Verzeichnisse zu denen der Benutzer Zugriff hat"
+
+#: inc/admin.inc:211
+msgid "Total user quota"
+msgstr "Gesamter Speicherplatz pro Benutzer"
+
+#: inc/admin.inc:213
+msgid "You can force total user quota to be a value independent of directory quota. <strong>This quota is calculated using the files table in the database, so that it will not include the files uploaded via FTP or by previous versions of IMCE(4.7.x and 5.x)</strong>. You can either use both quotations together or safely ignore this by setting the value to 0."
+msgstr " Speicherplatz pro Benutzer unabhängig von den Beschränkungen für Verzeichnisse verwalten. <strong> Speicherplatz wird nur auf Basis der Dateien, die in der Datenbank erfasst sind berechnet, sollten Dateien anders hochgeladen worden sein, so werden diese nicht berücksichtigt. Beide Beschränkungen gleichzeitig nutzen, oder auf 0 setzen und ohne Beschränkunen Dateien hochladen."
+
+#: inc/admin.inc:218
+#: tpl/imce-content.tpl.php:45
+msgid "Permitted file extensions"
+msgstr "Erlaubte Dateitypen"
+
+#: inc/admin.inc:221
+msgid "Extensions that users in this role can upload. Separate extensions with a space and do not include the leading dot."
+msgstr "Erweiterungen, die Benutzer in dieser Rolle hochladen können. Erweiterungen mit Leerzeichen getrennt und ohne führenden Punkt erfassen."
+
+#: inc/admin.inc:221
+msgid "Set to * to remove the restriction."
+msgstr "* für alle"
+
+#: inc/admin.inc:225
+#: tpl/imce-content.tpl.php:46
+msgid "Maximum image resolution"
+msgstr "Maximale Bildgröße"
+
+#: inc/admin.inc:227
+msgid "The maximum allowed image size (e.g. 640x480). Set to 0 for no restriction. If an <a href=\"!image-toolkit-link\">image toolkit</a> is installed, files exceeding this value will be scaled down to fit."
+msgstr "Die maximal zulässige Bildgröße (zB 640x480). Auf 0 setzen für keine Einschränkungen. Wenn ein <a href=\\\"!image-toolkit-link\\\">Bild Toolkit</a> installiert ist, werden Dateien die größer als dieser Wert sind, skaliert."
+
+#: inc/admin.inc:228
+msgid "WIDTHxHEIGHT"
+msgstr "BREITE×HÖHE"
+
+#: inc/admin.inc:232
+#: tpl/imce-content.tpl.php:47
+msgid "Maximum number of files per operation"
+msgstr "Begrenzt die Anzahl der Dateien pro Operation"
+
+#: inc/admin.inc:234
+msgid "You can allow users to select multiple files for operations such as delete, resize, etc. Entire batch file operation is executed in a single drupal load, which may be good. However there will be an increase in script execution time, cpu load and memory consumption possibly exceeding the limits of your server, which is really bad. For unlimited number of file handling, set this to 0."
+msgstr "Sie können Benutzern erlauben mehrere Dateien für Operationen wie \"Löschen\" Größe anpassen etc. gleichzeitig auszuwählen. Alle Dateioperationen in einem Zug durchführen, dies kann vorteilhaft sein. Dennoch steigt der Zeitverbrauch, der Berechnungsaufwand und der Speicherbedarf und kann die zur Verfügungstehenden Ressourcen übersteigen, was unvorteilhaft ist. Für unbegrenzte Anzahl von Datei-Operationen, setzen Sie diese auf 0."
+
+#: inc/admin.inc:269
+msgid "The changes have been saved."
+msgstr "Änderungen wurden gespeichert."
+
+#: inc/admin.inc:269
+msgid "Profile has been added."
+msgstr "Profil wurde hinzugefügt."
+
+#: inc/admin.inc:296
+msgid "Including subdirectories"
+msgstr "Einschließlich der Unterverzeichnisse"
+
+#: inc/admin.inc:301
+msgid "Browse"
+msgstr "Navigieren"
+
+#: inc/admin.inc:306
+#: inc/js.inc:21
+#: inc/page.inc:114
+#: js/imce.js:0
+msgid "Upload"
+msgstr "Hochladen"
+
+#: inc/admin.inc:311;417
+#: inc/page.inc:146;176
+msgid "Thumbnails"
+msgstr "Vorschaubilder"
+
+#: inc/admin.inc:321
+#: inc/js.inc:52
+#: inc/page.inc:162;218
+msgid "Resize"
+msgstr "Größe ändern"
+
+#: inc/admin.inc:350
+#: inc/subdir.inc:13
+msgid "Directory path"
+msgstr "Directory path"
+
+#: inc/admin.inc:352
+msgid "Directories"
+msgstr "Verzeichnisse"
+
+#: inc/admin.inc:354
+msgid ""
+"Define directories that users of this profile can access.\n"
+"<ul>\n"
+"\t<li>Use alphanumeric characters as directory paths.</li>\n"
+"\t<li>To specify file system root, just enter <strong>.</strong>(dot) character.</li>\n"
+"\t<li>Use <strong>%uid</strong> as a placeholder for user ID. Ex: <em>users/user%uid</em> creates directories such as <em>users/user1</em>, <em>users/user42</em>, etc.</li>\n"
+"  <li>To remove a directory from the list, leave the directory path blank.</li>\n"
+"  <li>If you want more flexibility in directory paths you can execute php to return a directory path.<br />\n"
+"  For php execution your directory path must start with <strong>php:</strong> and the rest must be a valid php code that is expected to return the actual directory path. <br />Ex: <strong>php: return 'users/'.$user->name;</strong> defines <strong>users/USER-NAME</strong> as the directory path.<br />\n"
+"  A multi-level directory example <strong>php: return date('Y', $user->created).'/'.date('m', $user->created).'/'.$user->uid;</strong> defines <strong>MEMBERSHIP-YEAR/MONTH/USER-ID</strong> as the directory path, resulting in self-categorized user directories based on membership date.<br />\n"
+"  Note that you should use the $user variable instead of $GLOBALS['user'] since they are not always the same object.</li>\n"
+"</ul>\n"
+"<p>Note that thumbnails permission does not affect thumbnail creation on upload. See thumbnails decription below.</p>\n"
+"<p>If you need more fields, just fill all and save, and you will get two more on the next page.</p>"
+msgstr "Definieren Sie die Verzeichnisse, dass den Nutzern dieses Profil zugreifen können.\n"
+"<ul><li> Verwenden Sie alphanumerische Zeichen als Verzeichnispfade. </li><li> So geben Sie für die Wurzel des Dateisystems einfach <strong>.</strong> (Punkt) an. </li><li> Verwenden Sie <strong>%uid</strong> als Platzhalter für <strong>Benutzer-ID</strong>. z.B. <em>Benutzer/Benutzer%uid</em> erzeugt ein Verzeichnis <em>Benutzer/Benutzer42</em>, etc.</li>\n"
+"  <li> Um ein Verzeichnis aus der Liste zu entfernen, lassen Sie den Verzeichnis-Pfad leer. </li>\n"
+"  <li> Wenn Sie wollen mehr Flexibilität für Verzeichnispfade wünschen, dann führen Sie php code aus, der einen Pfad zurückgibt. <br />\n"
+"  Für die PHP-Ausführung tragen Sie in Ihrem Verzeichnis Pfad <strong>php:</strong> und gültigen PHP-Code, der einen Verzeichnispfad zurückgibt ein. <br />z.B.: <strong>php: return 'users/'.$user->name;</strong> erzeugt <strong>users/Benutzername</strong>als Verzeichnispfad.<br />\n"
+"  Ein Verzeichnispfad über mehrere Ebenen:<strong>php: return date('Y', $user->created).'/'.date('m', $user->created).'/'.$user->uid;</strong> erzeugt<strong>YEAR/MONTH/USER-ID</strong> Datum der Erzeugung des Benutzerkontos als Verzeichnispfad<br />\n"
+"  Beachten Sie, dass Sie die Variable $user verwenden statt $GLOBALS ['user'], da sie nicht immer übereinstimmen. </li></ul><p> Die Möglichkeit Vorschaubilder zu erstellen ist davon nicht berührt. Die Beschreibung der Vorschaubider ist unten</p>\n"
+"<p>Wenn Sie mehr Felder wünschen, füllen Sie diese hier aus und zwei weitere sind auf der nächsten Seite.</p>"
+
+#: inc/admin.inc:405
+msgid "Name"
+msgstr "Name"
+
+#: inc/admin.inc:405
+msgid "Dimensions"
+msgstr "Dimensionen"
+
+#: inc/admin.inc:405
+msgid "Prefix"
+msgstr "Präfix"
+
+#: inc/admin.inc:405
+msgid "Suffix"
+msgstr "Suffix"
+
+#: inc/admin.inc:419
+msgid ""
+"You may create a list of thumbnail options that users can choose from.\n"
+"<ul>\n"
+"  <li>Use alphanumeric characters as thumbnail names.</li>\n"
+"  <li>Specify dimensions as <strong>WidthxHeight</strong>.</li>\n"
+"  <li>Prefix and suffix are strings that are added to original file name to create the thumbnail name.</li>\n"
+"  <li>An example thumbnail: Name = <strong>Small</strong>, Dimensions = <strong>80x80</strong>, Prefix = <strong>small_</strong></li>\n"
+"</ul>\n"
+"<p>Note that users will always be able to create thumbnails on file upload no matter what the thumbnail permission is. To disable thumbnail creation on file upload you should not define any thumbnails here.</p>\n"
+"<p>If you need more fields, just fill all and save, and you will get two more on the next page.</p>"
+msgstr "Legen Sie eine Liste der Optionen für Vorschaubilder fest, aus denen Ihre Nutzer auswählen können.\n"
+"<ul>\n"
+"  <li> Verwenden Sie alphanumerische Zeichen für die Namen der Vorschaubilder. </li>\n"
+"  <li> Geben Sie Dimensionen wie <strong>Breite X Höhe</strong>an</li>\n"
+"  <li>Präfix und Suffix sind Zeichenfolgen, die dem ursprünglichen Dateinamen hinzugefügt werden, um den Namen für das Vorschaubild zu bilden. </li>\n"
+"  <li> Ein Beispiel Vorschaubild: Name = <strong>Kleine</strong> Abmessungen: <strong>80x80,</strong> Präfix = <strong>small_</strong> </li></ul><p> Beachten Sie, dass Benutzer immer Vorschaubilder aus hochgeladenen Dateien erstellen können, unabhängig von den Berechtigungen für Vorschaubilder. Deaktivieren Sie die Erstellung von Vorschaubildern per Datei-Upload, dann definieren Sie hier keine Vorschaubilder. </p><p> Wenn Sie mehr Felder wünschen, füllen Sie diese hier aus und zwei weitere sind auf der nächsten Seite. </p>"
+
+#: inc/admin.inc:466
+msgid "Are you sure you want to delete the profile %name?"
+msgstr "Soll das Profil %name wirklich gelöscht werden?"
+
+#: inc/admin.inc:471
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: inc/admin.inc:482
+msgid "Profile has been deleted."
+msgstr "Das Profil wurde gelöscht."
+
+#: inc/admin.inc:490
+msgid "none"
+msgstr "Keine"
+
+#: inc/admin.inc:511
+msgid "Import settings from other profiles"
+msgstr "Einstellungen aus anderen Profilen importieren"
+
+#: inc/admin.inc:580
+msgid "Duplicate directory paths are not allowed."
+msgstr "Verzeichnispfade müssen eindeutig sein."
+
+#: inc/admin.inc:584
+msgid "%dirname is not accepted as a proper directory name."
+msgstr "% dirname ist kein zulässer Name für ein Verzeichnis."
+
+#: inc/js.inc:32
+#: inc/page.inc:121;181
+msgid "Create thumbnails"
+msgstr "Vorschaubilder erstellen"
+
+#: inc/page.inc:108
+msgid "File"
+msgstr "Datei"
+
+#: inc/page.inc:125
+msgid "Upload file"
+msgstr "Datei hochladen"
+
+#: inc/page.inc:138
+msgid "Selected files"
+msgstr "Ausgewählte Dateien"
+
+#: inc/page.inc:205
+msgid "Width x Height"
+msgstr "Breite x Höhe"
+
+#: inc/page.inc:224
+msgid "Create a new image"
+msgstr "Ein neues Bild erstellen"
+
+#: inc/page.inc:238
+#: js/imce.js:0
+msgid "Please select a file."
+msgstr "Bitte wählen Sie eine Datei."
+
+#: inc/page.inc:246
+#: js/imce.js:0
+msgid "You are not allowed to operate on more than %num files."
+msgstr "Sie sind nicht berechtigt Operationen auf mehr als %num Dateien auszuführen."
+
+#: inc/page.inc:253
+msgid "directory (%dir)"
+msgstr "Verzeichnis (%dir)"
+
+#: inc/page.inc:254
+msgid "An illegal choice has been detected. Please contact the site administrator."
+msgstr "Eine ungültige Wahl ist erkannt worden. Bitte kontaktieren Sie den Administrator der Website."
+
+#: inc/page.inc:282
+msgid "The file is renamed to %filename."
+msgstr "Die Datei wird in %filename umbenannt."
+
+#: inc/page.inc:295
+msgid "%filename is uploaded."
+msgstr "%filename ist hochgeladen."
+
+#: inc/page.inc:309
+msgid "Upload failed."
+msgstr "Hochladen fehlgeschlagen."
+
+#: inc/page.inc:333
+msgid "File deletion successful: %files."
+msgstr "Löschen von Dateien erfolgreich:%files."
+
+#: inc/page.inc:350
+#: js/imce.js:0
+msgid "Please specify dimensions within the allowed range that is from 1x1 to @dimensions."
+msgstr "Bitte geben Sie Dimensionen innerhalb des zulässigen Bereichs ist, dass von 1x1 bis @dimensions."
+
+#: inc/page.inc:350
+#: js/imce.js:0
+#: tpl/imce-content.tpl.php:44;46;47
+msgid "unlimited"
+msgstr "unbegrenzt"
+
+#: inc/page.inc:357
+msgid "File resizing successful: %files."
+msgstr "Größenänderung erfolgreich: %files."
+
+#: inc/page.inc:404
+msgid "Thumbnail creation (%thumbnames) successful for %filename."
+msgstr "Vorschaubild (%thumbnames) erfolgreich erstellt für %filename."
+
+#: inc/page.inc:437
+#: js/imce.js:0
+msgid "%filename is not an image."
+msgstr "%filename ist kein Bild."
+
+#: inc/page.inc:442
+msgid "Scaling up is not allowed."
+msgstr "Vergrößern ist nicht erlaubt."
+
+#: inc/page.inc:457
+msgid "%filename(%dimensions) already exists."
+msgstr "%filename(%dimensions) ist bereits vorhanden."
+
+#: inc/page.inc:474
+msgid "%filename cannot be resized to %dimensions"
+msgstr "%filename kann nicht auf %dimensions angepasst werden."
+
+#: inc/page.inc:487
+msgid "The selected file %file could not be copied."
+msgstr "Die ausgewählte Datei %file konnte nicht kopiert werden."
+
+#: inc/page.inc:568
+msgid "File browser is set to reject the upload of existing files."
+msgstr "Der Datei-Browser so eingestellt ist, dass der Upload von vorhandenen Dateien ablehnt wird."
+
+#: inc/page.inc:582
+#: js/imce.js:0
+msgid "Only files with the following extensions are allowed: %files-allowed."
+msgstr "Nur Dateien mit folgenden Erweiterungen sind zulässig: %files-allowed."
+
+#: inc/page.inc:596
+msgid "The file is %filesize exceeding the maximum file size of %maxsize."
+msgstr "Die Datei mit der Größe %filesize übersteigt die maximale Dateigröße von %maxsize."
+
+#: inc/page.inc:608
+msgid "%filename is %filesize which would exceed your %quota_type. You are currently using %size of %quota."
+msgstr "%filename mit der Größe %filesize übersteigt den zugewiesen Speicherplatz %quota_type. Sie nutzen aktuell %size von %quota."
+
+#: inc/page.inc:679
+msgid "Unable to get a working directory for the file browser!"
+msgstr "Kein Arbeitsverzeichnis für den Datei-Browser erhalten!"
+
+#: inc/page.inc:685
+msgid "There is no valid directory specified for the file browser!"
+msgstr "Es ist keine gültiges Verzeichnis für den Datei-Browser angegeben!"
+
+#: inc/page.inc:688
+msgid "You don't have access to any configuration profile to use the file browser!"
+msgstr "Sie haben keinen Zugriff auf das Konfigurationsprofil, um den Datei-Browser zu verwenden!"
+
+#: inc/page.inc:970
+msgid "Directory root"
+msgstr "Wurzel-Verzeichnis"
+
+#: inc/page.inc:253
+msgid "imce"
+msgstr "IMCE"
+
+#: inc/page.inc:253
+msgid "Illegal choice %choice in !name element."
+msgstr "Unzulässige Auswahl %choice für Element !name."
+
+#: inc/subdir.inc:10
+msgid "<p>Here you can create subdirectories for your users. Multiple directory creation is possible at a time with the <strong>*</strong> character. For example, specifying <strong>user*/foo</strong> will create <strong>foo</strong> named directories under each directory starting with <strong>user</strong>. */foo*/bar will create bar named directories under directories starting with foo in each directory of file system path.</p>"
+msgstr "<p> Hier können Sie Unterverzeichnisse für die Benutzer anlegen. Mehrere Verzeichnisse können über <strong>*</strong> gleichzeitig erzeugt werden. Zum Beispiel: <strong>user*/foo</strong> erzeugt ein Verzeichnis <strong>foo</strong> in allen Verzeichnissen, deren Namen mit <strong>user</strong> beginnen. */foo*/bar erzeugt das Verzeichnis bar in allen Verzeichnissen, deren Namen mit foo beginnt, in allen Verzeichnissen.</p>"
+
+#: inc/subdir.inc:19
+msgid "Create"
+msgstr "Erzeugen"
+
+#: inc/subdir.inc:46
+msgid "Specified path must be under file sytem path."
+msgstr "Der angegebenen Pfad muss unter Dateisystem-Pfad liegen."
+
+#: inc/subdir.inc:64
+msgid "No matching subdirectories found."
+msgstr "Es konnten keine entsprechenden Unterverzeichnissen gefunden werden."
+
+#: js/imce.js:0
+msgid "Directory %dir is loaded."
+msgstr "Das Verzeichnis %dir ist geladen."
+
+#: js/imce.js:0
+msgid "Directory %dir is empty."
+msgstr "Das Verzeichnis %dir ist leer."
+
+#: js/imce.js:0
+msgid "File browsing is disabled in directory %dir."
+msgstr "Navigieren durch das Verzeichnis %dir ist deaktiviert."
+
+#: js/imce.js:0
+msgid "You can't perform this operation."
+msgstr "Sie können diese Operation nicht durchführen."
+
+#: js/imce.js:0
+msgid "Do you want to refresh the current directory?"
+msgstr "Wollen Sie das aktuelle Verzeichnis aktualisieren?"
+
+#: js/imce.js:0
+msgid "Uploading %filename..."
+msgstr "%filename wird hochgeladen..."
+
+#: js/imce.js:0
+msgid "Delete selected files?"
+msgstr "Ausgewählte Dateien löschen?"
+
+#: js/imce.js:0
+msgid "Please select a thumbnail."
+msgstr "Bitte wählen Sie ein Vorschaubild."
+
+#: js/imce.js:0
+msgid "Please select a single file."
+msgstr "Bitte wählen Sie eine einzelne Datei."
+
+#: js/imce.js:0
+msgid "You must select at least %num files."
+msgstr "Sie müssen mindestens %num Dateien auswählen."
+
+#: js/imce_set_app.js:0
+#: js/imce_set_inline.js:0
+msgid "Send to @app"
+msgstr "An @app senden"
+
+#: js/imce_set_inline.js:0
+msgid "textarea"
+msgstr "Textfeld"
+
+#: tpl/imce-content.tpl.php:24
+msgid "You should use a javascript-enabled browser in order to experince a much more user-friendly interface."
+msgstr "Mit einem Javascript fähigen Browser erhalten Sie ein benutzerfreundlicheres Verhalten."
+
+#: tpl/imce-content.tpl.php:29
+msgid "Help"
+msgstr "Hilfe"
+
+#: tpl/imce-content.tpl.php:31
+msgid "Tips"
+msgstr "Tipps"
+
+#: tpl/imce-content.tpl.php:33
+msgid "Select a file by clicking the corresponding row in the file list."
+msgstr "Wählen Sie eine Datei, indem Sie die entsprechende Zeile in der Dateiliste anklicken."
+
+#: tpl/imce-content.tpl.php:34
+msgid "Ctrl+click to add files to the selection or to remove files from the selection."
+msgstr "Strg + Klick, um Dateien zur Auswahl hinzufügen oder Dateien aus der Auswahl zu entfernen."
+
+#: tpl/imce-content.tpl.php:35
+msgid "Shift+click to create a range selection. Click to start the range and shift+click to end it."
+msgstr "Umschalt + Klick, um einen Menge auszuwählen. Klicken um den Start der Menge festzulegen und Umschalt + Klick, um es zu beenden."
+
+#: tpl/imce-content.tpl.php:36
+msgid "Sort the files by clicking a column header of the file list."
+msgstr "Sortieren Sie die Dateien, indem Sie auf eine Spaltenüberschrift der Dateiliste klicken."
+
+#: tpl/imce-content.tpl.php:37
+msgid "Resize the work-spaces by dragging the horizontal or vertical resize-bars."
+msgstr "Die Linien können gezogen werden, um die Größe von Spalten und Zeilen anzupassen."
+
+#: tpl/imce-content.tpl.php:38
+msgid "Keyboard shortcuts for file list: up, down, left, home, end, ctrl+A."
+msgstr "Tastenkombinationen in der Dateiliste: oben, unten, links, Anfang, Ende, Strg + A."
+
+#: tpl/imce-content.tpl.php:39
+msgid "Keyboard shortcuts for selected files: enter/insert, delete, R(esize), T(humbnails), U(pload)."
+msgstr "Tastenkombinationen für ausgewählte Dateien: Geben Sie / einfügen, löschen, R= Reformatieren, T=Vorschaubilder, U=Hochladen."
+
+#: tpl/imce-content.tpl.php:40
+msgid "Keyboard shortcuts for directory list: up, down, left, right, home, end."
+msgstr "Tastenkombinationen für Verzeichnis-Liste: oben, unten, links, rechts, Anfang, Ende."
+
+#: tpl/imce-content.tpl.php:42
+msgid "Limitations"
+msgstr "Einschränkungen"
+
+#: tpl/imce-content.tpl.php:45
+msgid "all"
+msgstr "alle"
+
+#: tpl/imce-content.tpl.php:62
+msgid "Navigation"
+msgstr "Navigation"
+
+#: tpl/imce-content.tpl.php:72
+msgid "File name"
+msgstr "Dateiname"
+
+#: tpl/imce-content.tpl.php:73
+msgid "Size"
+msgstr "Größe"
+
+#: tpl/imce-content.tpl.php:74
+msgid "Width"
+msgstr "Breite"
+
+#: tpl/imce-content.tpl.php:75
+msgid "Height"
+msgstr "Höhe"
+
+#: tpl/imce-content.tpl.php:76
+msgid "Date"
+msgstr "Datum"
+
+#: tpl/imce-content.tpl.php:84
+msgid "!num files using !dirsize of !quota"
+msgstr "!num Dateien belegen !dirsize von !quota"
+
+#: tpl/imce-content.tpl.php:87
+msgid "unlimited quota"
+msgstr "unbegrenzte Quoten"
+
+#: tpl/imce-content.tpl.php:105
+msgid "Clear log"
+msgstr "Protokoll löschen"
+
+#: tpl/imce-page.tpl.php:7
+msgid "File Browser"
+msgstr "Datei-Browser"
+
