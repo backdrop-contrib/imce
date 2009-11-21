@@ -3,23 +3,23 @@
 # LANGUAGE translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>
 # Generated from files:
-#  imce.module,v 1.23.2.2 2008/04/13 21:24:17 ufku
+#  imce.module,v 1.23.2.5 2008/07/19 13:21:02 ufku
 #  imce.info,v 1.6 2008/02/27 18:03:46 ufku
-#  admin.inc,v 1.5.2.4 2008/04/18 21:49:01 ufku
-#  page.inc,v 1.10.2.6 2008/05/01 14:03:27 ufku
+#  admin.inc,v 1.5.2.6 2009/02/09 18:24:36 ufku
 #  js.inc,v 1.6.2.1 2008/05/04 15:29:15 ufku
-#  imce-content.tpl.php,v 1.8.2.3 2008/05/01 13:58:06 ufku
-#  imce.js,v 1.15.2.7 2008/05/04 15:28:27 ufku
+#  page.inc,v 1.10.2.23 2009/07/09 19:56:54 ufku
+#  imce-content.tpl.php,v 1.8.2.5 2009/09/21 12:10:12 ufku
+#  imce.js,v 1.15.2.10 2009/07/09 19:29:09 ufku
 #  subdir.inc,v 1.3 2008/02/29 16:57:12 ufku
-#  imce_set_app.js,v 1.3.2.1 2008/04/14 19:18:54 ufku
-#  imce_set_inline.js,v 1.3.2.1 2008/04/13 21:24:17 ufku
+#  imce_set_app.js,v 1.3.2.9 2009/09/21 14:26:39 ufku
+#  imce_set_inline.js,v 1.3.2.5 2009/09/21 14:26:39 ufku
 #  imce-page.tpl.php,v 1.8.2.2 2008/04/21 18:36:22 ufku
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2008-05-05 18:27+0200\n"
+"POT-Creation-Date: 2009-10-29 18:11+0100\n"
 "PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
@@ -28,15 +28,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: imce.module:117
+#: imce.module:131
 msgid "Insert !image or !link."
 msgstr ""
 
-#: imce.module:117
+#: imce.module:131
 msgid "image"
 msgstr ""
 
-#: imce.module:117
+#: imce.module:131
 msgid "link"
 msgstr ""
 
@@ -64,15 +64,11 @@ msgstr ""
 msgid "Add new profile"
 msgstr ""
 
-#: imce.module:0 inc/page.inc:245
-msgid "imce"
-msgstr ""
-
 #: imce.info:0
 msgid "An image/file uploader and browser supporting personal directories and user quota."
 msgstr ""
 
-#: inc/admin.inc:14;176
+#: inc/admin.inc:14;186
 msgid "Profile name"
 msgstr ""
 
@@ -84,7 +80,7 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: inc/admin.inc:20;306;459 inc/js.inc:42 inc/page.inc:148;185
+#: inc/admin.inc:20;316;470 inc/js.inc:42 inc/page.inc:154;193
 msgid "Delete"
 msgstr ""
 
@@ -128,327 +124,347 @@ msgstr ""
 msgid "Replace the existing file with the new one"
 msgstr ""
 
-#: inc/admin.inc:78;247
+#: inc/admin.inc:79
+msgid "Default method for creating thumbnails"
+msgstr ""
+
+#: inc/admin.inc:82
+msgid "Scale the image with respect to the thumbnail dimensions."
+msgstr ""
+
+#: inc/admin.inc:83
+msgid "First scale then crop the image to fit the thumbnail dimensions."
+msgstr ""
+
+#: inc/admin.inc:87;257
 msgid "Save configuration"
 msgstr ""
 
-#: inc/admin.inc:89
+#: inc/admin.inc:98
 msgid "User role"
 msgstr ""
 
-#: inc/admin.inc:89
+#: inc/admin.inc:98
 msgid "Assigned profile"
 msgstr ""
 
-#: inc/admin.inc:91
+#: inc/admin.inc:100
 msgid "user #1"
 msgstr ""
 
-#: inc/admin.inc:95
+#: inc/admin.inc:104
 msgid "Weight"
 msgstr ""
 
-#: inc/admin.inc:97
+#: inc/admin.inc:106
 msgid "n/a"
 msgstr ""
 
-#: inc/admin.inc:98
+#: inc/admin.inc:107
 msgid "For users who have <strong>multiple roles</strong>, <strong>weight</strong> property will determine the assigned profile. Lighter roles that are placed upper will take the precedence. So, an administrator role should be placed over other roles by having a smaller weight, ie. -10."
 msgstr ""
 
-#: inc/admin.inc:109
+#: inc/admin.inc:118
 msgid "Role-profile assignments"
 msgstr ""
 
-#: inc/admin.inc:111
+#: inc/admin.inc:120
 msgid "Assign profiles to user roles."
 msgstr ""
 
-#: inc/admin.inc:129
+#: inc/admin.inc:139
 msgid "Changes have been saved."
 msgstr ""
 
-#: inc/admin.inc:165
+#: inc/admin.inc:175
 msgid "Settings were imported from the profile %name"
 msgstr ""
 
-#: inc/admin.inc:178
+#: inc/admin.inc:188
 msgid "Give a name to this profile."
 msgstr ""
 
-#: inc/admin.inc:187 tpl/imce-content.tpl.php:44
+#: inc/admin.inc:197 tpl/imce-content.tpl.php:44
 msgid "Maximum file size per upload"
 msgstr ""
 
-#: inc/admin.inc:189;196
+#: inc/admin.inc:199;206
 msgid "Set to 0 to use the maximum value avaliable."
 msgstr ""
 
-#: inc/admin.inc:189
+#: inc/admin.inc:199
 msgid "Your PHP settings limit the maximum file size per upload to %size."
 msgstr ""
 
-#: inc/admin.inc:190;197;204
+#: inc/admin.inc:200;207;214
 msgid "MB"
 msgstr ""
 
-#: inc/admin.inc:194
+#: inc/admin.inc:204
 msgid "Directory quota"
 msgstr ""
 
-#: inc/admin.inc:196
+#: inc/admin.inc:206
 msgid "Define the upload quota per directory. Total user quota is proportional to the number of directories that the user has upload access to."
 msgstr ""
 
-#: inc/admin.inc:201
+#: inc/admin.inc:211
 msgid "Total user quota"
 msgstr ""
 
-#: inc/admin.inc:203
+#: inc/admin.inc:213
 msgid "You can force total user quota to be a value independent of directory quota. <strong>This quota is calculated using the files table in the database, so that it will not include the files uploaded via FTP or by previous versions of IMCE(4.7.x and 5.x)</strong>. You can either use both quotations together or safely ignore this by setting the value to 0."
 msgstr ""
 
-#: inc/admin.inc:208 tpl/imce-content.tpl.php:45
+#: inc/admin.inc:218 tpl/imce-content.tpl.php:45
 msgid "Permitted file extensions"
 msgstr ""
 
-#: inc/admin.inc:211
+#: inc/admin.inc:221
 msgid "Extensions that users in this role can upload. Separate extensions with a space and do not include the leading dot."
 msgstr ""
 
-#: inc/admin.inc:211
+#: inc/admin.inc:221
 msgid "Set to * to remove the restriction."
 msgstr ""
 
-#: inc/admin.inc:215 tpl/imce-content.tpl.php:46
+#: inc/admin.inc:225 tpl/imce-content.tpl.php:46
 msgid "Maximum image resolution"
 msgstr ""
 
-#: inc/admin.inc:217
+#: inc/admin.inc:227
 msgid "The maximum allowed image size (e.g. 640x480). Set to 0 for no restriction. If an <a href=\"!image-toolkit-link\">image toolkit</a> is installed, files exceeding this value will be scaled down to fit."
 msgstr ""
 
-#: inc/admin.inc:218
+#: inc/admin.inc:228
 msgid "WIDTHxHEIGHT"
 msgstr ""
 
-#: inc/admin.inc:222 tpl/imce-content.tpl.php:47
+#: inc/admin.inc:232 tpl/imce-content.tpl.php:47
 msgid "Maximum number of files per operation"
 msgstr ""
 
-#: inc/admin.inc:224
+#: inc/admin.inc:234
 msgid "You can allow users to select multiple files for operations such as delete, resize, etc. Entire batch file operation is executed in a single drupal load, which may be good. However there will be an increase in script execution time, cpu load and memory consumption possibly exceeding the limits of your server, which is really bad. For unlimited number of file handling, set this to 0."
 msgstr ""
 
-#: inc/admin.inc:259
+#: inc/admin.inc:269
 msgid "The changes have been saved."
 msgstr ""
 
-#: inc/admin.inc:259
+#: inc/admin.inc:269
 msgid "Profile has been added."
 msgstr ""
 
-#: inc/admin.inc:286
+#: inc/admin.inc:296
 msgid "Including subdirectories"
 msgstr ""
 
-#: inc/admin.inc:291
+#: inc/admin.inc:301
 msgid "Browse"
 msgstr ""
 
-#: inc/admin.inc:296 inc/js.inc:21 inc/page.inc:109 js/imce.js:0
+#: inc/admin.inc:306 inc/js.inc:21 inc/page.inc:114 js/imce.js:0
 msgid "Upload"
 msgstr ""
 
-#: inc/admin.inc:301;407 inc/page.inc:141;168
+#: inc/admin.inc:311;417 inc/page.inc:146;176
 msgid "Thumbnails"
 msgstr ""
 
-#: inc/admin.inc:311 inc/js.inc:52 inc/page.inc:154;210
+#: inc/admin.inc:321 inc/js.inc:52 inc/page.inc:162;218
 msgid "Resize"
 msgstr ""
 
-#: inc/admin.inc:340 inc/subdir.inc:13
+#: inc/admin.inc:350 inc/subdir.inc:13
 msgid "Directory path"
 msgstr ""
 
-#: inc/admin.inc:342
+#: inc/admin.inc:352
 msgid "Directories"
 msgstr ""
 
-#: inc/admin.inc:344
+#: inc/admin.inc:354
 msgid "Define directories that users of this profile can access.\n<ul>\n\t<li>Use alphanumeric characters as directory paths.</li>\n\t<li>To specify file system root, just enter <strong>.</strong>(dot) character.</li>\n\t<li>Use <strong>%uid</strong> as a placeholder for user ID. Ex: <em>users/user%uid</em> creates directories such as <em>users/user1</em>, <em>users/user42</em>, etc.</li>\n  <li>To remove a directory from the list, leave the directory path blank.</li>\n  <li>If you want more flexibility in directory paths you can execute php to return a directory path.<br />\n  For php execution your directory path must start with <strong>php:</strong> and the rest must be a valid php code that is expected to return the actual directory path. <br />Ex: <strong>php: return 'users/'.$user->name;</strong> defines <strong>users/USER-NAME</strong> as the directory path.<br />\n  A multi-level directory example <strong>php: return date('Y', $user->created).'/'.date('m', $user->created).'/'.$user->uid;</strong> defines <strong>MEMBERSHIP-YEAR/MONTH/USER-ID</strong> as the directory path, resulting in self-categorized user directories based on membership date.<br />\n  Note that you should use the $user variable instead of $GLOBALS['user'] since they are not always the same object.</li>\n</ul>\n<p>Note that thumbnails permission does not affect thumbnail creation on upload. See thumbnails decription below.</p>\n<p>If you need more fields, just fill all and save, and you will get two more on the next page.</p>"
 msgstr ""
 
-#: inc/admin.inc:395
+#: inc/admin.inc:405
 msgid "Name"
 msgstr ""
 
-#: inc/admin.inc:395
+#: inc/admin.inc:405
 msgid "Dimensions"
 msgstr ""
 
-#: inc/admin.inc:395
+#: inc/admin.inc:405
 msgid "Prefix"
 msgstr ""
 
-#: inc/admin.inc:395
+#: inc/admin.inc:405
 msgid "Suffix"
 msgstr ""
 
-#: inc/admin.inc:409
+#: inc/admin.inc:419
 msgid "You may create a list of thumbnail options that users can choose from.\n<ul>\n  <li>Use alphanumeric characters as thumbnail names.</li>\n  <li>Specify dimensions as <strong>WidthxHeight</strong>.</li>\n  <li>Prefix and suffix are strings that are added to original file name to create the thumbnail name.</li>\n  <li>An example thumbnail: Name = <strong>Small</strong>, Dimensions = <strong>80x80</strong>, Prefix = <strong>small_</strong></li>\n</ul>\n<p>Note that users will always be able to create thumbnails on file upload no matter what the thumbnail permission is. To disable thumbnail creation on file upload you should not define any thumbnails here.</p>\n<p>If you need more fields, just fill all and save, and you will get two more on the next page.</p>"
 msgstr ""
 
-#: inc/admin.inc:455
+#: inc/admin.inc:466
 msgid "Are you sure you want to delete the profile %name?"
 msgstr ""
 
-#: inc/admin.inc:460
+#: inc/admin.inc:471
 msgid "Cancel"
 msgstr ""
 
-#: inc/admin.inc:471
+#: inc/admin.inc:482
 msgid "Profile has been deleted."
 msgstr ""
 
-#: inc/admin.inc:479
+#: inc/admin.inc:490
 msgid "none"
 msgstr ""
 
-#: inc/admin.inc:500
+#: inc/admin.inc:511
 msgid "Import settings from other profiles"
 msgstr ""
 
-#: inc/admin.inc:569
+#: inc/admin.inc:580
 msgid "Duplicate directory paths are not allowed."
 msgstr ""
 
-#: inc/admin.inc:573
+#: inc/admin.inc:584
 msgid "%dirname is not accepted as a proper directory name."
 msgstr ""
 
-#: inc/js.inc:32 inc/page.inc:116;173
+#: inc/js.inc:32 inc/page.inc:121;181
 msgid "Create thumbnails"
 msgstr ""
 
-#: inc/page.inc:103
+#: inc/page.inc:108
 msgid "File"
 msgstr ""
 
-#: inc/page.inc:120
+#: inc/page.inc:125
 msgid "Upload file"
 msgstr ""
 
-#: inc/page.inc:134
+#: inc/page.inc:138
 msgid "Selected files"
 msgstr ""
 
-#: inc/page.inc:197
+#: inc/page.inc:205
 msgid "Width x Height"
 msgstr ""
 
-#: inc/page.inc:216
+#: inc/page.inc:224
 msgid "Create a new image"
 msgstr ""
 
-#: inc/page.inc:230 js/imce.js:0
+#: inc/page.inc:238 js/imce.js:0
 msgid "Please select a file."
 msgstr ""
 
-#: inc/page.inc:238 js/imce.js:0
+#: inc/page.inc:246 js/imce.js:0
 msgid "You are not allowed to operate on more than %num files."
 msgstr ""
 
-#: inc/page.inc:245
+#: inc/page.inc:253
 msgid "directory (%dir)"
 msgstr ""
 
-#: inc/page.inc:246
+#: inc/page.inc:254
 msgid "An illegal choice has been detected. Please contact the site administrator."
 msgstr ""
 
-#: inc/page.inc:274
+#: inc/page.inc:282
 msgid "The file is renamed to %filename."
 msgstr ""
 
-#: inc/page.inc:287
+#: inc/page.inc:295
 msgid "%filename is uploaded."
 msgstr ""
 
-#: inc/page.inc:301
+#: inc/page.inc:309
 msgid "Upload failed."
 msgstr ""
 
-#: inc/page.inc:325
+#: inc/page.inc:333
 msgid "File deletion successful: %files."
 msgstr ""
 
-#: inc/page.inc:342 js/imce.js:0
+#: inc/page.inc:350 js/imce.js:0
 msgid "Please specify dimensions within the allowed range that is from 1x1 to @dimensions."
 msgstr ""
 
-#: inc/page.inc:342 js/imce.js:0 tpl/imce-content.tpl.php:44;46;47
+#: inc/page.inc:350 js/imce.js:0 tpl/imce-content.tpl.php:44;46;47
 msgid "unlimited"
 msgstr ""
 
-#: inc/page.inc:349
+#: inc/page.inc:357
 msgid "File resizing successful: %files."
 msgstr ""
 
-#: inc/page.inc:396
+#: inc/page.inc:404
 msgid "Thumbnail creation (%thumbnames) successful for %filename."
 msgstr ""
 
-#: inc/page.inc:429 js/imce.js:0
+#: inc/page.inc:437 js/imce.js:0
 msgid "%filename is not an image."
 msgstr ""
 
-#: inc/page.inc:434
+#: inc/page.inc:442
 msgid "Scaling up is not allowed."
 msgstr ""
 
-#: inc/page.inc:449
+#: inc/page.inc:457
 msgid "%filename(%dimensions) already exists."
 msgstr ""
 
-#: inc/page.inc:465
+#: inc/page.inc:474
 msgid "%filename cannot be resized to %dimensions"
 msgstr ""
 
-#: inc/page.inc:478
+#: inc/page.inc:487
 msgid "The selected file %file could not be copied."
 msgstr ""
 
-#: inc/page.inc:558
+#: inc/page.inc:568
 msgid "File browser is set to reject the upload of existing files."
 msgstr ""
 
-#: inc/page.inc:572 js/imce.js:0
+#: inc/page.inc:582 js/imce.js:0
 msgid "Only files with the following extensions are allowed: %files-allowed."
 msgstr ""
 
-#: inc/page.inc:586
+#: inc/page.inc:596
 msgid "The file is %filesize exceeding the maximum file size of %maxsize."
 msgstr ""
 
-#: inc/page.inc:668
+#: inc/page.inc:608
+msgid "%filename is %filesize which would exceed your %quota_type. You are currently using %size of %quota."
+msgstr ""
+
+#: inc/page.inc:679
 msgid "Unable to get a working directory for the file browser!"
 msgstr ""
 
-#: inc/page.inc:674
+#: inc/page.inc:685
 msgid "There is no valid directory specified for the file browser!"
 msgstr ""
 
-#: inc/page.inc:677
+#: inc/page.inc:688
 msgid "You don't have access to any configuration profile to use the file browser!"
 msgstr ""
 
-#: inc/page.inc:927
+#: inc/page.inc:970
 msgid "Directory root"
 msgstr ""
 
-#: inc/page.inc:245
+#: inc/page.inc:253
+msgid "imce"
+msgstr ""
+
+#: inc/page.inc:253
 msgid "Illegal choice %choice in !name element."
 msgstr ""
 
