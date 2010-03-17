@@ -9,9 +9,7 @@
   <?php if (isset($_GET['app'])): drupal_add_js(drupal_get_path('module', 'imce') .'/js/imce_set_app.js'); endif;?>
   <?php print drupal_get_html_head(); ?>
   <?php print drupal_get_css(); ?>
-  <?php $vars['scripts'] = drupal_get_js('header'); ?>
-  <?php function_exists('jquery_update_preprocess_page') && jquery_update_preprocess_page($vars); ?>
-  <?php print $vars['scripts']; ?>
+  <?php print drupal_get_js('header'); ?>
   <style media="all" type="text/css">/*Quick-override*/</style>
 </head>
 
