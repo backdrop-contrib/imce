@@ -7,11 +7,11 @@
  */
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function imce_menu() {
   $items = array();
-  $access = array('administer imce(execute PHP)');
+  $access = array('administer imce');
   $items['imce'] = array(
     'title' => 'File browser',
     'page callback' => 'imce',
@@ -19,14 +19,14 @@ function imce_menu() {
     'file' => 'inc/imce.page.inc',
     'type' => MENU_CALLBACK,
   );
-  $items['admin/settings/imce'] = array(
+  $items['admin/config/media/imce'] = array(
     'title' => 'IMCE',
     'description' => 'Control how your image/file browser works.',
     'page callback' => 'imce_admin',
     'access arguments' => $access,
     'file' => 'inc/imce.admin.inc',
   );
-  $items['admin/settings/imce/profile'] = array(
+  $items['admin/config/media/imce/profile'] = array(
     'title' => 'Add new profile',
     'page callback' => 'imce_profile_operations',
     'access arguments' => $access,
@@ -37,63 +37,60 @@ function imce_menu() {
 }
 
 /**
- * Implementation of hook_perm().
+ * Implements hook_permission().
  */
-function imce_perm() {
-  return array('administer imce(execute PHP)');
+function imce_permission() {
+  return array(
+    'administer imce' => array(
+      'title' => t('Administer IMCE'),
+      'description' => t('Warning: Give to trusted roles only; this permission has security implications.'),
+    ),
+  );
 }
 
 /**
- * Implementation of hook_theme().
+ * Implements hook_theme().
  */
 function imce_theme() {
-  $path = drupal_get_path('module', 'imce') .'/tpl';
-  $theme['imce_admin']['function'] = 'imce_admin_theme';
-  $theme['imce_directories']['function'] = 'imce_directories_theme';
-  $theme['imce_thumbnails']['function'] = 'imce_thumbnails_theme';
+  $path = drupal_get_path('module', 'imce') . '/tpl';
+  $theme['imce_admin'] = array('function' => 'imce_admin_theme', 'render element' => 'form');
+  $theme['imce_directories'] = array('function' => 'imce_directories_theme', 'render element' => 'form');
+  $theme['imce_thumbnails'] = array('function' => 'imce_thumbnails_theme', 'render element' => 'form');
   $theme['imce_root_text'] = array(
-    'arguments' => array('imce_ref' => NULL),
+    'variables' => array('imce_ref' => NULL),
   );
   $theme['imce_file_list'] = array(
     'template' => 'imce-file-list',
-    'arguments' => array('imce_ref' => NULL),
+    'variables' => array('imce_ref' => NULL),
     'path' => $path,
   );
   $theme['imce_content'] = array(
     'template' => 'imce-content',
-    'arguments' => array('tree' => NULL, 'forms' => NULL, 'imce_ref' => NULL),
+    'variables' => array('tree' => NULL, 'forms' => NULL, 'imce_ref' => NULL),
     'path' => $path,
   );
   $theme['imce_page'] = array(
     'template' => 'imce-page',
-    'arguments' => array('content' => NULL),
+    'variables' => array('content' => NULL),
     'path' => $path,
   );
   return $theme;
 }
 
 /**
- * Implementation of hook_file_download().
+ * Implements hook_file_download().
  */
-function imce_file_download($file) {
-  if ($path = file_create_path($file)) {
-    if ($result = db_result(db_query("SELECT filemime FROM {files} WHERE filepath = '%s'", $path))) {
-      $type = $result;
-    }
-    elseif (function_exists('file_get_mimetype')) {
-      $type = file_get_mimetype($path);
-    }
-    else {
-      $type = 'application/x-download';
-    }
-    return array('Content-type: '. $type, 'Content-Length: '. filesize($path));
-  }
+function imce_file_download($uri) {
+  return array(
+    'Content-type' => file_get_mimetype($uri),
+    'Content-Length' => filesize($uri),
+  );
 }
 
 /**
- * Implementation of hook_elements().
+ * Implements hook_element_info().
  */
-function imce_elements() {
+function imce_element_info() {
   return array('textarea' => array('#process' => array('imce_textarea')));
 }
 
@@ -101,43 +98,85 @@ function imce_elements() {
  * Inline image/link insertion to textareas.
  */
 function imce_textarea($element) {
-  static $ids;
-  if (!isset($ids)) {
-    $ids = FALSE;
-    if (imce_access() && $setting = str_replace(' ', '', variable_get('imce_settings_textarea', ''))) {
-      $ids = array();
-      foreach (explode(',', $setting) as $id) {
-        $ids[$id] = 1;
-      }
+  static $regexp;
+  if (!isset($regexp)) {
+    $regexp = FALSE;
+    if (imce_access() && $regexp = str_replace(' ', '', variable_get('imce_settings_textarea', ''))) {
+      $regexp = '@^' . str_replace(',', '|', implode('.*', array_map('preg_quote', explode('*', $regexp)))) . '$@';
     }
   }
-  if ($ids && isset($ids[$element['#id']])) {
-    drupal_add_js(drupal_get_path('module', 'imce') .'/js/imce_set_inline.js');
-    $element['#description'] .= '<div class="imce-inline-wrapper" style="display:none">'. t('Insert !image or !link.', array('!image' => l(t('image'), 'imce', array('attributes' => array('name' => $element['#id'] .'-IMCE-image', 'class' => 'imce-inline-image'))), '!link' => l(t('link'), 'imce', array('attributes' => array('name' => $element['#id'] .'-IMCE-link', 'class' => 'imce-inline-link'))))) .'</div>';
+  if ($regexp && preg_match($regexp, $element['#id'])) {
+    drupal_add_js(drupal_get_path('module', 'imce') . '/js/imce_set_inline.js');
+    $element['#description'] = (isset($element['#description']) ? $element['#description'] : '') . '<div class="imce-inline-wrapper" style="display:none">' . t('Insert !image or !link.', array('!image' => l(t('image'), 'imce', array('attributes' => array('name' => $element['#id'] . '-IMCE-image', 'class' => array('imce-inline-image')))), '!link' => l(t('link'), 'imce', array('attributes' => array('name' => $element['#id'] . '-IMCE-link', 'class' => array('imce-inline-link')))))) . '</div>';
   }
   return $element;
 }
 
 /**
- * Get the profile for the user.
+ * Returns the configuration profile assigned to a user for a specific file scheme.
  */
-function imce_user_profile($user) {
+function imce_user_profile($user, $scheme = NULL) {
   $profiles = variable_get('imce_profiles', array());
-  if ($user->uid == 1 && isset($profiles[1])) {
-    return $profiles[1];
+  $swrappers = file_get_stream_wrappers();
+  $default_scheme = variable_get('file_default_scheme', 'public');
+
+  //handle user#1 separately
+  if ($user->uid == 1) {
+    $scheme = empty($scheme) ? $default_scheme : $scheme;
+    if (isset($profiles[1]) && isset($swrappers[$scheme])) {
+      return $profiles[1] + array('scheme' => $scheme);
+    }
+    return FALSE;
   }
-  else {
-    foreach (variable_get('imce_roles_profiles', array()) as $rid => $role) {
-      if (isset($user->roles[$rid]) && isset($profiles[$role['pid']])) {
-        return $profiles[$role['pid']];
+
+  //handle regular users
+  $roles_profiles = variable_get('imce_roles_profiles', array());
+  //store assigned configuration
+  $conf = array();
+  foreach ($roles_profiles as $rid => $role) {
+    if (isset($user->roles[$rid])) {
+      $conf = $role;
+      break;
+    }
+  }
+
+  //no scheme-profile assignment
+  if (empty($conf)) {
+    return FALSE;
+  }
+
+  //return the profile for the specified scheme
+  if (!empty($scheme)) {
+    $key = $scheme . '_pid';
+    if (isset($conf[$key]) && isset($profiles[$conf[$key]]) && isset($swrappers[$scheme])) {
+      return $profiles[$conf[$key]] + array('scheme' => $scheme);
+    }
+    return FALSE;
+  }
+
+  //no scheme specified. check the default
+  $scheme = $default_scheme;
+  $key = $scheme . '_pid';
+  if (isset($conf[$key]) && isset($profiles[$conf[$key]]) && isset($swrappers[$scheme])) {
+    return $profiles[$conf[$key]] + array('scheme' => $scheme);
+  }
+
+  //check if any of the schemes has a profile assigned.
+  foreach ($conf as $key => $pid) {
+    if (substr($key, -4) == '_pid' && isset($profiles[$pid])) {
+      $scheme = substr($key, 0, -4);
+      if (isset($swrappers[$scheme])) {
+        return $profiles[$pid] + array('scheme' => $scheme);
       }
     }
   }
+
   return FALSE;
 }
 
 /**
- * Check if the user has access to imce.
+ * Checks if the user is assigned an imce profile.
+ * A more detailed assignment check is performed before imce loads.
  */
 function imce_access($user = FALSE) {
   if ($user === FALSE) {
@@ -149,9 +188,14 @@ function imce_access($user = FALSE) {
   }
 
   $roles_profiles = variable_get('imce_roles_profiles', array());
-  foreach ($user->roles as $rid => $name) {
-    if (isset($roles_profiles[$rid]['pid']) && $roles_profiles[$rid]['pid']) {
-      return TRUE;
+  foreach ($roles_profiles as $rid => $role) {
+    if (isset($user->roles[$rid])) {
+      foreach ($role as $key => $pid) {
+        if (substr($key, -4) == '_pid' && $pid) {
+          return TRUE;
+        }
+      }
+      break;
     }
   }
 
@@ -168,7 +212,7 @@ function imce_reg_dir($dirname) {
 /**
  * Returns the text for the root directory in a directory tree.
  */
-function theme_imce_root_text($imce_ref) {
-  //$imce = &$imce_ref['imce'];
+function theme_imce_root_text($variables) {
+  //$imce = &$variables['imce_ref']['imce'];
   return '&lt;' . t('root') . '&gt;';
 }

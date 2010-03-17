@@ -1,4 +1,10 @@
 ; $Id$
 name = "IMCE"
 description = "An image/file uploader and browser supporting personal directories and user quota."
-core = "6.x"
+core = "7.x"
+package = "Media"
+
+files[] = "imce.install"
+files[] = "imce.module"
+files[] = "inc/imce.admin.inc"
+files[] = "inc/imce.page.inc"

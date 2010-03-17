@@ -9,32 +9,32 @@
 /**
  * q = imce.
  */
-function imce() {
+function imce($scheme = NULL) {
   module_invoke('admin_menu', 'suppress');//suppress admin_menu
   $jsop = isset($_GET['jsop']) ? $_GET['jsop'] : NULL;
-  print imce_page($GLOBALS['user'], $jsop);
+  print imce_page($GLOBALS['user'], $scheme, $jsop);
   exit();
 }
 
 /**
- * Returns the imce page for the specified user.
+ * Returns the imce page for the specified user and the file scheme.
  */
-function imce_page($user, $jsop = NULL) {
-  return theme('imce_page', imce_content($user, $jsop));
+function imce_page($user, $scheme = NULL, $jsop = NULL) {
+  return theme('imce_page', array('content' => imce_content($user, $scheme, $jsop)));
 }
 
 /**
  * Returns the content of the file browser.
  */
-function imce_content($user, $jsop = NULL) {
+function imce_content($user, $scheme = NULL, $jsop = NULL) {
 
   //execute ajax calls.
   if ($jsop) {
-    return imce_js($user, $jsop);
+    return imce_js($user, $scheme, $jsop);
   }
 
   //initiate configuration profile
-  if (!$imce = imce_initiate_profile($user)) {
+  if (!$imce = imce_initiate_profile($user, $scheme)) {
     return '';
   }
   imce_process_profile($imce);//get active directory content
@@ -47,18 +47,17 @@ function imce_content($user, $jsop = NULL) {
   drupal_add_css($path . '/css/imce-content.css');
 
   //process forms.
-  //reference imce inside an array so it will stay referenced during argument copy of drupal_get_form
   $imce_ref = array('imce' => &$imce);
-  $forms = '';
-
+  $forms = array();
   if (!$imce['error']) {
     //process file upload.
     if (imce_perm_exists($imce, 'upload')) {
-      $forms .= drupal_get_form('imce_upload_form', $imce_ref);
+      $forms[] = drupal_get_form('imce_upload_form', $imce_ref);
     }
     //process file operations.
-    $forms .= drupal_get_form('imce_fileop_form', $imce_ref);
+    $forms[] = drupal_get_form('imce_fileop_form', $imce_ref);
   }
+  $forms = drupal_render($forms);
 
   //run custom content functions. possible to insert extra forms. content is invisible when js is enabled.
   foreach (variable_get('imce_custom_content', array()) as $func => $state) {
@@ -67,7 +66,11 @@ function imce_content($user, $jsop = NULL) {
     }
   }
 
-  $content = theme('imce_content', imce_create_tree($imce), $forms, $imce_ref);
+  $content = theme('imce_content', array(
+    'tree' => imce_create_tree($imce),
+    'forms' => $forms,
+    'imce_ref' => $imce_ref,
+  ));
 
   //make necessary changes for js conversion
   $imce['dir'] = str_replace('%2F', '/', rawurlencode($imce['dir']));
@@ -81,15 +84,15 @@ function imce_content($user, $jsop = NULL) {
 /**
  * Ajax operations. q=imce&jsop={op}
  */
-function imce_js($user, $jsop = '') {
+function imce_js($user, $scheme, $jsop = '') {
   $response = array();
 
   //data
-  if ($imce = imce_initiate_profile($user)) {
+  if ($imce = imce_initiate_profile($user, $scheme)) {
     imce_process_profile($imce);
     if (!$imce['error']) {
       module_load_include('inc', 'imce', 'inc/imce.js');
-      if (function_exists($func = 'imce_js_'. $jsop)) {
+      if (function_exists($func = 'imce_js_' . $jsop)) {
         $response['data'] = $func($imce);
       }
     }
@@ -98,15 +101,15 @@ function imce_js($user, $jsop = '') {
   $response['messages'] = drupal_get_messages();
 
   //for upload we must return plain text header.
-  drupal_set_header('Content-Type: text/'. ($jsop == 'upload' ? 'html' : 'javascript') .'; charset=utf-8');
-  print drupal_to_js($response);
+  drupal_add_http_header('Content-Type', 'text/' . ($jsop == 'upload' ? 'html' : 'javascript') . '; charset=utf-8');
+  print drupal_json_encode($response);
   exit();
 }
 
 /**
  * Upload form.
  */
-function imce_upload_form(&$form_state, $ref) {
+function imce_upload_form($form, &$form_state, $ref) {
   $imce =& $ref['imce'];
   $form['imce'] = array(
     '#type' => 'file',
@@ -134,7 +137,7 @@ function imce_upload_form(&$form_state, $ref) {
 /**
  * File operations form.
  */
-function imce_fileop_form(&$form_state, $ref) {
+function imce_fileop_form($form, &$form_state, $ref) {
   $imce =& $ref['imce'];
   $form['filenames'] = array(
     '#type' => 'textfield',
@@ -234,7 +237,7 @@ function imce_resize_form(&$imce) {
  * Validate file operations form.
  */
 function imce_fileop_form_validate($form, &$form_state) {
-  $imce =& $form['#parameters'][2]['imce'];
+  $imce =& $form_state['build_info']['args'][0]['imce'];
 
   //check if the filenames is empty
   if ($form_state['values']['filenames'] == '') {
@@ -253,7 +256,7 @@ function imce_fileop_form_validate($form, &$form_state) {
   for ($i = 0; $i < $cnt; $i++) {
     $filenames[$i] = $filename = rawurldecode($filenames[$i]);
     if (!isset($imce['files'][$filename])) {
-      watchdog('imce', 'Illegal choice %choice in !name element.', array('%choice' => $filename, '!name' => t('directory (%dir)', array('%dir' => file_directory_path() . ($imce['dir'] == '.' ? '' : '/'. $imce['dir'])))), WATCHDOG_ERROR);
+      watchdog('imce', 'Illegal choice %choice in !name element.', array('%choice' => $filename, '!name' => t('directory (%dir)', array('%dir' => imce_dir_uri($imce)))), WATCHDOG_ERROR);
       return form_error($form['filenames'], t('An illegal choice has been detected. Please contact the site administrator.'));
     }
   }
@@ -266,39 +269,30 @@ function imce_fileop_form_validate($form, &$form_state) {
  */
 function imce_upload_submit($form, &$form_state) {
   $form_state['redirect'] = FALSE;
-  $imce =& $form['#parameters'][2]['imce'];
+  $imce =& $form_state['build_info']['args'][0]['imce'];
   $validators = array('imce_validate_all' => array(&$imce));
-  $dirpath = file_directory_path() . ($imce['dir'] == '.' ? '' : '/'. $imce['dir']);
+  $diruri = imce_dir_uri($imce);
 
   //save uploaded file.
   $replace = variable_get('imce_settings_replace', FILE_EXISTS_RENAME);
-  if ($file = file_save_upload('imce', $validators, $dirpath, $replace)) {
-
-    //core bug #203204.
-    @chmod($file->filepath, 0664);
+  if ($file = file_save_upload('imce', $validators, $diruri, $replace)) {
 
     //core bug #54223.
     if ($replace == FILE_EXISTS_RENAME) {
-      $name = basename($file->filepath);
+      $name = basename($file->uri);
       if ($name != $file->filename) {
         $file->filename = $name;
         drupal_set_message(t('The file has been renamed to %filename.', array('%filename' => $file->filename)));
       }
     }
-    elseif ($replace == FILE_EXISTS_REPLACE) {//check duplicates
-      if ($_file = db_fetch_object(db_query("SELECT fid FROM {files} WHERE filepath = '%s' AND fid <> %d", $file->filepath, $file->fid))) {
-        db_query("DELETE FROM {files} WHERE fid = %d", $file->fid);
-        $file->fid = $_file->fid;
-      }
-    }
 
     $file->uid = $imce['uid'];//global user may not be the owner.
-    $file->status = FILE_STATUS_PERMANENT;//make permanent
-    drupal_write_record('files', $file, array('fid'));//update
+    $file->status = FILE_STATUS_PERMANENT;
+    file_save($file);
     drupal_set_message(t('%filename has been uploaded.', array('%filename' => $file->filename)));
 
     //update file list
-    $img = imce_image_info($file->filepath);
+    $img = imce_image_info($file->uri);
     $file->width = $img ? $img['width'] : 0;
     $file->height = $img ? $img['height'] : 0;
     imce_add_file($file, $imce);
@@ -318,7 +312,7 @@ function imce_upload_submit($form, &$form_state) {
  */
 function imce_thumb_submit($form, &$form_state) {
   $form_state['redirect'] = FALSE;
-  $imce =& $form['#parameters'][2]['imce'];
+  $imce =& $form_state['build_info']['args'][0]['imce'];
   //create thumbnails
   imce_process_files($form_state['values']['filenames'], $imce, 'imce_create_thumbnails', array($form_state['values']['thumbnails']));
 }
@@ -328,7 +322,7 @@ function imce_thumb_submit($form, &$form_state) {
  */
 function imce_delete_submit($form, &$form_state) {
   $form_state['redirect'] = FALSE;
-  $imce =& $form['#parameters'][2]['imce'];
+  $imce =& $form_state['build_info']['args'][0]['imce'];
 
   $deleted = imce_process_files($form_state['values']['filenames'], $imce, 'imce_delete_file');
 
@@ -343,7 +337,7 @@ function imce_delete_submit($form, &$form_state) {
  */
 function imce_resize_submit($form, &$form_state) {
   $form_state['redirect'] = FALSE;
-  $imce =& $form['#parameters'][2]['imce'];
+  $imce =& $form_state['build_info']['args'][0]['imce'];
 
   //check dimensions
   $width = (int) $form_state['values']['width'];
@@ -384,34 +378,25 @@ function imce_process_files($filenames, &$imce, $function, $args = array()) {
  * Delete a file in the file list.
  */
 function imce_delete_file($filename, &$imce) {
-  $filepath = file_directory_path() . ($imce['dir'] == '.' ? '' : '/'. $imce['dir']) .'/'. $filename;
-  $file = db_fetch_object(db_query("SELECT f.* FROM {files} f WHERE f.filepath = '%s'", $filepath));
+  $uri = imce_dir_uri($imce) . $filename;
+  $file = file_load_multiple(array(), array('uri' => $uri));
+  $file = reset($file);
 
   //file exists in database
   if ($file) {
-    //let filefield handle the deletion
-    if (function_exists('field_file_delete')) {
-      $result = field_file_delete($file);
-      //deletion blocked by an other module.
-      if (is_array($result)) {
-        drupal_set_message(t('%filename is in use by another application.', array('%filename' => $file->filename)), 'error');
-        return FALSE;
-      }
-      //general failure
-      if (!$result) {
-        return FALSE;
-      }
+    $result = file_delete($file);
+    //deletion blocked by an other module.
+    if (is_array($result)) {
+      drupal_set_message(t('%filename is in use by another application.', array('%filename' => $file->filename)), 'error');
+      return FALSE;
     }
-    //delete manually
-    else {
-      if (!file_delete($file->filepath)) {
-        return FALSE;
-      }
-      db_query('DELETE FROM {files} WHERE fid = %d', $file->fid);
+    //general failure
+    if (!$result) {
+      return FALSE;
     }
   }
   //not in db. probably loaded via ftp.
-  elseif (!file_delete($filepath)) {
+  elseif (!file_unmanaged_delete($uri)) {
     return FALSE;
   }
 
@@ -457,12 +442,12 @@ function imce_create_thumbnail($filename, &$imce, $thumbnail) {
 /**
  * Resize an image in the file list. Also used for thumbnail creation.
  */
-function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $dest = FALSE, $op = 'resize') {
-  $dirpath = file_directory_path() . ($imce['dir'] == '.' ? '' : '/'. $imce['dir']);
-  $filepath = $dirpath .'/'. $filename;
+function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $destname = FALSE, $op = 'resize') {
+  $destdir = imce_dir_uri($imce);
+  $imguri = $destdir . $filename;
 
   //check if the file is an image
-  if (!$imce['files'][$filename]['width'] || !$img = imce_image_info($filepath)) {
+  if (!$imce['files'][$filename]['width'] || !$img = imce_image_info($imguri)) {
     drupal_set_message(t('%filename is not an image.', array('%filename' => utf8_encode($filename))), 'error', FALSE);
     return FALSE;
   }
@@ -474,16 +459,16 @@ function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $de
 
   //create file object
   $file = new stdClass();
-  $file->filepath = $dirpath .'/'. $dest;
-  if (!$dest || $dest == $filename) {
-    $file->filepath = $copy ? file_create_filename($filename, $dirpath) : $filepath;
+  $file->uri = $destdir . $destname;
+  if (!$destname || $destname == $filename) {
+    $file->uri = $copy ? file_create_filename($filename, $destdir) : $imguri;
   }
-  $file->filename = basename($file->filepath);
+  $file->filename = basename($file->uri);
 
   //check if a file having the same properties exists already.
   if (isset($imce['files'][$file->filename])) {
     if (($f = $imce['files'][$file->filename]) && $f['width'] == $width && $f['height'] == $height) {
-      drupal_set_message(t('%filename(%dimensions) already exists.', array('%filename' => utf8_encode($file->filename), '%dimensions' => $width .'x'. $height)), 'error');
+      drupal_set_message(t('%filename(%dimensions) already exists.', array('%filename' => utf8_encode($file->filename), '%dimensions' => $width . 'x' . $height)), 'error');
       return FALSE;
     }
   }
@@ -495,50 +480,47 @@ function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $de
     return FALSE;
   }
 
-  //resize image to a temp file
-  $temp = tempnam(realpath(file_directory_temp()), 'imc');
-  register_shutdown_function('file_delete', $temp);
-  $function = 'image_'. $op;
-  if (!$function($filepath, $temp, $width, $height)) {
-    drupal_set_message(t('%filename cannot be resized to %dimensions', array('%filename' => utf8_encode($filename), '%dimensions' => $width .'x'. $height)), 'error', FALSE);
+  //resize image
+  $image = image_load($imguri);
+  $function = 'image_' . $op;
+  if (!$image || !function_exists($function) || !$function($image, $width, $height)) {
+    drupal_set_message(t('%filename cannot be resized to %dimensions', array('%filename' => utf8_encode($filename), '%dimensions' => $width . 'x' . $height)), 'error', FALSE);
+    return FALSE;
+  }
+
+  //copy to a temp file
+  if (!$tempuri = drupal_tempnam('temporary://', 'imce')) {
+    return FALSE;
+  }
+  register_shutdown_function('file_unmanaged_delete', $tempuri);
+  if (!image_save($image, $tempuri) || !$image->info) {
     return FALSE;
   }
 
   //validate quota
-  $file->filesize = filesize($temp);
-  $overwrite = $file->filename == $filename;
-  if (!imce_validate_quotas($file, $imce, $overwrite ? -$imce['files'][$filename]['size'] : 0)) {
+  $file->filesize = $image->info['file_size'];
+  $quotadiff = $file->filename == $filename ? -$imce['files'][$filename]['size'] : 0;
+  if (!imce_validate_quotas($file, $imce, $quotadiff)) {
     return FALSE;
   }
-
-  //copy from temp to filepath
-  if (!@copy($temp, $file->filepath)) {
-    drupal_set_message(t('The selected file %file could not be copied.', array('%file' => utf8_encode($file->filename))), 'error', FALSE);
-    return FALSE;
-  }
-  @chmod($file->filepath, 0664);
 
   //build the rest of the file object
   $file->uid = $imce['uid'];
   $file->filemime = $img['mime'];
   $file->status = FILE_STATUS_PERMANENT;
-  $file->timestamp = time();
+  $file->timestamp = REQUEST_TIME;
 
-  //if we are overwriting the file and it is already in database.
-  $update = array();
-  if ($overwrite && $_file = db_fetch_object(db_query("SELECT f.* FROM {files} f WHERE f.filepath = '%s'", $file->filepath))) {
-    $file->fid = $_file->fid;
-    $file->uid = $_file->uid;
-    $update[] = 'fid';
+  //copy from temp to file uri
+  $destination = $file->uri;
+  $file->uri = $tempuri;
+  if (!$file = file_copy($file, $destination, FILE_EXISTS_REPLACE)) {
+    return FALSE;
   }
-
-  //save the file
-  drupal_write_record('files', $file, $update);
 
   //update file list
   //if the file was scaled get the new dimensions
   if ($op == 'scale') {
-    $img = imce_image_info($file->filepath);
+    $img = imce_image_info($file->uri);
     $width = $img['width'];
     $height = $img['height'];
   }
@@ -568,7 +550,7 @@ function imce_add_file($file, &$imce) {
     $add = $imce['files'][$file->filename];
     $add['name'] = rawurlencode($file->filename);
     $add['fsize'] = format_size($file->filesize);
-    $add['fdate'] = format_date($file->timestamp, 'small');
+    $add['fdate'] = format_date($file->timestamp, 'short');
     $add['id'] = $file->fid;
     $imce['added'][] = $add;
   }
@@ -591,11 +573,6 @@ function imce_remove_file($filename, &$imce) {
  * Validate uploaded file.
  */
 function imce_validate_all(&$file, $imce) {
-
-  //fix FILE_EXISTS_ERROR bug. core bug #54223.
-  if (!$file->destination && variable_get('imce_settings_replace', FILE_EXISTS_RENAME) == FILE_EXISTS_ERROR) {
-    return array(t('File browser is set to reject the upload of existing files.'));
-  }
 
   //validate image resolution only if filesize validation passes.
   //because user might have uploaded a very big image
@@ -684,7 +661,7 @@ function imce_image_info($file) {
 function imce_thumbnail_options($thumbs = array()) {
   $options = array();
   foreach ($thumbs as $thumb) {
-    $options[$thumb['name']] = $thumb['name'] .' ('. $thumb['dimensions'] .')';
+    $options[$thumb['name']] = $thumb['name'] . ' (' . $thumb['dimensions'] . ')';
   }
   return $options;
 }
@@ -692,16 +669,16 @@ function imce_thumbnail_options($thumbs = array()) {
 /**
  * Initiate and return configuration profile for the $user.
  */
-function imce_initiate_profile($user) {
+function imce_initiate_profile($user, $scheme = NULL) {
 
   //check user profile and translate tokens in directory paths and evaluate php paths.
-  if ($imce = imce_user_profile($user)) {
+  if ($imce = imce_user_profile($user, $scheme)) {
     imce_process_directories($imce, $user);
     if (!empty($imce['directories'])) {
       $imce['uid'] = (int)$user->uid;
       $imce['url'] = url($_GET['q']);
       $imce['clean'] = variable_get('clean_url', 0) == 1;
-      $imce['furl'] = file_create_url('');
+      $imce['furl'] = file_create_url($imce['scheme'] . '://');
       $imce['filesize'] *= 1048576;//convert from Mb to byte
       $imce['quota'] *= 1048576;
       $imce['tuquota'] *= 1048576;
@@ -838,21 +815,10 @@ function imce_working_directory(&$imce) {
 /**
  * Create a writable directory(any level) under file system directory.
  */
-function imce_check_directory($dirname, $imce = array()) {
+function imce_check_directory($dirname, $imce) {
+  $diruri = imce_dir_uri($imce, $dirname);
 
-  $root = file_directory_path();
-  $dirpath = $root .'/'. $dirname;
-
-  if (!file_check_directory($dirpath)) {//directory does not exist. try to create it.
-    $path = $root;
-    foreach (explode('/', $dirname) as $arg) {
-      $path .= '/'. $arg;
-      if (!file_check_location($path, $root) || !file_check_directory($path, FILE_CREATE_DIRECTORY)) {
-        return imce_inaccessible_directory($dirname, $imce);
-      }
-    }
-  }
-  elseif (!file_check_location($dirpath, $root)) {//directory exists outside of root.
+  if (!imce_reg_dir($dirname) || !file_prepare_directory($diruri, FILE_CREATE_DIRECTORY)) {
     return imce_inaccessible_directory($dirname, $imce);
   }
 
@@ -862,11 +828,12 @@ function imce_check_directory($dirname, $imce = array()) {
 /**
  * Generate and log a directory access error.
  */
-function imce_inaccessible_directory($dirname, $imce = array()) {
+function imce_inaccessible_directory($dirname, $imce) {
   if (is_string($dirname)) {
     $dirname = utf8_encode($dirname);
+    $diruri = imce_dir_uri($imce, $dirname);
     drupal_set_message(t('Directory %dirname is not accessible.', array('%dirname' => $dirname)), 'error');
-    watchdog('imce', 'Access to %directory was denied.', array('%directory' => $dirname), WATCHDOG_ERROR);
+    watchdog('imce', 'Access to %directory was denied.', array('%directory' => $diruri), WATCHDOG_ERROR);
   }
   return FALSE;
 }
@@ -883,11 +850,9 @@ function imce_directory_info($dirname, $imce) {
   }
 
   $info = FALSE;
-  $root = file_directory_path();
-  $dirpath = $root .'/'. $dirname;
-  if (imce_reg_dir($dirname) && file_check_directory($dirpath)) {
+  if (imce_reg_dir($dirname) && file_prepare_directory(imce_dir_uri($imce, $dirname))) {
     foreach ($imce['directories'] as $name => $prop) {
-      if ($prop['subnav'] && file_check_location($dirpath, $root .'/'. $name)) {
+      if ($prop['subnav'] && ($name == '.' || strpos($dirname . '/', $name . '/') === 0)) {
         $info = $prop;
         $info['name'] = $dirname;
       }
@@ -903,14 +868,12 @@ function imce_directory_info($dirname, $imce) {
 function imce_subdirectories_accessible(&$imce) {
 
   if (!empty($imce['subdirectories'])) {
-    $root = file_directory_path() .'/';
     //checking only the first one is sufficient.
-    $dirname = ($imce['dir'] == '.' ? '' : $imce['dir'] .'/') . $imce['subdirectories'][0];
-    $dirpath = $root . $dirname;
+    $dirname = ($imce['dir'] == '.' ? '' : $imce['dir'] . '/') . $imce['subdirectories'][0];
 
     //check if any setting is applicable for this subdirectory through any directory in the list.
     foreach ($imce['directories'] as $name => $info) {
-      if ($info['subnav'] && $dirname != $name && file_check_location($dirpath, $root . $name)) {
+      if ($info['subnav'] && $dirname != $name && ($name == '.' || strpos($dirname . '/', $name . '/') === 0)) {
         return TRUE;
       }
     }
@@ -945,12 +908,12 @@ function imce_perm_exists(&$imce, $perm) {
 /**
  * Scan directory and return file list, subdirectories, and total size.
  */
-function imce_scan_directory($dirname, $imce = array()) {
+function imce_scan_directory($dirname, $imce) {
 
   $directory = array('dirsize' => 0, 'files' => array(), 'subdirectories' => array(), 'error' => FALSE);
-  $dirpath = file_directory_path() .'/'. $dirname;
+  $diruri = imce_dir_uri($imce, $dirname);
 
-  if (!is_string($dirname) || $dirname == '' || !$handle = opendir($dirpath)) {
+  if (!is_string($dirname) || $dirname == '' || !$handle = opendir($diruri)) {
     imce_inaccessible_directory($dirname, $imce);
     $directory['error'] = TRUE;
     return $directory;
@@ -962,7 +925,7 @@ function imce_scan_directory($dirname, $imce = array()) {
       continue;
     }
 
-    $path = $dirpath .'/'. $file;
+    $path = $diruri . $file;
 
     if (is_dir($path)) {
       $directory['subdirectories'][] = $file;
@@ -1017,13 +980,13 @@ function imce_create_tree(&$imce) {
     }
   }
   //set root branch
-  $root = theme('imce_root_text', array('imce' => &$imce));
+  $root = theme('imce_root_text', array('imce_ref' => array('imce' => &$imce)));
   $q = $imce['clean'] ? '?' : '&';
   if (isset($imce['directories']['.'])) {
-    $root = '<a href="'. $imce['url'] . $q .'dir=." title="." class="folder'. ($imce['dir'] == '.' ? ' active' : '') .'">'. $root .'</a>';
+    $root = '<a href="' . $imce['url'] . $q . 'dir=." title="." class="folder' . ($imce['dir'] == '.' ? ' active' : '') . '">' . $root . '</a>';
   }
   else {
-    $root = '<a title="." class="folder disabled">'. $root .'</a>';
+    $root = '<a title="." class="folder disabled">' . $root . '</a>';
   }
 
   return $root . imce_tree_html($imce, $paths, $q);
@@ -1041,17 +1004,27 @@ function imce_tree_html(&$imce, $paths, $q = '?', $prefix = '', $eprefix = '') {
     $earg = rawurlencode($arg);
     $epath = $eprefix . $earg;
     if (isset($children[':access:']) || imce_directory_info($path, $imce)) {
-      $a = '<a href="'. $imce['url'] . $q .'dir='. $epath .'" title="'. $epath .'" class="folder'. (isset($children[':active:']) ? ' active' : '') .'">'. $earg .'</a>';
+      $a = '<a href="' . $imce['url'] . $q . 'dir=' . $epath . '" title="' . $epath . '" class="folder' . (isset($children[':active:']) ? ' active' : '') . '">' . $earg . '</a>';
     }
     else {
-      $a = '<a title="'. $epath .'" class="folder disabled">'. $earg .'</a>';
+      $a = '<a title="' . $epath . '" class="folder disabled">' . $earg . '</a>';
     }
-    $ul = imce_tree_html($imce, $children, $q, $path .'/', $epath .'/');
+    $ul = imce_tree_html($imce, $children, $q, $path . '/', $epath . '/');
     $class = $ul ? ' class="expanded"' : (isset($children[':active:']) ? ' class="leaf"' : '');
-    $html .= '<li'. $class .'>'. $a . $ul .'</li>';
+    $html .= '<li' . $class . '>' . $a . $ul . '</li>';
   }
   if ($html) {
-    $html = '<ul>'. $html .'</ul>';
+    $html = '<ul>' . $html . '</ul>';
   }
   return $html;
+}
+
+/**
+ * Return the uri of the active directory
+ */
+function imce_dir_uri($imce, $dir = NULL) {
+  if (!isset($dir)) {
+    $dir = $imce['dir'];
+  }
+  return $imce['scheme'] . '://' . ($dir == '.' ? '' : $dir . '/');
 }

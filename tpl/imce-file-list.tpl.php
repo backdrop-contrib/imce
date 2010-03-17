@@ -19,7 +19,7 @@ if ($imce['perm']['browse'] && !empty($imce['files'])) {
     <td class="size" id="<?php print $file['size']; ?>"><?php print format_size($file['size']); ?></td>
     <td class="width"><?php print $file['width']; ?></td>
     <td class="height"><?php print $file['height']; ?></td>
-    <td class="date" id="<?php print $file['date']; ?>"><?php print format_date($file['date'], 'small'); ?></td>
+    <td class="date" id="<?php print $file['date']; ?>"><?php print format_date($file['date'], 'short'); ?></td>
   </tr><?php
   }
 }?>
