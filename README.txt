@@ -12,7 +12,7 @@ See INTEGRATION METHODS for more information.
 
 FEATURES
 -----------
- -Basic file operations: upload, delete
+- Basic file operations: upload, delete
 - Image(jpg, png, gif) operations: resize, create thumbnails, preview
 - Support for private file system
 - Configurable limits for user roles: file size per upload, directory quota, file extensions, and image dimensions
