@@ -81,10 +81,10 @@ function imce_theme() {
  * Implements hook_file_download().
  */
 function imce_file_download($uri) {
-  return array(
+  return file_exists($uri) ? array(
     'Content-type' => file_get_mimetype($uri),
     'Content-Length' => filesize($uri),
-  );
+  ) : NULL;
 }
 
 /**
