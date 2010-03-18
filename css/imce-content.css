@@ -257,7 +257,7 @@ body.imce {
 
 /*File operations*/
 #op-items {
-  min-height: 16px;
+  min-height: 26px;
 }
 #op-contents {
   position: absolute;
@@ -265,7 +265,7 @@ body.imce {
 }
 #op-contents .op-content {
   display: none;
-  padding: 14px;
+  padding: 16px;
   border: 2px solid #344454;
   background-color: #f5f5f5;
   position: relative;
@@ -276,8 +276,8 @@ body.imce {
   z-index: 3;
   top: 2px;
   right: 2px;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   background: url(close.png) no-repeat 50% 50%;
   visibility: hidden;
 }
