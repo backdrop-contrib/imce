@@ -320,6 +320,9 @@ body.imce {
 #op-item-delete a {
   background-image: url(delete.png);
 }
+#op-item-sendto a {
+  background-image: url(sendto.png);
+}
 
 /*resizers*/
 #imce-content .y-resizer {

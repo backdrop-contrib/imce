@@ -521,18 +521,18 @@ setPreview: function (fid) {
 
 //default file send function. sends the file to the new window.
 send: function (fid) {
-  if (fid) window.open(imce.getURL(fid));
+  fid && window.open(imce.getURL(fid));
 },
 
 //add an operation for an external application to which the files are send.
 setSendTo: function (title, func) {
-  imce.send = function (fid) { if(fid) func(imce.fileGet(fid), window);};
+  imce.send = function (fid) { fid && func(imce.fileGet(fid), window);};
   var opFunc = function () {
     if (imce.selcount != 1) return imce.setMessage(Drupal.t('Please select a file.'), 'error');
     imce.send(imce.vars.prvfid);
   };
   imce.vars.prvtitle = title;
-  return imce.opAdd({'title': title, func: opFunc});
+  return imce.opAdd({name: 'sendto', title: title, func: opFunc});
 },
 
 /**************** LOG MESSAGES  ********************/

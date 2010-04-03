@@ -55,9 +55,7 @@ imce.hooks.load.push(function(win) {
     imce.highlight(filename.substr(filename.lastIndexOf('/')+1));
   }
   //set send to
-  if (sendtoFunc) {
-    imce.setSendTo(Drupal.t('Send to @app', {'@app': appName}), sendtoFunc);
-  }
+  sendtoFunc && imce.setSendTo(Drupal.t('Insert file'), sendtoFunc);
 });
 
 //sendTo function
