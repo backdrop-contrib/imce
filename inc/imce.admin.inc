@@ -201,6 +201,11 @@ function imce_profile_form($form, &$form_state, $pid = 0) {
   $form['import'] = array(
     '#markup' => imce_profile_import_html($pid),
   );
+  $form['usertab'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display file browser tab in user profile pages.'),
+    '#default_value' => $profile['usertab'],
+  );
   $form['filesize'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum file size per upload'),

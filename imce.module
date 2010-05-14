@@ -19,6 +19,16 @@ function imce_menu() {
     'file' => 'inc/imce.page.inc',
     'type' => MENU_CALLBACK,
   );
+  $items['user/%user/imce'] = array(
+    'title' => 'File browser',
+    'page callback' => 'imce_user_page',
+    'page arguments' => array(1),
+    'access callback' => 'imce_user_page_access',
+    'access arguments' => array(1),
+    'file' => 'inc/imce.page.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
+  );
   $items['admin/config/media/imce'] = array(
     'title' => 'IMCE',
     'description' => 'Control how your image/file browser works.',
@@ -58,6 +68,9 @@ function imce_theme() {
   $theme['imce_thumbnails'] = array('function' => 'imce_thumbnails_theme', 'render element' => 'form');
   $theme['imce_root_text'] = array(
     'variables' => array('imce_ref' => NULL),
+  );
+  $theme['imce_user_page'] = array(
+    'variables' => array('account' => NULL),
   );
   $theme['imce_file_list'] = array(
     'template' => 'imce-file-list',
@@ -207,16 +220,19 @@ function imce_access($user = FALSE) {
 }
 
 /**
+ * Checks access to user/{$account->uid}/imce for the $user.
+ */
+function imce_user_page_access($account, $user = FALSE) {
+  if ($user === FALSE) {
+    global $user;
+  }
+
+  return $account->uid == $user->uid && ($profile = imce_user_profile($user)) && $profile['usertab'];
+}
+
+/**
  * Check if the directory name is regular.
  */
 function imce_reg_dir($dirname) {
   return $dirname == '.' || (is_string($dirname) && $dirname != '' && !preg_match('@(^\s)|(^/)|(^\./)|(\s$)|(/$)|(/\.$)|(\.\.)|(//)|(\\\\)|(/\./)@', $dirname));
-}
-
-/**
- * Returns the text for the root directory in a directory tree.
- */
-function theme_imce_root_text($variables) {
-  //$imce = &$variables['imce_ref']['imce'];
-  return '&lt;' . t('root') . '&gt;';
 }
