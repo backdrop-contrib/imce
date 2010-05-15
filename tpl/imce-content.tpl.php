@@ -100,8 +100,6 @@ $imce =& $imce_ref['imce'];//keep this line.
 
 </div><!-- resizable-content -->
 
-<div id="content-resizer" class="y-resizer"></div>
-
 <div id="forms-wrapper"><?php print $forms; ?></div>
 
 </div><!-- imce-content -->

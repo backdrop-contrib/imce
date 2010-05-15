@@ -752,6 +752,8 @@ updateUI: function() {
   //log
   $('#log-prv-wrapper').before($('#log-prv-wrapper > #preview-wrapper')).remove();
   $('#log-clearer').remove();
+  //content resizer
+  $('#content-resizer').remove();
   //message-box
   imce.msgBox = imce.el('message-box') || $('<div id="message-box"></div>').prependTo('#imce-content')[0];
   //help box & ie fix

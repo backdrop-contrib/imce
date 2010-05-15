@@ -22,7 +22,6 @@ body.imce {
 #imce-content {
   position: relative;
   background-color: #fff;
-  max-width: 760px;
 }
 #imce-content a {
   text-decoration: none;
@@ -87,7 +86,6 @@ body.imce {
   height: 180px;
   overflow: auto;
 }
-#content-resizer {}
 
 /*columns of browse-wrapper*/
 #navigation-wrapper {
