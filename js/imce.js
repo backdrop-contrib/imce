@@ -442,7 +442,7 @@ uploadValidate: function (data, form, options) {
 
 //settings for upload
 uploadSettings: function () {
-  return {beforeSubmit: imce.uploadValidate, success: function (response) {imce.processResponse(Drupal.parseJson(response));}, complete: function () {imce.fopLoading('upload', false);}, resetForm: true};
+  return {beforeSubmit: imce.uploadValidate, success: function (response) {imce.processResponse($.parseJSON(response));}, complete: function () {imce.fopLoading('upload', false);}, resetForm: true};
 },
 
 /**************** FILE OPS  ********************/
