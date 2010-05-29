@@ -105,6 +105,26 @@ function imce_file_download($uri) {
 }
 
 /**
+ * Implements hook_file_delete().
+ */
+function imce_file_delete($file) {
+  db_delete('imce_files')->condition('fid', $file->fid)->execute();
+}
+
+/**
+ * Implements of hook_file_references().
+ */
+function imce_file_references($file) {
+  //do not report reference count on internal file deletion
+  if (isset($file->imce_noref) && $file->imce_noref) {
+    return;
+  }
+  if (db_query('SELECT 1 FROM {imce_files} WHERE fid = :fid', array(':fid' => $file->fid))->fetchField()) {
+    return array('imce' => 1);
+  }
+}
+
+/**
  * Implements hook_element_info().
  */
 function imce_element_info() {

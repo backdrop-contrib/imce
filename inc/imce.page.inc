@@ -298,6 +298,7 @@ function imce_upload_submit($form, &$form_state) {
     $file->uid = $imce['uid'];//global user may not be the owner.
     $file->status = FILE_STATUS_PERMANENT;
     file_save($file);
+    imce_file_register($file);
     drupal_set_message(t('%filename has been uploaded.', array('%filename' => $file->filename)));
 
     //update file list
@@ -393,6 +394,8 @@ function imce_delete_file($filename, &$imce) {
 
   //file exists in database
   if ($file) {
+    //prevent imce returning ref count
+    $file->imce_noref = TRUE;
     $result = file_delete($file);
     //deletion blocked by an other module.
     if (is_array($result)) {
@@ -525,6 +528,7 @@ function imce_resize_image($filename, &$imce, $width, $height, $copy = TRUE, $de
   if (!$file = file_copy($file, $destination, FILE_EXISTS_REPLACE)) {
     return FALSE;
   }
+  imce_file_register($file);
 
   //update file list
   //if the file was scaled get the new dimensions
@@ -1051,4 +1055,11 @@ function theme_imce_root_text($variables) {
  */
 function theme_imce_user_page($variables) {
   return '<iframe src="' . url('imce') . '" frameborder="0" style="border: 1px solid #eee; width: 99%; height: 520px" class="imce-frame"></iframe>';
+}
+
+/**
+ * Registers the file as an IMCE file.
+ */
+function imce_file_register($file) {
+  return $file->fid && @db_insert('imce_files')->fields(array('fid' => $file->fid))->execute();
 }

@@ -31,6 +31,26 @@ function imce_uninstall() {
 }
 
 /**
+ * Implements hook_schema().
+ */
+function imce_schema() {
+  $schema['imce_files'] = array(
+    'description' => 'Stores files created by IMCE.',
+    'fields' => array(
+      'fid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'The {files}.fid that belongs to IMCE.',
+      ),
+    ),
+    'primary key' => array('fid'),
+  );
+  return $schema;
+}
+
+/**
  * Updates from 6.x to 7.x.
  */
 function imce_update_7000() {
