@@ -53,7 +53,7 @@ function imce_permission() {
   return array(
     'administer imce' => array(
       'title' => t('Administer IMCE'),
-      'description' => t('Warning: Give to trusted roles only; this permission has security implications.'),
+      'restrict access' => TRUE,
     ),
   );
 }
