@@ -688,7 +688,7 @@ function imce_initiate_profile($user, $scheme = NULL) {
   if ($imce = imce_user_profile($user, $scheme)) {
     imce_process_directories($imce, $user);
     if (!empty($imce['directories'])) {
-      $imce['uid'] = (int)$user->uid;
+      $imce['uid'] = (int) $user->uid;
       $imce['url'] = url($_GET['q']);
       $imce['clean'] = variable_get('clean_url', 0) == 1;
       $imce['furl'] = file_create_url($imce['scheme'] . '://');
@@ -1054,7 +1054,15 @@ function theme_imce_root_text($variables) {
  * Returns the html for user's file browser tab.
  */
 function theme_imce_user_page($variables) {
-  return '<iframe src="' . url('imce') . '" frameborder="0" style="border: 1px solid #eee; width: 99%; height: 520px" class="imce-frame"></iframe>';
+  global $user;
+  $account = $variables['account'];
+  $options = array();
+  //switch to account's active folder
+  if ($user->uid == 1 && $account->uid != 1) {
+    $imce = imce_initiate_profile($account);
+    $options['query'] = array('dir' => $imce['dir']);
+  }
+  return '<iframe src="' . url('imce', $options) . '" frameborder="0" style="border: 1px solid #eee; width: 99%; height: 520px" class="imce-frame"></iframe>';
 }
 
 /**

@@ -247,7 +247,7 @@ function imce_user_page_access($account, $user = FALSE) {
     global $user;
   }
 
-  return $account->uid == $user->uid && ($profile = imce_user_profile($user)) && $profile['usertab'];
+  return ($user->uid == 1 || $account->uid == $user->uid) && ($profile = imce_user_profile($account)) && $profile['usertab'];
 }
 
 /**
