@@ -21,7 +21,7 @@ ii.initiate = function() {
 
 //function to be executed when imce loads.
 ii.load = function(win) {
-  win.imce.setSendTo(Drupal.t('Send to @app', {'@app': Drupal.t('textarea')}), ii.insert);
+  win.imce.setSendTo(Drupal.t('Insert file'), ii.insert);
   $(window).unload(function() {
     if (ii.pop && !ii.pop.closed) ii.pop.close();
   });
