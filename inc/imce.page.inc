@@ -691,6 +691,7 @@ function imce_initiate_profile($user, $scheme = NULL) {
       $imce['uid'] = (int) $user->uid;
       $imce['url'] = url($_GET['q']);
       $imce['clean'] = variable_get('clean_url', 0) == 1;
+      $imce['absurls'] = variable_get('imce_settings_absurls', 0) == 1;
       $imce['furl'] = file_create_url($imce['scheme'] . '://');
       $imce['filesize'] *= 1048576;//convert from Mb to byte
       $imce['quota'] *= 1048576;

@@ -731,11 +731,18 @@ syncScroll: function(scrlEl, fixEl, bottom) {
 updateUI: function() {
   //file urls.
   var furl = imce.conf.furl, isabs = furl.indexOf('://') > -1;
-  furl.charAt(furl.length - 1) != '/' && (furl += '/');
-  imce.conf.modfix = imce.conf.clean && furl.indexOf(location.host + '/system/') > -1;
-  if (imce.vars.absurls && !isabs || !imce.vars.absurls && isabs) {
-    var baseurl = location.protocol + '//' + location.host + (location.port ? ':' + location.port : '');
-    imce.conf.furl = isabs ? furl.substr(baseurl.length) : baseurl + furl;
+  var absurls = imce.conf.absurls = imce.vars.absurls || imce.conf.absurls;
+  var host = location.host + (location.port ? ':' + location.port : '');
+  var baseurl = location.protocol + '//' + host;
+  if (furl.charAt(furl.length - 1) != '/') {
+    furl += '/';
+  }
+  imce.conf.modfix = imce.conf.clean && furl.indexOf(host + '/system/') > -1;
+  if (absurls && !isabs) {
+    imce.conf.furl = baseurl + furl;
+  }
+  else if (!absurls && isabs && furl.indexOf(baseurl) == 0) {
+    imce.conf.furl = furl.substr(baseurl.length);
   }
   //convert button elements to input elements.
   imce.convertButtons(imce.el('forms-wrapper'));

@@ -33,7 +33,7 @@ INSTALLATION
 2) Enable the module at: /admin/build/modules
 3) Create configuration profiles and assign them to user roles at /admin/config/media/imce
 4) Test it at /imce.
-5) See imce-content.tpl.php for some configuration options such as absolute URLs ad inline previewing.
+5) See imce-content.tpl.php for some configuration options such as inline previewing.
 6) See INTEGRATION METHODS to make IMCE collaborate with your application if it's not already integrated.
 Notes:
  - When you configure IMCE for inline image/file insertion into textareas there should appear an IMCE link under each textarea you specified.
