@@ -2,10 +2,10 @@
 /*
  * IMCE Integration by URL
  * Ex-1: http://example.com/imce?app=XEditor|url@urlFieldId|width@widthFieldId|height@heightFieldId
- * Creates "Send to XEditor" operation tab, which fills the specified fields with url, width, height properties
+ * Creates "Insert file" operation tab, which fills the specified fields with url, width, height properties
  * of the selected file in the parent window
  * Ex-2: http://example.com/imce?app=XEditor|sendto@functionName
- * "Send to XEditor" operation calls parent window's functionName(file, imceWindow)
+ * "Insert file" operation calls parent window's functionName(file, imceWindow)
  * Ex-3: http://example.com/imce?app=nomatter|imceload@functionName
  * Parent window's functionName(imceWindow) is called as soon as IMCE UI is ready. Send to operation
  * needs to be set manually. See imce.setSendTo() method in imce.js
