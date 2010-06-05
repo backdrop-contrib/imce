@@ -109,11 +109,10 @@ imce.initiateSorting = function() {
   imce.hooks.navigate.push(function (data, olddir, cached) {
     cached ? imce.updateSortState(data.cid, data.dsc) : imce.firstSort();
   });
-  imce.vars.cid = imce.cookie('icid')*1;
-  imce.vars.dsc = imce.cookie('idsc')*1;
+  imce.vars.cid = imce.cookie('imcecid') * 1;
+  imce.vars.dsc = imce.cookie('imcedsc') * 1;
   imce.cols = imce.el('file-header').rows[0].cells;
   $(imce.cols).click(function () {imce.columnSort(this.cellIndex, imce.hasC(this, 'asc'));});
-  $(window).unload(function() {imce.cookie('icid', imce.vars.cid); imce.cookie('idsc', imce.vars.dsc ? 1 : 0);});
   imce.firstSort();
 };
 
@@ -145,8 +144,8 @@ imce.columnSort = function(cid, dsc) {
 imce.updateSortState = function(cid, dsc) {
   $(imce.cols[imce.vars.cid]).removeClass(imce.vars.dsc ? 'desc' : 'asc');
   $(imce.cols[cid]).addClass(dsc ? 'desc' : 'asc');
-  imce.vars.cid = cid;
-  imce.vars.dsc = dsc;
+  imce.vars.cid != cid && imce.cookie('imcecid', imce.vars.cid = cid);
+  imce.vars.dsc != dsc && imce.cookie('imcedsc', (imce.vars.dsc = dsc) ? 1 : 0);
 };
 
 //sorters
@@ -159,13 +158,13 @@ imce.sortNumDsc = function(a, b) {return b-a};
 
 //set resizers for resizable areas and recall previous dimensions
 imce.initiateResizeBars = function () {
-  imce.setResizer('navigation-resizer', 'X', 'navigation-wrapper', null, 1);
-  imce.setResizer('browse-resizer', 'Y', 'browse-wrapper', 'preview-wrapper', 50);
-  imce.recallDimensions();
-  $(window).unload(function() {
-    imce.cookie('imcebwh', $(imce.BW).height());
-    imce.cookie('imcenww', Math.max($(imce.NW).width(), 1));
+  imce.setResizer('navigation-resizer', 'X', 'navigation-wrapper', null, 1, function(p1, p2, m) {
+    p1 != p2 && imce.cookie('imcenww', p2);
   });
+  imce.setResizer('browse-resizer', 'Y', 'browse-wrapper', 'preview-wrapper', 50, function(p1, p2, m) {
+    p1 != p2 && imce.cookie('imcebwh', p2);
+  });
+  imce.recallDimensions();
 };
 
 //set a resize bar
@@ -231,7 +230,7 @@ imce.cookie = function (name, value) {
   if (typeof(value) == 'undefined') {//get
     return unescape((document.cookie.match(new RegExp('(^|;) *'+ name +'=([^;]*)(;|$)')) || ['', '', ''])[2]);
   }
-  document.cookie = name +'='+ escape(value) +'; expires='+ (new Date(new Date()*1 + 30*86400000)).toGMTString() +'; path=/';//set
+  document.cookie = name +'='+ escape(value) +'; expires='+ (new Date(new Date() * 1 + 15 * 86400000)).toGMTString() +'; path=' + Drupal.settings.basePath + 'imce';//set
 };
 
 //view thumbnails(smaller than tMaxW x tMaxH) inside the rows.
