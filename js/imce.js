@@ -737,7 +737,7 @@ updateUI: function() {
   //file urls.
   var furl = imce.conf.furl, isabs = furl.indexOf('://') > -1;
   var absurls = imce.conf.absurls = imce.vars.absurls || imce.conf.absurls;
-  var host = location.host + (location.port ? ':' + location.port : '');
+  var host = location.host;
   var baseurl = location.protocol + '//' + host;
   if (furl.charAt(furl.length - 1) != '/') {
     furl += '/';
