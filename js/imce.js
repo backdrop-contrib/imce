@@ -323,7 +323,12 @@ opClick: function(name) {
     var $opcon = $('#op-contents').css({left: 0});
     $(Op.div).slideDown('normal', function() {
       setTimeout(function() {
-        imce.vars.op && $('input:first', imce.ops[imce.vars.op].div).focus();
+        if (imce.vars.op) {
+          var $inputs = $('input', imce.ops[imce.vars.op].div);
+          $inputs.eq(0).focus();
+          //form inputs become invisible in IE. Solution is as stupid as the behavior.
+          $('html').is('.ie') && $inputs.addClass('dummyie').removeClass('dummyie');
+       }
       });
     });
     var diff = left + $opcon.width() - $('#imce-content').width();
