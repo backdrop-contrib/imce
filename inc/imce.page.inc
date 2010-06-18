@@ -385,10 +385,21 @@ function imce_process_files($filenames, &$imce, $function, $args = array()) {
 }
 
 /**
- * Delete a file in the file list.
+ * Deletes a file in the file list.
  */
 function imce_delete_file($filename, &$imce) {
   $uri = imce_dir_uri($imce) . $filename;
+  if (!imce_delete_filepath($uri)) {
+    return FALSE;
+  }
+  imce_remove_file($filename, $imce);
+  return TRUE;
+}
+
+/**
+ * Deletes a file by uri.
+ */
+function imce_delete_filepath($uri) {
   $file = file_load_multiple(array(), array('uri' => $uri));
   $file = reset($file);
 
@@ -412,7 +423,6 @@ function imce_delete_file($filename, &$imce) {
     return FALSE;
   }
 
-  imce_remove_file($filename, $imce);
   return TRUE;
 }
 
