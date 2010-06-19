@@ -1080,5 +1080,7 @@ function theme_imce_user_page($variables) {
  * Registers the file as an IMCE file.
  */
 function imce_file_register($file) {
-  return $file->fid && @db_insert('imce_files')->fields(array('fid' => $file->fid))->execute();
+  if (!db_query('SELECT 1 FROM {imce_files} WHERE fid = :fid', array(':fid' => $file->fid))->fetchField()) {
+    return @db_insert('imce_files')->fields(array('fid' => $file->fid))->execute();
+  }
 }
