@@ -30,7 +30,7 @@ FEATURES
 INSTALLATION
 -----------
 1) Copy imce directory to your modules directory
-2) Enable the module at: /admin/build/modules
+2) Enable the module at module administration page
 3) Create configuration profiles and assign them to user roles at /admin/config/media/imce
 4) Test it at /imce.
 5) See imce-content.tpl.php for some configuration options such as inline previewing.
