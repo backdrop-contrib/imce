@@ -704,7 +704,7 @@ decode: function (str) {
 },
 //global ajax error function
 ajaxError: function (e, response, settings, thrown) {
-  imce.setMessage(Drupal.ahahError(response, settings.url).replace('\n', '<br />'), 'error');
+  imce.setMessage(Drupal.ajaxError(response, settings.url).replace(/\n/g, '<br />'), 'error');
 },
 //convert button elements to standard input buttons
 convertButtons: function(form) {
