@@ -565,7 +565,9 @@ setMessage: function (msg, type) {
     $box.css({opacity: 0, display: 'block'}).html(msg);
     $box.dequeue();
   });
-  $box.fadeTo(600, 1).fadeTo(1000, 1).fadeOut(400);
+  var q = $box.queue().length;
+  q = q < 2 ? 1 : q < 3 ? 0.8 : q < 4 ? 0.7 : 0.4;//adjust speed with respect to queue length
+  $box.fadeTo(600 * q, 1).fadeTo(1000 * q, 1).fadeOut(400 * q);
   $(logs).append(msg);
   return false;
 },
