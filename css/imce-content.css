@@ -32,7 +32,7 @@ body.imce {
 #imce-content label.option {
   font-weight: normal;
 }
-#imce-content input.form-text, #imce-content input[type=text], #imce-content input.form-file, #imce-content input[type=file], #imce-content select {
+#imce-content input.form-text, #imce-content input[type=text], #imce-content input.form-file, #imce-content input[type=file], #imce-content select, #imce-content textarea {
   border: 1px inset #aaa;
   padding: 2px;
   background-color: #fff;
@@ -55,6 +55,9 @@ body.imce {
 }
 #imce-content .form-item {
   margin: 4px 0;
+}
+#imce-content .form-item .description {
+  font-size: 0.9em;
 }
 #imce-content strong, #imce-content h4 {
   font-weight: bold;
