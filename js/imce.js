@@ -742,7 +742,7 @@ updateUI: function() {
   var host = location.host;
   var baseurl = location.protocol + '//' + host;
   if (furl.charAt(furl.length - 1) != '/') {
-    furl += '/';
+    furl = imce.conf.furl = furl + '/';
   }
   imce.conf.modfix = imce.conf.clean && furl.indexOf(host + '/system/') > -1;
   if (absurls && !isabs) {

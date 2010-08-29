@@ -82,7 +82,7 @@ var isFunc = function(str, scope) {
   var obj = scope || appWindow;
   var parts = str.split('.'), len = parts.length;
   for (var i = 0; i < len && (obj = obj[parts[i]]); i++);
-  return obj && i == len && typeof obj != 'string' && !obj.nodeName && obj.constructor != Array && /^[\s[]?function/.test(obj + '') ? obj : false;
+  return obj && i == len && (typeof obj == 'function' || typeof obj != 'string' && !obj.nodeName && obj.constructor != Array && /^[\s[]?function/.test(obj.toString())) ? obj : false;
 }
 
 })(jQuery);
