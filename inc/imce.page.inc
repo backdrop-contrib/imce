@@ -403,22 +403,26 @@ function imce_delete_filepath($uri) {
   $file = file_load_multiple(array(), array('uri' => $uri));
   $file = reset($file);
 
-  //file exists in database
+  // File exists in database
   if ($file) {
-    //prevent imce returning ref count
-    $file->imce_noref = TRUE;
-    $result = file_delete($file);
-    //deletion blocked by an other module.
-    if (is_array($result)) {
+    $usage = file_usage_list($file);
+    $is_imce = isset($usage['imce']);
+    unset($usage['imce']);
+    // File is in use by an other module.
+    if (!empty($usage)) {
       drupal_set_message(t('%filename is in use by another application.', array('%filename' => $file->filename)), 'error');
       return FALSE;
     }
-    //general failure
-    if (!$result) {
+    // Force delete file. Prevent running file_usage_list() second time.
+    if (!file_delete($file, TRUE)) {
       return FALSE;
     }
+    // Remove imce usage
+    if ($is_imce) {
+      file_usage_delete($file, 'imce');
+    }
   }
-  //not in db. probably loaded via ftp.
+  // Not in db. Probably loaded via ftp.
   elseif (!file_unmanaged_delete($uri)) {
     return FALSE;
   }
@@ -1080,7 +1084,7 @@ function theme_imce_user_page($variables) {
  * Registers the file as an IMCE file.
  */
 function imce_file_register($file) {
-  if (!db_query('SELECT 1 FROM {imce_files} WHERE fid = :fid', array(':fid' => $file->fid))->fetchField()) {
-    return @db_insert('imce_files')->fields(array('fid' => $file->fid))->execute();
+  if (!db_query("SELECT 1 FROM {file_usage} WHERE module = 'imce' AND fid = :fid", array(':fid' => $file->fid))->fetchField()) {
+    file_usage_add($file, 'imce', 'file', $file->fid);
   }
 }
