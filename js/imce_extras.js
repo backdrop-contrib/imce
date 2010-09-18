@@ -240,7 +240,7 @@ imce.thumbRow = function (row) {
   if (!w) return;
   var h = row.cells[3].innerHTML*1;
   if (imce.vars.tMaxW < w || imce.vars.tMaxH < h) {
-    if (!imce.vars.prvstyle) return;
+    if (!imce.vars.prvstyle || imce.conf.dir.indexOf('styles') == 0) return;
     var img = new Image();
     img.src = imce.imagestyleURL(imce.getURL(row.id), imce.vars.prvstyle);
     img.className = 'imagestyle imagestyle-' + imce.vars.prvstyle;
