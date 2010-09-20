@@ -267,7 +267,7 @@ imce.thumbRow = function (row) {
 //convert a file URL returned by imce.getURL() to an image style(imagecache preset) URL
 imce.imagestyleURL = function (url, stylename) {
   var len = imce.conf.furl.length - 1;
-  return url.substr(0, len) + '/styles/' + stylename + url.substr(len);
+  return url.substr(0, len) + '/styles/' + stylename + '/' + imce.conf.scheme + url.substr(len);
 };
 
 })(jQuery);
