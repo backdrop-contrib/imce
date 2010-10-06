@@ -68,8 +68,8 @@ Install http://drupal.org/project/imce_wysiwyg bridge module and enable IMCE as 
 BUEditor:
 IMCE is integrated in image and link dialogs.
 
-FCKeditor(without WYSIWYG): 
-Fckeditor profile->File browser settings->IMCE integration
+(F)CKeditor(without WYSIWYG): 
+(F)ckeditor profile->File browser settings->IMCE integration
 
 If your application is not one of the above, please keep reading in order to learn how to integrate IMCE.
 

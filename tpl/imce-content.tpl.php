@@ -17,6 +17,10 @@ $imce =& $imce_ref['imce'];//keep this line.
   imce.vars.prvH = 40; //maximum height of the thumbnail used in inline preview.
   //imce.vars.prvstyle = 'stylename'; //preview larger images inline using an image style(imagecache preset).
 
+  //enable box view for file list. set box dimensions = preview dimensions + 30 or more
+  //imce.vars.boxW = 100; //width of a file info box
+  //imce.vars.boxH = 100; //height of a file info box
+
   //imce.vars.previewImages = 0; //disable click previewing of images.
   //imce.vars.cache = 0; //disable directory caching. File lists will always refresh.
   //imce.vars.absurls = 1; //make IMCE return absolute file URLs to external applications.

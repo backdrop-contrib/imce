@@ -3,12 +3,8 @@
 
 (function($) {
 
-//add onload hook. unshift to make sure it runs first after imce loads.
-imce.hooks.load.unshift(function () {
-  imce.NW = imce.el('navigation-wrapper');
-  imce.BW = imce.el('browse-wrapper');
-  imce.PW = imce.el('preview-wrapper');
-  //add scale calculator for resizing.
+// add scale calculator for resizing.
+imce.hooks.load.push(function () {
   $('#edit-width, #edit-height').focus(function () {
     var fid, r, w, isW, val;
     if (fid = imce.vars.prvfid) {
@@ -19,7 +15,7 @@ imce.hooks.load.unshift(function () {
   });
 });
 
-/**************** SHORTCUTS ********************/
+// Shortcuts
 var F = null;
 imce.initiateShortcuts = function () {
   $(imce.NW).attr('tabindex', '0').keydown(function (e) {
@@ -97,8 +93,6 @@ $.each({k46: 'delete', k82: 'resize', k84: 'thumb', k85: 'upload'}, function (k,
   };
 });
 
-/**************** SORTING ********************/
-
 //prepare column sorting
 imce.initiateSorting = function() {
   //add cache hook. cache the old directory's sort settings before the new one replaces it.
@@ -154,14 +148,12 @@ imce.sortStrDsc = function(a, b) {return imce.sortStrAsc(b, a);};
 imce.sortNumAsc = function(a, b) {return a-b;};
 imce.sortNumDsc = function(a, b) {return b-a};
 
-/**************** RESIZE-BARS  ********************/
-
 //set resizers for resizable areas and recall previous dimensions
 imce.initiateResizeBars = function () {
-  imce.setResizer('navigation-resizer', 'X', 'navigation-wrapper', null, 1, function(p1, p2, m) {
+  imce.setResizer('#navigation-resizer', 'X', imce.NW, null, 1, function(p1, p2, m) {
     p1 != p2 && imce.cookie('imcenww', p2);
   });
-  imce.setResizer('browse-resizer', 'Y', 'browse-wrapper', 'preview-wrapper', 50, function(p1, p2, m) {
+  imce.setResizer('#browse-resizer', 'Y', imce.BW, imce.PW, 50, function(p1, p2, m) {
     p1 != p2 && imce.cookie('imcebwh', p2);
   });
   imce.recallDimensions();
@@ -171,8 +163,8 @@ imce.initiateResizeBars = function () {
 imce.setResizer = function (resizer, axis, area1, area2, Min, callback) {
   var opt = axis == 'X' ? {pos: 'pageX', func: 'width'} : {pos: 'pageY', func: 'height'};
   var Min = Min || 0;
-  var $area1 = $(imce.el(area1)), $area2 = area2 ? $(imce.el(area2)) : null, $doc = $(document);
-  $(imce.el(resizer)).mousedown(function(e) {
+  var $area1 = $(area1), $area2 = area2 ? $(area2) : null, $doc = $(document);
+  $(resizer).mousedown(function(e) {
     var pos = e[opt.pos];
     var end = start = $area1[opt.func]();
     var Max = $area2 ? start + $area2[opt.func]() : 1200;
@@ -238,12 +230,12 @@ imce.cookie = function (name, value) {
 imce.thumbRow = function (row) {
   var w = row.cells[2].innerHTML * 1;
   if (!w) return;
-  var h = row.cells[3].innerHTML*1;
+  var h = row.cells[3].innerHTML * 1;
   if (imce.vars.tMaxW < w || imce.vars.tMaxH < h) {
     if (!imce.vars.prvstyle || imce.conf.dir.indexOf('styles') == 0) return;
     var img = new Image();
     img.src = imce.imagestyleURL(imce.getURL(row.id), imce.vars.prvstyle);
-    img.className = 'imagestyle imagestyle-' + imce.vars.prvstyle;
+    img.className = 'imagestyle-' + imce.vars.prvstyle;
   }
   else {
     var prvH = h, prvW = w;
@@ -268,6 +260,31 @@ imce.thumbRow = function (row) {
 imce.imagestyleURL = function (url, stylename) {
   var len = imce.conf.furl.length - 1;
   return url.substr(0, len) + '/styles/' + stylename + '/' + imce.conf.scheme + url.substr(len);
+};
+
+// replace table view with box view for file list
+imce.boxView = function () {
+  var w = imce.vars.boxW, h = imce.vars.boxH;
+  if (!w || !h || $.browser.msie && parseFloat($.browser.version) < 8) return;
+  var $body = $(document.body);
+  var toggle = function() {
+    $body.toggleClass('box-view');
+    // refresh dom. required by all except FF.
+    !$.browser.mozilla && $('#file-list').appendTo(imce.FW).appendTo(imce.FLW);
+  };
+  $body.append('<style type="text/css">.box-view #file-list td.name {width: ' + w + 'px;height: ' + h + 'px;} .box-view #file-list td.name span {width: ' + w + 'px;word-wrap: normal;text-overflow: ellipsis;}</style>');
+  imce.hooks.load.push(function() {
+    toggle();
+    imce.SBW.scrollTop = 0;
+    imce.opAdd({name: 'changeview', title: Drupal.t('Change view'), func: toggle});
+  });
+  imce.hooks.list.push(imce.boxViewRow);
+};
+
+// process a row for box view. include all data in box title.
+imce.boxViewRow = function (row) {
+  var s = ' | ', w = row.cells[2].innerHTML * 1, dim = w ? s + w + 'x' + row.cells[3].innerHTML * 1 : '';
+  row.cells[0].title = imce.decode(row.id) + s + row.cells[1].innerHTML + (dim) + s + row.cells[4].innerHTML;
 };
 
 })(jQuery);
