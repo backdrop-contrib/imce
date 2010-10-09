@@ -40,7 +40,7 @@ function imce_menu() {
     'title' => 'Add new profile',
     'page callback' => 'imce_profile_operations',
     'access arguments' => $access,
-    'type' => MENU_CALLBACK,
+    'type' => MENU_VISIBLE_IN_BREADCRUMB,
     'file' => 'inc/imce.admin.inc',
   );
   return $items;
