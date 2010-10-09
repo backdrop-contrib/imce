@@ -59,12 +59,6 @@ function imce_admin_form($form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  $form['common']['disable_private'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Disable serving of private files'),
-    '#default_value' => variable_get('imce_settings_disable_private', 1),
-    '#description' => t('IMCE serves all files under private files directory without applying any access restrictions. This allows anonymous access to any file(/system/files/filename) unless there is a module restricting access to the files. Here you can disable this feature.'),
-  );
   $form['common']['textarea'] = array(
     '#type' => 'textfield',
     '#title' => t('Enable inline image/file insertion into plain textareas'),
@@ -96,6 +90,12 @@ function imce_admin_form($form, &$form_state) {
       'scale' => t('Scale the image with respect to the thumbnail dimensions.'),
       'scale_and_crop' => t('First scale then crop the image to fit the thumbnail dimensions.')
     ),
+  );
+  $form['common']['disable_private'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Disable serving of private files'),
+    '#default_value' => variable_get('imce_settings_disable_private', 1),
+    '#description' => t('IMCE serves all files under private files directory without applying any access restrictions. This allows anonymous access to any file(/system/files/filename) unless there is a module restricting access to the files. Here you can disable this feature.'),
   );
 
   $form['submit'] = array('#type' => 'submit', '#value' => t('Save configuration'));
@@ -480,6 +480,7 @@ function imce_role_form($role, $weight = TRUE, $core = TRUE) {
       '#type' => 'select',
       '#options' => imce_profile_options(),
       '#default_value' => $role[$scheme . '_pid'],
+      '#empty_value' => 0,
     );
   }
   return $form;
@@ -517,7 +518,7 @@ function imce_profile_delete_submit($form, &$form_state) {
  * Profile options.
  */
 function imce_profile_options() {
-  $options = array(t('none'));
+  $options = array();
   foreach (variable_get('imce_profiles', array()) as $pid => $profile) {
     $options[$pid] = $profile['name'];
   }
