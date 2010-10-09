@@ -44,6 +44,9 @@ body.imce {
   padding: 2px 6px 2px 20px;
   margin: 2px 0;
   background: #e8e8d8 url(submit.png) no-repeat 2px 50%;
+  -moz-border-radius: 0;
+  -webkit-border-radius: 0;
+  border-radius: 0;
 }
 #imce-content [disabled], #imce-content .disabled {
   color: #999;
