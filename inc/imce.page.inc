@@ -606,7 +606,7 @@ function imce_validate_all(&$file, $imce) {
   //and scaling it may exploit system memory.
   $errors = imce_validate_filesize($file, $imce['filesize']);
   //image resolution validation
-  if (empty($errors)) {
+  if (empty($errors) && imce_image_info($file->uri)) {
     $errors = array_merge($errors, file_validate_image_resolution($file, $imce['dimensions']));
   }
   //directory quota validation
