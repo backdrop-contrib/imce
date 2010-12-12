@@ -114,9 +114,9 @@ function imce_admin_theme($variables) {
   $rows = array(array(t('Site maintenance account')));
   $keys = array('name');
   //add each stream wrapper as a column
-  $swrappers = file_get_stream_wrappers();
+  $swrappers = file_get_stream_wrappers(STREAM_WRAPPERS_VISIBLE);
   foreach ($swrappers as $scheme => $info) {
-    $header[] = $info['name'];
+    $header[] = l($info['name'], 'imce/' . $scheme);
     $rows[0][] = $profile1['name'];
     $keys[] = $scheme . '_pid';
   }
@@ -140,7 +140,7 @@ function imce_admin_theme($variables) {
 
   $output = '<h2 class="title">' . t('Role-profile assignments') . '</h2>';
   $output .= theme('table', array('header' => $header, 'rows' => $rows));
-  $output .= '<div class="form-item"><div class="description">' . t('Assign profiles to user roles for available file systems. Your default file system is %name', array('%name' => $swrappers[variable_get('file_default_scheme', 'public')]['name'])) . ' ' . $weight_info . '</div></div>';
+  $output .= '<div class="form-item"><div class="description">' . t('Assign profiles to user roles for available file systems. Your default file system is %name.', array('%name' => $swrappers[variable_get('file_default_scheme', 'public')]['name'])) . ' ' . $weight_info . '</div></div>';
   $output .= drupal_render($form['common']);
   $output .= drupal_render_children($form);
   return $output;
@@ -475,7 +475,7 @@ function imce_role_form($role, $weight = TRUE, $core = TRUE) {
       '#default_value' => $role['weight'],
     );
   }
-  foreach (array_keys(file_get_stream_wrappers()) as $scheme) {
+  foreach (array_keys(file_get_stream_wrappers(STREAM_WRAPPERS_VISIBLE)) as $scheme) {
     $form[$scheme . '_pid'] = array(
       '#type' => 'select',
       '#options' => imce_profile_options(),
@@ -645,7 +645,7 @@ function imce_sorted_roles() {
     $roles_profiles = variable_get('imce_roles_profiles', array());
     $roles_profiles[DRUPAL_ANONYMOUS_RID]['weight'] = 12;
     $roles_profiles[DRUPAL_AUTHENTICATED_RID]['weight'] = 11;
-    $schemes = array_keys(file_get_stream_wrappers());
+    $schemes = array_keys(file_get_stream_wrappers(STREAM_WRAPPERS_VISIBLE));
     foreach ($roles as $rid => $name) {
       $sorted[$rid] = array(
         'name' => $name,

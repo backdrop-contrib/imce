@@ -599,7 +599,7 @@ function imce_remove_file($filename, &$imce) {
 /**
  * Validate uploaded file.
  */
-function imce_validate_all(&$file, $imce) {
+function imce_validate_all($file, $imce) {
 
   //validate image resolution only if filesize validation passes.
   //because user might have uploaded a very big image

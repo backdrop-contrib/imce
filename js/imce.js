@@ -268,7 +268,7 @@ setFileOps: function () {
     var Op = {name: $sbmt.attr('id').substr(5)};
     var func = function() {imce.fopSubmit(Op.name); return false;};
     $sbmt.click(func);
-    Op.title = $(this).children('legend').remove().text();
+    Op.title = $(this).children('legend').remove().text() || $sbmt.val();
     Op.name == 'delete' ? (Op.func = func) : (Op.content = this.childNodes);
     imce.opAdd(Op);
   }).remove();
@@ -521,7 +521,7 @@ setPreview: function (fid) {
   imce.vars.prvfid = fid;
   if (fid && (row = imce.fids[fid])) {
     var width = row.cells[2].innerHTML * 1;
-    html = imce.vars.previewImages && width ? imce.imgHtml(fid, width, row.cells[3].innerHTML) : imce.decode(fid);
+    html = imce.vars.previewImages && width ? imce.imgHtml(fid, width, row.cells[3].innerHTML) : imce.decodePlain(fid);
     html = '<a href="#" onclick="imce.send(\''+ fid +'\'); return false;" title="'+ (imce.vars.prvtitle||'') +'">'+ html +'</a>';
   }
   imce.el('file-preview').innerHTML = html;
@@ -620,7 +620,7 @@ resMsgs: function (msgs) {
 
 //return img markup
 imgHtml: function (fid, width, height) {
-  return '<img src="'+ imce.getURL(fid) +'" width="'+ width +'" height="'+ height +'" alt="'+ imce.decode(fid) +'">';
+  return '<img src="'+ imce.getURL(fid) +'" width="'+ width +'" height="'+ height +'" alt="'+ imce.decodePlain(fid) +'">';
 },
 //check if the file is an image
 isImage: function (fid) {
@@ -692,7 +692,7 @@ highlight: function (fid) {
 },
 //process a row
 processRow: function (row) {
-  row.cells[0].innerHTML = '<span>' + imce.decode(row.id) + '</span>';
+  row.cells[0].innerHTML = '<span>' + imce.decodePlain(row.id) + '</span>';
   row.onmousedown = function(e) {
     var e = e||window.event;
     imce.fileClick(this, e.ctrlKey, e.shiftKey);
@@ -706,6 +706,10 @@ processRow: function (row) {
 //decode urls. uses unescape. can be overridden to use decodeURIComponent
 decode: function (str) {
   return unescape(str);
+},
+//decode and convert to plain text
+decodePlain: function (str) {
+  return Drupal.checkPlain(imce.decode(str));
 },
 //global ajax error function
 ajaxError: function (e, response, settings, thrown) {
