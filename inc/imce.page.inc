@@ -279,7 +279,9 @@ function imce_fileop_form_validate($form, &$form_state) {
 function imce_upload_submit($form, &$form_state) {
   $form_state['redirect'] = FALSE;
   $imce =& $form_state['build_info']['args'][0]['imce'];
-  $validators = array('imce_validate_all' => array(&$imce));
+  // Need to provide extension validatior, otherwise file_save_upload uses the default.
+  $validators['file_validate_extensions'] = array($imce['extensions'] === '*' ? NULL : $imce['extensions']);
+  $validators['imce_validate_all'] = array(&$imce);
   $diruri = imce_dir_uri($imce);
 
   //save uploaded file.
@@ -612,10 +614,6 @@ function imce_validate_all($file, $imce) {
   //directory quota validation
   if ($imce['quota']) {
     $errors = array_merge($errors, imce_validate_quota($file, $imce['quota'], $imce['dirsize']));
-  }
-  //file extension validation
-  if ($imce['extensions'] != '*') {
-    $errors = array_merge($errors, file_validate_extensions($file, $imce['extensions']));
   }
   //user quota validation. check it if no errors were thrown.
   if (empty($errors) && $imce['tuquota']) {
