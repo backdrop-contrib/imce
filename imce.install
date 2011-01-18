@@ -50,32 +50,48 @@ function imce_update_7000() {
   if ($ids != '') {
     $ids = explode(',', $ids);
     foreach ($ids as &$id) {
-      $id += '*';
+      $id .= '*';
     }
     variable_set('imce_settings_textarea', implode(', ', $ids));
   }
 }
 
 /**
+ * Migrates imce files from {files} to {file_managed}.
  * Removes {imce_files} in favor of {file_usage}.
  */
 function imce_update_7001(&$sandbox) {
-  if (!db_table_exists('imce_files')) {
+  if (!db_table_exists('imce_files') || !db_table_exists('files')) {
     return;
   }
+  // Initiate progress
   if (!isset($sandbox['progress'])) {
     $sandbox['progress'] = 0;
-    $sandbox['last_fid_processed'] = -1;
-    $sandbox['max'] = db_query("SELECT COUNT(*) FROM {imce_files}")->fetchField();
+    $sandbox['last_fid_processed'] = 0;
+    $sandbox['max'] = db_query("SELECT COUNT(*) FROM {imce_files} i INNER JOIN {files} f ON i.fid = f.fid")->fetchField();
   }
-  $limit = 500;
-  $result = db_query_range('SELECT i.fid FROM {imce_files} i INNER JOIN {file_managed} f ON i.fid = f.fid WHERE i.fid > :fid ORDER BY i.fid', 0, $limit, array(':fid' => $sandbox['last_fid_processed']))->fetchAll();
+  // Prepare variables
+  $limit = 250;
+  $basedir = variable_get('file_directory_path', conf_path() . '/files') . '/';
+  $baselen = strlen($basedir);
+  $scheme = file_default_scheme() . '://';
+  $result = db_query_range('SELECT f.* FROM {imce_files} i INNER JOIN {files} f ON i.fid = f.fid WHERE i.fid > :fid ORDER BY i.fid', 0, $limit, array(':fid' => $sandbox['last_fid_processed']))->fetchAll();
+  // Migrate imce files from {files} to {file_managed}
   foreach ($result as $file) {
+    $relpath = substr($file->filepath, 0, $baselen) == $basedir ? substr($file->filepath, $baselen) : $file->filepath;
+    $file->uri = file_stream_wrapper_uri_normalize($scheme . $relpath);
+    unset($file->filepath);
+    if (!db_query("SELECT 1 FROM {file_managed} WHERE fid = :fid", array(':fid' => $file->fid))->fetchField()) {
+      drupal_write_record('file_managed', $file);
+    }
     file_usage_add($file, 'imce', 'file', $file->fid);
     $sandbox['progress']++;
     $sandbox['last_fid_processed'] = $file->fid;
   }
-  if ($sandbox['#finished'] = empty($sandbox['max']) || ($sandbox['progress'] / $sandbox['max'])) {
+  // Drop {imce_files} if the progress is complete.
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : $sandbox['progress'] / $sandbox['max'];
+  if ($sandbox['#finished'] >= 1) {
     db_drop_table('imce_files');
+    return t('Migrated IMCE files.');
   }
 }
