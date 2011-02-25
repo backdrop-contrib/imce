@@ -1,4 +1,3 @@
-// $Id$
 
 (function($) {
 //Global container.

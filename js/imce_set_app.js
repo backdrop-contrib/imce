@@ -1,4 +1,3 @@
-// $Id$
 /*
  * IMCE Integration by URL
  * Ex-1: http://example.com/imce?app=XEditor|url@urlFieldId|width@widthFieldId|height@heightFieldId

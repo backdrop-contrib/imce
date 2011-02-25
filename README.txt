@@ -1,4 +1,3 @@
-// $Id$
 
 IMCE
 http://drupal.org/project/imce
