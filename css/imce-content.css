@@ -252,6 +252,9 @@ body.imce {
   background-color: #07f;
   color: #fff;
 }
+#file-list tr.selected span {
+  color: #fff;
+}
 #file-list td.name img {
   vertical-align: middle;
   margin-right: 3px;
@@ -304,6 +307,7 @@ body.imce {
 #ops-list a span {
   display: inline-block;
   color: #0e1f43;
+  padding-left: 1px;
 }
 #ops-list li.loading a {
   background-image: url(loading.gif);
