@@ -4,6 +4,7 @@ body.imce {
   padding: 2px;
   background: none;
   text-align: left;
+  height: auto;
 }
 
 /*Main container*/
