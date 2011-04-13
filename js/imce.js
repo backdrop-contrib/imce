@@ -328,7 +328,7 @@ opClick: function(name) {
       });
     });
     var diff = left + $opcon.width() - $('#imce-content').width();
-    $opcon.css({left: diff > 0 ? left - diff : left});
+    $opcon.css({left: diff > 0 ? left - diff - 1 : left});
     $(Op.li).addClass('active');
     $(imce.opCloseLink).fadeIn(300);
     imce.vars.op = name;
