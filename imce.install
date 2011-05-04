@@ -81,7 +81,13 @@ function imce_update_7001(&$sandbox) {
     $file->uri = file_stream_wrapper_uri_normalize($scheme . $relpath);
     unset($file->filepath);
     if (!db_query("SELECT 1 FROM {file_managed} WHERE fid = :fid", array(':fid' => $file->fid))->fetchField()) {
-      drupal_write_record('file_managed', $file);
+      // Check duplicate uri
+      if ($fid = db_query("SELECT fid FROM {file_managed} WHERE uri = :uri", array(':uri' => $file->uri))->fetchField()) {
+        $file->fid = $fid;
+      }
+      else {
+        drupal_write_record('file_managed', $file);
+      }
     }
     file_usage_add($file, 'imce', 'file', $file->fid);
     $sandbox['progress']++;
