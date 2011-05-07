@@ -553,9 +553,9 @@ setMessage: function (msg, type) {
     $box.css({opacity: 0, display: 'block'}).html(msg);
     $box.dequeue();
   });
-  var q = $box.queue().length;
+  var q = $box.queue().length, t = imce.vars.msgT || 1000;
   q = q < 2 ? 1 : q < 3 ? 0.8 : q < 4 ? 0.7 : 0.4;//adjust speed with respect to queue length
-  $box.fadeTo(600 * q, 1).fadeTo(1000 * q, 1).fadeOut(400 * q);
+  $box.fadeTo(600 * q, 1).fadeTo(t * q, 1).fadeOut(400 * q);
   $(logs).append(msg);
   return false;
 },
