@@ -957,9 +957,10 @@ function imce_scan_directory($dirname, $imce) {
     return $directory;
   }
 
-  $exclude = array('.' => 1, '..' => 1, 'CVS' => 1, '.svn' => 1, '.htaccess' => 1);
   while (($file = readdir($handle)) !== FALSE) {
-    if (isset($exclude[$file])) {
+
+    // Do not include dot files and folders
+    if (substr($file, 0, 1) === '.') {
       continue;
     }
 
