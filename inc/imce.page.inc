@@ -885,7 +885,7 @@ function imce_directory_info($dirname, $imce) {
     $diruri = imce_dir_uri($imce, $dirname);
     if (file_prepare_directory($diruri)) {
       foreach ($imce['directories'] as $name => $prop) {
-        if ($prop['subnav'] && ($name == '.' || strpos($dirname . '/', $name . '/') === 0)) {
+        if ($prop['subnav'] && ($name === '.' || strpos($dirname . '/', $name . '/') === 0)) {
           $info = $prop;
           $info['name'] = $dirname;
         }
@@ -902,6 +902,9 @@ function imce_directory_info($dirname, $imce) {
 function imce_subdirectories_accessible(&$imce) {
 
   if (!empty($imce['subdirectories'])) {
+    if (!empty($imce['perm']['subnav'])) {
+      return TRUE;
+    }
     //checking only the first one is sufficient.
     $dirname = ($imce['dir'] == '.' ? '' : $imce['dir'] . '/') . $imce['subdirectories'][0];
 
