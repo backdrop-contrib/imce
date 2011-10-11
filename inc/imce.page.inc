@@ -101,6 +101,12 @@ function imce_js($user, $scheme, $jsop = '') {
       if (function_exists($func = 'imce_js_' . $jsop)) {
         $response['data'] = $func($imce);
       }
+      // Allow alteration of response.
+      foreach (variable_get('imce_custom_response', array()) as $func => $state) {
+        if ($state && function_exists($func)) {
+          $func($jsop, $response, $imce, $user);
+        }
+      }
     }
   }
   //messages

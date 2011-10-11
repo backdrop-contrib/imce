@@ -29,6 +29,7 @@ function imce_uninstall() {
   variable_del('imce_custom_process');
   variable_del('imce_custom_init');
   variable_del('imce_custom_scan');
+  variable_del('imce_custom_response');
 }
 
 /**
