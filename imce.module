@@ -233,5 +233,5 @@ function imce_user_page_access($account, $user = FALSE) {
  * Check if the directory name is regular.
  */
 function imce_reg_dir($dirname) {
-  return $dirname == '.' || (is_string($dirname) && $dirname != '' && !preg_match('@(^\s)|(^/)|(^\./)|(\s$)|(/$)|(/\.$)|(\.\.)|(//)|(\\\\)|(/\./)@', $dirname));
+  return $dirname == '.' || is_int($dirname) || (is_string($dirname) && $dirname != '' && !preg_match('@(^\s)|(^/)|(^\./)|(\s$)|(/$)|(/\.$)|(\.\.)|(//)|(\\\\)|(/\./)@', $dirname));
 }

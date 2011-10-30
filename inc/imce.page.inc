@@ -838,6 +838,7 @@ function imce_working_directory(&$imce) {
 
   //or the whole list.
   foreach ($imce['directories'] as $dirname => $info) {
+    $dirname = (string) $dirname;
     if (imce_check_directory($dirname, $imce)) {
       if ($sess) {
         $_SESSION['imce_directory'] = rawurlencode($dirname);
