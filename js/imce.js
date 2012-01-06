@@ -492,7 +492,7 @@ fopSettings: function (fop) {
 
 //toggle loading state
 fopLoading: function(fop, state) {
-  var el = imce.el('edit-'+ fop), func = state ? 'addClass' : 'removeClass'
+  var el = imce.el('edit-'+ fop), func = state ? 'addClass' : 'removeClass';
   if (el) {
     $(el)[func]('loading').attr('disabled', state);
   }
