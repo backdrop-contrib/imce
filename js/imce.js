@@ -424,7 +424,7 @@ navCache: function (dir, newdir) {
 
 //validate upload form
 uploadValidate: function (data, form, options) {
-  var path = data[0].value;
+  var path = $('#edit-imce').val();
   if (!path) return false;
   if (imce.conf.extensions != '*') {
     var ext = path.substr(path.lastIndexOf('.') + 1);
