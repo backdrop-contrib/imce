@@ -359,7 +359,7 @@ function imce_resize_submit($form, &$form_state) {
   //check dimensions
   $width = (int) $form_state['values']['width'];
   $height = (int) $form_state['values']['height'];
-  list($maxw, $maxh) = explode('x', $imce['dimensions']);
+  list($maxw, $maxh) = $imce['dimensions'] ? explode('x', $imce['dimensions']) : array(0, 0);
   if ($width < 1 || $height < 1 || ($maxw && ($width > $maxw || $height > $maxh))) {
     drupal_set_message(t('Please specify dimensions within the allowed range that is from 1x1 to @dimensions.', array('@dimensions' => $imce['dimensions'] ? $imce['dimensions'] : t('unlimited'))), 'error');
     return;
