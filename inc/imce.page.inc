@@ -11,6 +11,7 @@
 function imce($scheme = NULL) {
   module_invoke('admin_menu', 'suppress');//suppress admin_menu
   $jsop = isset($_GET['jsop']) ? $_GET['jsop'] : NULL;
+  drupal_add_http_header('Content-Type', 'text/html; charset=utf-8');
   print imce_page($GLOBALS['user'], $scheme, $jsop);
   exit();
 }
