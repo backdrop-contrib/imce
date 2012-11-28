@@ -17,6 +17,7 @@ function imce_install() {
  * Implements hook_uninstall().
  */
 function imce_uninstall() {
+  db_delete('file_usage')->condition('module', 'imce')->execute();
   variable_del('imce_profiles');
   variable_del('imce_roles_profiles');
   variable_del('imce_settings_textarea');
