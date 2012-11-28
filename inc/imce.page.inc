@@ -425,10 +425,6 @@ function imce_delete_filepath($uri) {
     if (!file_delete($file, TRUE)) {
       return FALSE;
     }
-    // Remove imce usage
-    if ($is_imce) {
-      file_usage_delete($file, 'imce');
-    }
   }
   // Not in db. Probably loaded via ftp.
   elseif (!file_unmanaged_delete($uri)) {
