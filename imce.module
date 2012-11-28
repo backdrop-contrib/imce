@@ -119,7 +119,7 @@ function imce_textarea($element) {
   if (!isset($regexp)) {
     $regexp = FALSE;
     if (imce_access() && $regexp = str_replace(' ', '', variable_get('imce_settings_textarea', ''))) {
-      $regexp = '@^' . str_replace(',', '|', implode('.*', array_map('preg_quote', explode('*', $regexp)))) . '$@';
+      $regexp = '@^(' . str_replace(',', '|', implode('.*', array_map('preg_quote', explode('*', $regexp)))) . ')$@';
     }
   }
   if ($regexp && preg_match($regexp, $element['#id'])) {
