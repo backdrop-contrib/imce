@@ -15,6 +15,7 @@ function imce_menu() {
     'title' => 'File browser',
     'page callback' => 'imce',
     'access callback' => 'imce_access',
+    'access arguments' => array(FALSE, 1),
     'file' => 'inc/imce.page.inc',
     'type' => MENU_CALLBACK,
   );
