@@ -1,4 +1,3 @@
-
 (function($) {
 //Global container.
 window.imce = {tree: {}, findex: [], fids: {}, selected: {}, selcount: 0, ops: {}, cache: {}, urlId: {},
@@ -432,7 +431,6 @@ uploadValidate: function (data, form, options) {
       return imce.setMessage(Drupal.t('Only files with the following extensions are allowed: %files-allowed.', {'%files-allowed': imce.conf.extensions}), 'error');
     }
   }
-  var sep = path.indexOf('/') == -1 ? '\\' : '/';
   options.url = imce.ajaxURL('upload');//make url contain current dir.
   imce.fopLoading('upload', true);
   return true;
