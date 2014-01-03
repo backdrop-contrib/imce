@@ -257,7 +257,7 @@ setFileOps: function () {
   $(form.elements.filenames).parent().remove();
   $(form).find('fieldset').each(function() {//remove fieldsets
     var $sbmt = $('input:submit', this);
-    if (!$sbmt.size()) return;
+    if (!$sbmt.length) return;
     var Op = {name: $sbmt.attr('id').substr(5)};
     var func = function() {imce.fopSubmit(Op.name); return false;};
     $sbmt.click(func);
@@ -279,7 +279,7 @@ refreshOps: function() {
 //add a new file operation
 opAdd: function (op) {
   var oplist = imce.el('ops-list'), opcons = imce.el('op-contents');
-  var name = op.name || ('op-'+ $(oplist).children('li').size());
+  var name = op.name || ('op-'+ $(oplist).children('li').length);
   var title = op.title || 'Untitled';
   var Op = imce.ops[name] = {title: title};
   if (op.content) {
@@ -449,7 +449,7 @@ fopValidate: function(fop) {
     case 'delete':
       return confirm(Drupal.t('Delete selected files?'));
     case 'thumb':
-      if (!$('input:checked', imce.ops['thumb'].div).size()) {
+      if (!$('input:checked', imce.ops['thumb'].div).length) {
         return imce.setMessage(Drupal.t('Please select a thumbnail.'), 'error');
       }
       return imce.validateImage();
@@ -536,7 +536,7 @@ prepareMsgs: function () {
     $('>div', msgs).each(function (){
       var type = this.className.split(' ')[1];
       var li = $('>ul li', this);
-      if (li.size()) li.each(function () {imce.setMessage(this.innerHTML, type);});
+      if (li.length) li.each(function () {imce.setMessage(this.innerHTML, type);});
       else imce.setMessage(this.innerHTML, type);
     });
     $(msgs).remove();
@@ -771,7 +771,7 @@ updateUI: function() {
     return false;
   }).appendTo('#op-contents')[0];
   //navigation-header
-  if (!$('#navigation-header').size()) {
+  if (!$('#navigation-header').length) {
     $(imce.NW).children('.navigation-text').attr('id', 'navigation-header').wrapInner('<span></span>');
   }
   //log
