@@ -19,6 +19,8 @@ initiate: function() {
   imce.initiateList();//process file list
   imce.initiateOps();//prepare operation tabs
   imce.refreshOps();
+  // Bind global error handler
+  $(document).ajaxError(imce.ajaxError);
   imce.invoke('load', window);//run functions set by external applications.
 },
 
@@ -820,6 +822,6 @@ updateUI: function() {
 };
 
 //initiate
-$(document).ready(imce.initiate).ajaxError(imce.ajaxError);
+$(document).ready(imce.initiate);
 
 })(jQuery);
