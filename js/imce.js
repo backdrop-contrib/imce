@@ -7,8 +7,8 @@ hooks: {load: [], list: [], navigate: [], cache: []},
 //initiate imce.
 initiate: function() {
   imce.conf = Drupal.settings.imce || {};
-  imce.ie = (navigator.userAgent.match(/msie (\d+)/i) || ['', 0])[1] * 1;
   if (imce.conf.error != false) return;
+  imce.ie = (navigator.userAgent.match(/msie (\d+)/i) || ['', 0])[1] * 1;
   imce.FLW = imce.el('file-list-wrapper'), imce.SBW = imce.el('sub-browse-wrapper');
   imce.NW = imce.el('navigation-wrapper'), imce.BW = imce.el('browse-wrapper');
   imce.PW = imce.el('preview-wrapper'), imce.FW = imce.el('forms-wrapper');
