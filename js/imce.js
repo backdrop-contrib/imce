@@ -241,12 +241,19 @@ setHtmlOps: function () {
 
 //convert upload form to an op.
 setUploadOp: function () {
-  var form = imce.el('imce-upload-form');
+  var el, form = imce.el('imce-upload-form');
   if (!form) return;
   $(form).ajaxForm(imce.uploadSettings()).find('fieldset').each(function() {//clean up fieldsets
     this.removeChild(this.firstChild);
     $(this).after(this.childNodes);
   }).remove();
+  // Set html response flag
+  el = form.elements['files[imce]'];
+  if (el && el.files && window.FormData) {
+    if (el = form.elements.html_response) {
+      el.value = 0;
+    }
+  } 
   imce.opAdd({name: 'upload', title: Drupal.t('Upload'), content: form});//add op
 },
 
@@ -439,7 +446,19 @@ uploadValidate: function (data, form, options) {
 
 //settings for upload
 uploadSettings: function () {
-  return {beforeSubmit: imce.uploadValidate, success: function (response) {imce.processResponse($.parseJSON(response));}, complete: function () {imce.fopLoading('upload', false);}, resetForm: true};
+  return {
+    beforeSubmit: imce.uploadValidate,
+    success: function (response) {
+      try{
+        imce.processResponse($.parseJSON(response));
+      } catch(e) {}
+    },
+    complete: function () {
+      imce.fopLoading('upload', false);
+    },
+    resetForm: true,
+    dataType: 'text'
+  };
 },
 
 //validate default ops(delete, thumb, resize)
