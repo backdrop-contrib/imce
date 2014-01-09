@@ -507,7 +507,7 @@ commonSubmit: function(fop) {
 
 //settings for default file operations
 fopSettings: function (fop) {
-  return {url: imce.ajaxURL(fop), type: 'POST', dataType: 'json', success: imce.processResponse, complete: function (response) {imce.fopLoading(fop, false);}, data: imce.vars.opform +'&filenames='+ escape(imce.serialNames()) +'&jsop='+ fop + (imce.ops[fop].div ? '&'+ $('input, select, textarea', imce.ops[fop].div).serialize() : '')};
+  return {url: imce.ajaxURL(fop), type: 'POST', dataType: 'json', success: imce.processResponse, complete: function (response) {imce.fopLoading(fop, false);}, data: imce.vars.opform +'&filenames='+ encodeURIComponent(imce.serialNames()) +'&jsop='+ fop + (imce.ops[fop].div ? '&'+ $('input, select, textarea', imce.ops[fop].div).serialize() : '')};
 },
 
 //toggle loading state
@@ -724,7 +724,10 @@ processRow: function (row) {
 
 //decode urls. uses unescape. can be overridden to use decodeURIComponent
 decode: function (str) {
-  return unescape(str);
+  try {
+    return decodeURIComponent(str);
+  } catch(e) {}
+  return str;
 },
 
 //decode and convert to plain text

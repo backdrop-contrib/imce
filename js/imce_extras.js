@@ -214,9 +214,9 @@ imce.recallHeights = function(bwFixedHeight) {
 //cookie get & set
 imce.cookie = function (name, value) {
   if (typeof(value) == 'undefined') {//get
-    return unescape((document.cookie.match(new RegExp('(^|;) *'+ name +'=([^;]*)(;|$)')) || ['', '', ''])[2]);
+    return document.cookie ? imce.decode((document.cookie.match(new RegExp('(?:^|;) *' + name + '=([^;]*)(?:;|$)')) || ['', ''])[1].replace(/\+/g, '%20')) : '';
   }
-  document.cookie = name +'='+ escape(value) +'; expires='+ (new Date(new Date() * 1 + 15 * 86400000)).toGMTString() +'; path=' + Drupal.settings.basePath + 'imce';//set
+  document.cookie = name +'='+ encodeURIComponent(value) +'; expires='+ (new Date(new Date() * 1 + 15 * 86400000)).toUTCString() +'; path=' + Drupal.settings.basePath + 'imce';//set
 };
 
 //view thumbnails(smaller than tMaxW x tMaxH) inside the rows.
