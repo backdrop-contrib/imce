@@ -332,7 +332,7 @@ opClick: function(name) {
           var $inputs = $('input', imce.ops[imce.vars.op].div);
           $inputs.eq(0).focus();
           //form inputs become invisible in IE. Solution is as stupid as the behavior.
-          $('html').is('.ie') && $inputs.addClass('dummyie').removeClass('dummyie');
+          $('html').hasClass('ie') && $inputs.addClass('dummyie').removeClass('dummyie');
        }
       });
     });

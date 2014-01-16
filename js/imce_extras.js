@@ -180,7 +180,7 @@ imce.setResizer = function (resizer, axis, area1, area2, Min, callback) {
 //get&set area dimensions of the last session from the cookie
 imce.recallDimensions = function() {
   var $body = $(document.body);
-  if (!$body.is('.imce')) return;
+  if (!$body.hasClass('imce')) return;
   //row heights
   imce.recallHeights(imce.cookie('imcebwh') * 1);
   $(window).resize(function(){imce.recallHeights()});
