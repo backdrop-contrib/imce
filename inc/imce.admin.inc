@@ -196,7 +196,7 @@ function imce_profile_operations($op = 'add', $pid = 0) {
     return drupal_get_form('imce_profile_delete_form', $pid);
   }
   //add-edit
-  if ($pid != 1 || $GLOBALS['user']->uid == 1) {
+  if ($op === 'add' || $op === 'edit') {
     return drupal_get_form('imce_profile_form', $pid);
   }
   drupal_access_denied();
