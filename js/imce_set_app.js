@@ -63,7 +63,7 @@ imce.hooks.load.push(function(win) {
     imce.highlight(filename.substr(filename.lastIndexOf('/')+1));
   }
   // Set send to
-  sendtoFunc && imce.setSendTo(Drupal.t('Insert file'), sendtoFunc);
+  sendtoFunc && imce.setSendTo(Backdrop.t('Insert file'), sendtoFunc);
 });
 
 // Default sendTo function

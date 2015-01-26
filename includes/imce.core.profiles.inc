@@ -9,7 +9,7 @@
  * Create core profiles.
  */
 function imce_install_profiles() {
-  $profiles = variable_get('imce_profiles', array());
+  $profiles = config_get('imce.settings', 'imce_profiles');
 
   //already installed
   if (isset($profiles[1]) && !empty($profiles[1])) {
@@ -18,7 +18,7 @@ function imce_install_profiles() {
 
   $profiles[1] = imce_user1_profile();
   $profiles[2] = imce_sample_profile();
-  variable_set('imce_profiles', $profiles);
+  config_set('imce.settings', 'imce_profiles', $profiles);
 
   return TRUE;
 }
@@ -41,7 +41,7 @@ function imce_construct_profile($n, $u, $f, $q, $tq, $e, $d, $fn, $ds, $ts) {
  * User1's profile.
  */
 function imce_user1_profile() {
-  $profiles = variable_get('imce_profiles', array());
+  $profiles = config_get('imce.settings', 'imce_profiles');
   if (isset($profiles[1])) {
     return $profiles[1];
   }

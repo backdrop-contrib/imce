@@ -216,7 +216,7 @@ imce.cookie = function (name, value) {
   if (typeof(value) == 'undefined') {//get
     return document.cookie ? imce.decode((document.cookie.match(new RegExp('(?:^|;) *' + name + '=([^;]*)(?:;|$)')) || ['', ''])[1].replace(/\+/g, '%20')) : '';
   }
-  document.cookie = name +'='+ encodeURIComponent(value) +'; expires='+ (new Date(new Date() * 1 + 15 * 86400000)).toUTCString() +'; path=' + Drupal.settings.basePath + 'imce';//set
+  document.cookie = name +'='+ encodeURIComponent(value) +'; expires='+ (new Date(new Date() * 1 + 15 * 86400000)).toUTCString() +'; path=' + Backdrop.settings.basePath + 'imce';//set
 };
 
 //view thumbnails(smaller than tMaxW x tMaxH) inside the rows.
@@ -270,7 +270,7 @@ imce.boxView = function () {
   imce.hooks.load.push(function() {
     toggle();
     imce.SBW.scrollTop = 0;
-    imce.opAdd({name: 'changeview', title: Drupal.t('Change view'), func: toggle});
+    imce.opAdd({name: 'changeview', title: Backdrop.t('Change view'), func: toggle});
   });
   imce.hooks.list.push(imce.boxViewRow);
 };

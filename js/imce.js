@@ -6,7 +6,7 @@ hooks: {load: [], list: [], navigate: [], cache: []},
 
 //initiate imce.
 initiate: function() {
-  imce.conf = Drupal.settings.imce || {};
+  imce.conf = Backdrop.settings.imce || {};
   if (imce.conf.error != false) return;
   imce.ie = (navigator.userAgent.match(/msie (\d+)/i) || ['', 0])[1] * 1;
   imce.FLW = imce.el('file-list-wrapper'), imce.SBW = imce.el('sub-browse-wrapper');
@@ -128,7 +128,7 @@ initiateList: function(cached) {
     }
   }
   if (!imce.conf.perm.browse) {
-    imce.setMessage(Drupal.t('File browsing is disabled in directory %dir.', token), 'error');
+    imce.setMessage(Backdrop.t('File browsing is disabled in directory %dir.', token), 'error');
   }
 },
 
@@ -256,7 +256,7 @@ setUploadOp: function () {
       el.value = 0;
     }
   } 
-  imce.opAdd({name: 'upload', title: Drupal.t('Upload'), content: form});//add op
+  imce.opAdd({name: 'upload', title: Backdrop.t('Upload'), content: form});//add op
 },
 
 //convert fileop form submit buttons to ops.
@@ -316,7 +316,7 @@ opVoid: function() {},
 opClick: function(name) {
   var Op = imce.ops[name], oldop = imce.vars.op;
   if (!Op || Op.disabled) {
-    return imce.setMessage(Drupal.t('You can not perform this operation.'), 'error');
+    return imce.setMessage(Backdrop.t('You can not perform this operation.'), 'error');
   }
   if (Op.div) {
     if (oldop) {
@@ -378,7 +378,7 @@ opShrink: function(name, effect) {
 
 //navigate to dir
 navigate: function(dir) {
-  if (imce.vars.navbusy || (dir == imce.conf.dir && !confirm(Drupal.t('Do you want to refresh the current directory?')))) return;
+  if (imce.vars.navbusy || (dir == imce.conf.dir && !confirm(Backdrop.t('Do you want to refresh the current directory?')))) return;
   var cache = imce.vars.cache && dir != imce.conf.dir;
   var set = imce.navSet(dir, cache);
   if (cache && imce.cache[dir]) {//load from the cache
@@ -438,7 +438,7 @@ uploadValidate: function (data, form, options) {
   if (imce.conf.extensions != '*') {
     var ext = path.substr(path.lastIndexOf('.') + 1);
     if ((' '+ imce.conf.extensions +' ').indexOf(' '+ ext.toLowerCase() +' ') == -1) {
-      return imce.setMessage(Drupal.t('Only files with the following extensions are allowed: %files-allowed.', {'%files-allowed': imce.conf.extensions}), 'error');
+      return imce.setMessage(Backdrop.t('Only files with the following extensions are allowed: %files-allowed.', {'%files-allowed': imce.conf.extensions}), 'error');
     }
   }
   options.url = imce.ajaxURL('upload');//make url contain current dir.
@@ -468,10 +468,10 @@ fopValidate: function(fop) {
   if (!imce.validateSelCount(1, imce.conf.filenum)) return false;
   switch (fop) {
     case 'delete':
-      return confirm(Drupal.t('Delete selected files?'));
+      return confirm(Backdrop.t('Delete selected files?'));
     case 'thumb':
       if (!$('input:checked', imce.ops['thumb'].div).length) {
-        return imce.setMessage(Drupal.t('Please select a thumbnail.'), 'error');
+        return imce.setMessage(Backdrop.t('Please select a thumbnail.'), 'error');
       }
       return imce.validateImage();
     case 'resize':
@@ -479,7 +479,7 @@ fopValidate: function(fop) {
       var maxDim = imce.conf.dimensions.split('x');
       var maxW = maxDim[0]*1, maxH = maxW ? maxDim[1]*1 : 0;
       if (!(/^[1-9][0-9]*$/).test(w) || !(/^[1-9][0-9]*$/).test(h) || (maxW && (maxW < w*1 || maxH < h*1))) {
-        return imce.setMessage(Drupal.t('Please specify dimensions within the allowed range that is from 1x1 to @dimensions.', {'@dimensions': maxW ? imce.conf.dimensions : Drupal.t('unlimited')}), 'error');
+        return imce.setMessage(Backdrop.t('Please specify dimensions within the allowed range that is from 1x1 to @dimensions.', {'@dimensions': maxW ? imce.conf.dimensions : Backdrop.t('unlimited')}), 'error');
       }
       return imce.validateImage();
   }
@@ -543,7 +543,7 @@ send: function (fid) {
 setSendTo: function (title, func) {
   imce.send = function (fid) { fid && func(imce.fileGet(fid), window);};
   var opFunc = function () {
-    if (imce.selcount != 1) return imce.setMessage(Drupal.t('Please select a file.'), 'error');
+    if (imce.selcount != 1) return imce.setMessage(Backdrop.t('Please select a file.'), 'error');
     imce.send(imce.vars.prvfid);
   };
   imce.vars.prvtitle = title;
@@ -567,7 +567,7 @@ prepareMsgs: function () {
 //insert log message
 setMessage: function (msg, type) {
   var $box = $(imce.msgBox);
-  var logs = imce.el('log-messages') || $(imce.newEl('div')).appendTo('#help-box-content').before('<h4>'+ Drupal.t('Log messages') +':</h4>').attr('id', 'log-messages')[0];
+  var logs = imce.el('log-messages') || $(imce.newEl('div')).appendTo('#help-box-content').before('<h4>'+ Backdrop.t('Log messages') +':</h4>').attr('id', 'log-messages')[0];
   var msg = '<div class="message '+ (type || 'status') +'">'+ msg +'</div>';
   $box.queue(function() {
     $box.css({opacity: 0, display: 'block'}).html(msg);
@@ -645,16 +645,16 @@ getNonImage: function (selected) {
 //validate current selection for images
 validateImage: function () {
   var nonImg = imce.getNonImage(imce.selected);
-  return nonImg ? imce.setMessage(Drupal.t('%filename is not an image.', {'%filename': imce.decode(nonImg)}), 'error') : true;
+  return nonImg ? imce.setMessage(Backdrop.t('%filename is not an image.', {'%filename': imce.decode(nonImg)}), 'error') : true;
 },
 
 //validate number of selected files
 validateSelCount: function (Min, Max) {
   if (Min && imce.selcount < Min) {
-    return imce.setMessage(Min == 1 ? Drupal.t('Please select a file.') : Drupal.t('You must select at least %num files.', {'%num': Min}), 'error');
+    return imce.setMessage(Min == 1 ? Backdrop.t('Please select a file.') : Backdrop.t('You must select at least %num files.', {'%num': Min}), 'error');
   }
   if (Max && Max < imce.selcount) {
-    return imce.setMessage(Drupal.t('You are not allowed to operate on more than %num files.', {'%num': Max}), 'error');
+    return imce.setMessage(Backdrop.t('You are not allowed to operate on more than %num files.', {'%num': Max}), 'error');
   }
   return true;
 },
@@ -732,12 +732,12 @@ decode: function (str) {
 
 //decode and convert to plain text
 decodePlain: function (str) {
-  return Drupal.checkPlain(imce.decode(str));
+  return Backdrop.checkPlain(imce.decode(str));
 },
 
 //global ajax error function
 ajaxError: function (e, response, settings, thrown) {
-  imce.setMessage(Drupal.ajaxError(response, settings.url).replace(/\n/g, '<br />'), 'error');
+  imce.setMessage(Backdrop.ajaxError(response, settings.url).replace(/\n/g, '<br />'), 'error');
 },
 
 //convert button elements to standard input buttons
@@ -790,7 +790,7 @@ updateUI: function() {
   imce.convertButtons(imce.FW);
   //ops-list
   $('#ops-list').removeClass('tabs secondary').addClass('clear-block clearfix');
-  imce.opCloseLink = $(imce.newEl('a')).attr({id: 'op-close-link', href: '#', title: Drupal.t('Close')}).click(function() {
+  imce.opCloseLink = $(imce.newEl('a')).attr({id: 'op-close-link', href: '#', title: Backdrop.t('Close')}).click(function() {
     imce.vars.op && imce.opClick(imce.vars.op);
     return false;
   }).appendTo('#op-contents')[0];

@@ -23,7 +23,7 @@ function imce_js_navigate(&$imce) {
 function imce_js_upload(&$imce) {
   if ($imce['perm']['upload']) {
     $_POST['op'] = t('Upload');
-    drupal_get_form('imce_upload_form', array('imce' => &$imce));
+    backdrop_get_form('imce_upload_form', array('imce' => &$imce));
     return array('added' => isset($imce['added']) ? $imce['added'] : NULL, 'dirsize' => format_size($imce['dirsize']));
   }
 }
@@ -62,6 +62,6 @@ function imce_js_resize(&$imce) {
  * Process file operations form
  */
 function imce_process_fileop(&$imce) {
-  drupal_get_form('imce_fileop_form', array('imce' => &$imce));
+  backdrop_get_form('imce_fileop_form', array('imce' => &$imce));
   return array('added' => isset($imce['added']) ? $imce['added'] : NULL, 'removed' => isset($imce['removed']) ? $imce['removed'] : NULL, 'dirsize' => format_size($imce['dirsize']));
 }

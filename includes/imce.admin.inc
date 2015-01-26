@@ -9,8 +9,8 @@
  * Admin main page.
  */
 function imce_admin() {
-
-  $profiles = variable_get('imce_profiles', array());
+  $config = config('imce.settings');
+  $profiles = $config->get('imce_profiles');
 
   $header = array(t('Profile name'), array('data' => t('Operations'), 'colspan' => 2));
   $rows = array();
@@ -34,16 +34,16 @@ function imce_admin() {
     '#rows' => $rows,
     '#attributes' => array('id' => 'imce-profiles-list'),
   );
-  $output['form'] = drupal_get_form('imce_admin_form');
+  $output['form'] = backdrop_get_form('imce_admin_form');
 
   // Display security warnings
   if (empty($_POST)) {
-    $roles = variable_get('imce_roles_profiles', array());
-    if (!empty($roles[DRUPAL_ANONYMOUS_RID]['public_pid']) || !empty($roles[DRUPAL_ANONYMOUS_RID]['private_pid'])) {
-      drupal_set_message(t('Anonymous user role has access to IMCE.') . ' ' . t('Make sure this is not a misconfiguration.'), 'warning');
+    $roles = $config->get('imce_roles_profiles');
+    if (!empty($roles[BACKDROP_ANONYMOUS_ROLE]['public_pid']) || !empty($roles[BACKDROP_ANONYMOUS_ROLE]['private_pid'])) {
+      backdrop_set_message(t('Anonymous user role has access to IMCE.') . ' ' . t('Make sure this is not a misconfiguration.'), 'warning');
     }
-    if (imce_admin_check_wildcard_upload(DRUPAL_AUTHENTICATED_RID, $roles)) {
-      drupal_set_message(t('Authenticated user role is assigned a configuration profile with unrestricted file extensions.') . ' ' . t('Make sure this is not a misconfiguration.'), 'warning');
+    if (imce_admin_check_wildcard_upload(BACKDROP_AUTHENTICATED_ROLE, $roles)) {
+      backdrop_set_message(t('Authenticated user role is assigned a configuration profile with unrestricted file extensions.') . ' ' . t('Make sure this is not a misconfiguration.'), 'warning');
     }
   }
 
@@ -54,13 +54,15 @@ function imce_admin() {
  * Admin form.
  */
 function imce_admin_form($form, &$form_state) {
+  $config = config('imce.settings');
+
   //roles profiles
   $form['roles'] = array('#tree' => TRUE);
   $roles = imce_sorted_roles();
   $form['#weighted'] = count($roles) > 3;
 
   foreach ($roles as $rid => $role) {
-    $core = $rid == DRUPAL_ANONYMOUS_RID || $rid == DRUPAL_AUTHENTICATED_RID;
+    $core = $rid == BACKDROP_ANONYMOUS_ROLE || $rid == BACKDROP_AUTHENTICATED_ROLE;
     $form['roles'][$rid] = imce_role_form($role, $form['#weighted'], $core);
   }
 
@@ -74,20 +76,20 @@ function imce_admin_form($form, &$form_state) {
   $form['common']['textarea'] = array(
     '#type' => 'textfield',
     '#title' => t('Enable inline image/file insertion into plain textareas'),
-    '#default_value' => variable_get('imce_settings_textarea', ''),
+    '#default_value' => $config->get('imce_settings_textarea'),
     '#maxlength' => NULL,
     '#description' => t('If you don\'t use any WYSIWYG editor, this feature will allow you to add your images or files as <strong>html code into any plain textarea</strong>. Enter <strong>comma separated textarea IDs</strong> under which you want to enable a link to IMCE. The * character is a wildcard. Hint: ID of Body fields in most node types starts with edit-body*.'),
   );
   $form['common']['absurls'] = array(
     '#type' => 'checkbox',
     '#title' => t('Absolute URLs'),
-    '#default_value' => variable_get('imce_settings_absurls', 0),
+    '#default_value' => $config->get('imce_settings_absurls'),
     '#description' => t('Check if you want IMCE to return absolute file URLs.'),
   );
   $form['common']['replace'] = array(
     '#type' => 'radios',
     '#title' => t('Default behaviour for existing files during file uploads'),
-    '#default_value' => variable_get('imce_settings_replace', FILE_EXISTS_RENAME),
+    '#default_value' => $config->get('imce_settings_replace'),
     '#options' => array(
       FILE_EXISTS_RENAME => t('Keep the existing file renaming the new one'),
       FILE_EXISTS_ERROR => t('Keep the existing file rejecting the new one'),
@@ -97,7 +99,7 @@ function imce_admin_form($form, &$form_state) {
   $form['common']['thumb_method'] = array(
     '#type' => 'radios',
     '#title' => t('Default method for creating thumbnails'),
-    '#default_value' => variable_get('imce_settings_thumb_method', 'scale_and_crop'),
+    '#default_value' => $config->get('imce_settings_thumb_method'),
     '#options' => array(
       'scale' => t('Scale the image with respect to the thumbnail dimensions.'),
       'scale_and_crop' => t('First scale then crop the image to fit the thumbnail dimensions.')
@@ -106,7 +108,7 @@ function imce_admin_form($form, &$form_state) {
   $form['common']['disable_private'] = array(
     '#type' => 'checkbox',
     '#title' => t('Disable serving of private files'),
-    '#default_value' => variable_get('imce_settings_disable_private', 1),
+    '#default_value' => $config->get('imce_settings_disable_private'),
     '#description' => t('IMCE serves all files under private files directory without applying any access restrictions. This allows anonymous access to any file(/system/files/filename) unless there is a module restricting access to the files. Here you can disable this feature.'),
   );
 
@@ -145,16 +147,16 @@ function imce_admin_theme($variables) {
   foreach (element_children($form['roles']) as $rid) {
     $cells = array();
     foreach ($keys as $key) {
-      $cells[] = drupal_render($form['roles'][$rid][$key]);
+      $cells[] = backdrop_render($form['roles'][$rid][$key]);
     }
     $rows[] = $cells;
   }
 
   $output = '<h2 class="title">' . t('Role-profile assignments') . '</h2>';
   $output .= theme('table', array('header' => $header, 'rows' => $rows));
-  $output .= '<div class="form-item"><div class="description">' . t('Assign profiles to user roles for available file systems. Your default file system is %name.', array('%name' => $swrappers[variable_get('file_default_scheme', 'public')]['name'])) . ' ' . $weight_info . '</div></div>';
-  $output .= drupal_render($form['common']);
-  $output .= drupal_render_children($form);
+  $output .= '<div class="form-item"><div class="description">' . t('Assign profiles to user roles for available file systems. Your default file system is %name.', array('%name' => $swrappers[config_get('system.core', 'file_default_scheme')]['name'])) . ' ' . $weight_info . '</div></div>';
+  $output .= backdrop_render($form['common']);
+  $output .= backdrop_render_children($form);
   return $output;
 }
 
@@ -164,8 +166,8 @@ function imce_admin_theme($variables) {
 function imce_admin_form_validate($form, &$form_state) {
   $roles = $form_state['values']['roles'];
   // Check anonymous profile. Do not allow wildcard upload.
-  if ($key = imce_admin_check_wildcard_upload(DRUPAL_ANONYMOUS_RID, $roles)) {
-    form_error($form['roles'][DRUPAL_ANONYMOUS_RID][$key], t('Anonymous user role can not have a configuration profile with unrestricted file extensions.'));
+  if ($key = imce_admin_check_wildcard_upload(BACKDROP_ANONYMOUS_ROLE, $roles)) {
+    form_error($form['roles'][BACKDROP_ANONYMOUS_ROLE][$key], t('Anonymous user role can not have a configuration profile with unrestricted file extensions.'));
   }
 }
 
@@ -173,17 +175,20 @@ function imce_admin_form_validate($form, &$form_state) {
  * Submit admin form.
  */
 function imce_admin_submit($form, &$form_state) {
+  $config = config('imce.settings');
+
   $roles = $form_state['values']['roles'];
   if (count($roles) > 3) {
     uasort($roles, 'imce_rolesort');
   }
-  variable_set('imce_roles_profiles', $roles);
-  variable_set('imce_settings_textarea', $form_state['values']['textarea']);
-  variable_set('imce_settings_absurls', $form_state['values']['absurls']);
-  variable_set('imce_settings_replace', $form_state['values']['replace']);
-  variable_set('imce_settings_thumb_method', $form_state['values']['thumb_method']);
-  variable_set('imce_settings_disable_private', $form_state['values']['disable_private']);
-  drupal_set_message(t('Changes have been saved.'));
+  $config->set('imce_roles_profiles', $roles);
+  $config->set('imce_settings_textarea', $form_state['values']['textarea']);
+  $config->set('imce_settings_absurls', $form_state['values']['absurls']);
+  $config->set('imce_settings_replace', $form_state['values']['replace']);
+  $config->set('imce_settings_thumb_method', $form_state['values']['thumb_method']);
+  $config->set('imce_settings_disable_private', $form_state['values']['disable_private']);
+  $config->save();
+  backdrop_set_message(t('Changes have been saved.'));
 }
 
 /**
@@ -192,14 +197,14 @@ function imce_admin_submit($form, &$form_state) {
 function imce_profile_operations($op = 'add', $pid = 0) {
   //delete
   if ($op == 'delete') {
-    drupal_set_title(t('Delete configuration profile'));
-    return drupal_get_form('imce_profile_delete_form', $pid);
+    backdrop_set_title(t('Delete configuration profile'));
+    return backdrop_get_form('imce_profile_delete_form', $pid);
   }
   //add-edit
   if ($op === 'add' || $op === 'edit') {
-    return drupal_get_form('imce_profile_form', $pid);
+    return backdrop_get_form('imce_profile_form', $pid);
   }
-  drupal_access_denied();
+  backdrop_access_denied();
 }
 
 /**
@@ -208,18 +213,17 @@ function imce_profile_operations($op = 'add', $pid = 0) {
 function imce_profile_form($form, &$form_state, $pid = 0) {
 
   if ($pid && $profile = imce_load_profile($pid)) {
-    drupal_set_title($profile['name']);
+    backdrop_set_title($profile['name']);
   }
   else {
     $pid = 0;
     $profile = imce_sample_profile();
     $profile['name'] = '';
   }
-
   //import profile
   if (isset($_GET['import']) && $imported = imce_load_profile($_GET['import'])) {
     if (empty($form_state['post'])) {
-      drupal_set_message(t('Settings were imported from the profile %name', array('%name' => $imported['name'])));
+      backdrop_set_message(t('Settings were imported from the profile %name', array('%name' => $imported['name'])));
     }
     $imported['name'] = $profile['name']; //preserve the original name.
     $profile = $imported;
@@ -344,7 +348,7 @@ function imce_profile_submit($form, &$form_state) {
   //save profile.
   $pid = imce_update_profiles($pid, $profile);
 
-  drupal_set_message($message);
+  backdrop_set_message($message);
   $form_state['redirect'] = 'admin/config/media/imce/profile/edit/' . $pid;
 }
 
@@ -404,7 +408,7 @@ function imce_directories_theme($variables) {
 
   foreach (element_children($form) as $key) {
     //directory path
-    $row = array('<div class="container-inline">&lt;' . $root . '&gt;' . '/' . drupal_render($form[$key]['name']) . '</div>' . drupal_render($form[$key]['subnav']));
+    $row = array('<div class="container-inline">&lt;' . $root . '&gt;' . '/' . backdrop_render($form[$key]['name']) . '</div>' . backdrop_render($form[$key]['subnav']));
     unset($form[$key]['name'], $form[$key]['subnav']);
 
     //permissions
@@ -412,7 +416,7 @@ function imce_directories_theme($variables) {
     foreach (element_children($form[$key]) as $perm) {
       $header[] = $form[$key][$perm]['#title'];
       unset($form[$key][$perm]['#title']);
-      $row[] = drupal_render($form[$key][$perm]);
+      $row[] = backdrop_render($form[$key][$perm]);
     }
 
     $rows[] = $row;
@@ -435,7 +439,7 @@ function imce_directories_theme($variables) {
 </ul>
 <p>Note that thumbnails permission does not affect thumbnail creation on upload. See thumbnails decription below.</p>
 <p>If you need more fields, just fill all and save, and you will get two more on the next page.</p>') . '</div></div>';
-  $output .= drupal_render_children($form);
+  $output .= backdrop_render_children($form);
   return $output;
 }
 
@@ -479,10 +483,10 @@ function imce_thumbnails_theme($variables) {
 
   foreach (element_children($form) as $key) {
     $rows[] = array(
-      drupal_render($form[$key]['name']),
-      drupal_render($form[$key]['dimensions']),
-      drupal_render($form[$key]['prefix']),
-      drupal_render($form[$key]['suffix']),
+      backdrop_render($form[$key]['name']),
+      backdrop_render($form[$key]['dimensions']),
+      backdrop_render($form[$key]['prefix']),
+      backdrop_render($form[$key]['suffix']),
     );
   }
 
@@ -497,7 +501,7 @@ function imce_thumbnails_theme($variables) {
 </ul>
 <p>Note that users will always be able to create these thumbnails on file upload no matter what the thumbnail permission is.</p>
 <p>If you need more fields, just fill all and save, and you will get two more on the next page.</p>') . '</div></div>';
-  $output .= drupal_render_children($form);
+  $output .= backdrop_render_children($form);
   return $output;
 }
 
@@ -545,7 +549,7 @@ function imce_profile_delete_form($form, &$form_state, $pid) {
       t('Cancel')
     );
   }
-  drupal_goto('admin/config/media/imce');
+  backdrop_goto('admin/config/media/imce');
 }
 
 /**
@@ -553,7 +557,7 @@ function imce_profile_delete_form($form, &$form_state, $pid) {
  */
 function imce_profile_delete_submit($form, &$form_state) {
   imce_update_profiles($form_state['values']['pid'], NULL);
-  drupal_set_message(t('Profile has been deleted.'));
+  backdrop_set_message(t('Profile has been deleted.'));
   $form_state['redirect'] = 'admin/config/media/imce';
 }
 
@@ -562,7 +566,7 @@ function imce_profile_delete_submit($form, &$form_state) {
  */
 function imce_profile_options() {
   $options = array();
-  foreach (variable_get('imce_profiles', array()) as $pid => $profile) {
+  foreach (config_get('imce.settings', 'imce_profiles') as $pid => $profile) {
     $options[$pid] = $profile['name'];
   }
   return $options;
@@ -575,7 +579,7 @@ function imce_profile_import_html($pid = 0) {
   $output = '';
   $links = array();
 
-  foreach (variable_get('imce_profiles', array()) as $id => $profile) {
+  foreach (config_get('imce.settings', 'imce_profiles') as $id => $profile) {
     if ($pid != $id) {
       $links[] = l($profile['name'], $_GET['q'], array('query' => array('import' => $id)));
     }
@@ -593,7 +597,7 @@ function imce_profile_import_html($pid = 0) {
  * Update role-profile assignments.
  */
 function imce_update_roles($pid) {
-  $roles = variable_get('imce_roles_profiles', array());
+  $roles = config_get('imce.settings', 'imce_roles_profiles');
   foreach ($roles as $rid => $role) {
     foreach ($role as $key => $value) {
       if (substr($key, -4) == '_pid') {
@@ -606,14 +610,14 @@ function imce_update_roles($pid) {
       }
     }
   }
-  variable_set('imce_roles_profiles', $roles);
+  config_set('imce.settings', 'imce_roles_profiles', $roles);
 }
 
 /**
  * Add, update or delete a profile.
  */
 function imce_update_profiles($pid, $profile = NULL) {
-  $profiles = variable_get('imce_profiles', array());
+  $profiles = config_get('imce.settings', 'imce_profiles');
 
   //add or update
   if (isset($profile)) {
@@ -631,7 +635,7 @@ function imce_update_profiles($pid, $profile = NULL) {
     imce_update_roles($pid);
   }
 
-  variable_set('imce_profiles', $profiles);
+  config_set('imce.settings', 'imce_profiles', $profiles);
   return $pid;
 }
 
@@ -655,11 +659,11 @@ function imce_clean_profile_fields(&$profile) {
       continue;
     }
     if (isset($names[$dir['name']])) {
-      drupal_set_message(t('Duplicate directory paths are not allowed.'), 'error');
+      backdrop_set_message(t('Duplicate directory paths are not allowed.'), 'error');
       continue;
     }
     if (!imce_reg_dir($dir['name'])) {
-      drupal_set_message(t('%dirname is not accepted as a proper directory name.', array('%dirname' => $dir['name'])), 'error');
+      backdrop_set_message(t('%dirname is not accepted as a proper directory name.', array('%dirname' => $dir['name'])), 'error');
       continue;
     }
     $clean[] = $dir;
@@ -672,7 +676,7 @@ function imce_clean_profile_fields(&$profile) {
  * Profile load.
  */
 function imce_load_profile($pid) {
-  $profiles = variable_get('imce_profiles', array());
+  $profiles = config_get('imce.settings', 'imce_profiles');
   return isset($profiles[$pid]) ? $profiles[$pid] : NULL;
 }
 
@@ -680,14 +684,16 @@ function imce_load_profile($pid) {
  * Sort roles according to their weights.
  */
 function imce_sorted_roles() {
+  $config = config('imce.settings');
+
   static $sorted;
   if (!isset($sorted)) {
     $sorted = array();
     $roles = user_roles();
-    $profiles = variable_get('imce_profiles', array());
-    $roles_profiles = variable_get('imce_roles_profiles', array());
-    $roles_profiles[DRUPAL_ANONYMOUS_RID]['weight'] = 12;
-    $roles_profiles[DRUPAL_AUTHENTICATED_RID]['weight'] = 11;
+    $profiles = $config->get('imce_profiles', array());
+    $roles_profiles = $config->get('imce_roles_profiles', array());
+    $roles_profiles[BACKDROP_ANONYMOUS_ROLE]['weight'] = 12;
+    $roles_profiles[BACKDROP_AUTHENTICATED_ROLE]['weight'] = 11;
     $schemes = array_keys(file_get_stream_wrappers(STREAM_WRAPPERS_VISIBLE));
     foreach ($roles as $rid => $name) {
       $sorted[$rid] = array(
@@ -716,7 +722,7 @@ function imce_rolesort($r1, $r2) {
  */
 function imce_admin_check_wildcard_upload($rid, $conf = NULL) {
   if (!isset($conf)) {
-    $conf = variable_get('imce_roles_profiles', array());
+    $conf = config_get('imce.settings', 'imce_roles_profiles');
   }
   if (!empty($conf[$rid])) {
     foreach ($conf[$rid] as $key => $pid) {
@@ -737,4 +743,4 @@ function imce_admin_check_wildcard_upload($rid, $conf = NULL) {
 }
 
 //Include core profile functions.
-include_once DRUPAL_ROOT . '/' . drupal_get_path('module', 'imce') . '/inc/imce.core.profiles.inc';
+include_once BACKDROP_ROOT . '/' . backdrop_get_path('module', 'imce') . '/includes/imce.core.profiles.inc';

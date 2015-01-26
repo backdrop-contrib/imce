@@ -2,8 +2,8 @@
 
 var ii = window.imceInline = {};
 
-// Drupal behavior
-Drupal.behaviors.imceInline = {attach: function(context, settings) {
+// Backdrop behavior
+Backdrop.behaviors.imceInline = {attach: function(context, settings) {
   $('div.imce-inline-wrapper', context).not('.processed').addClass('processed').show().find('a').click(function() {
     var i = this.name.indexOf('-IMCE-');
     ii.activeTextarea = $('#'+ this.name.substr(0, i)).get(0);
@@ -20,7 +20,7 @@ Drupal.behaviors.imceInline = {attach: function(context, settings) {
 
 //function to be executed when imce loads.
 ii.load = function(win) {
-  win.imce.setSendTo(Drupal.t('Insert file'), ii.insert);
+  win.imce.setSendTo(Backdrop.t('Insert file'), ii.insert);
   $(window).bind('unload', function() {
     if (ii.pop && !ii.pop.closed) ii.pop.close();
   });

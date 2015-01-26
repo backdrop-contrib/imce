@@ -6,6 +6,18 @@
  */
 
 /**
+ * Implements hook_config_info().
+ */
+function imce_config_info() {
+  $prefixes['imce.settings'] = array(
+    'label' => t('IMCE settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+
+/**
  * Implements hook_menu().
  */
 function imce_menu() {
@@ -16,7 +28,7 @@ function imce_menu() {
     'page callback' => 'imce',
     'access callback' => 'imce_access',
     'access arguments' => array(FALSE, 1),
-    'file' => 'inc/imce.page.inc',
+    'file' => 'includes/imce.page.inc',
     'type' => MENU_CALLBACK,
   );
   $items['user/%user/imce'] = array(
@@ -25,7 +37,7 @@ function imce_menu() {
     'page arguments' => array(1),
     'access callback' => 'imce_user_page_access',
     'access arguments' => array(1),
-    'file' => 'inc/imce.page.inc',
+    'file' => 'includes/imce.page.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
   );
@@ -34,14 +46,14 @@ function imce_menu() {
     'description' => 'Control how your image/file browser works.',
     'page callback' => 'imce_admin',
     'access arguments' => $access,
-    'file' => 'inc/imce.admin.inc',
+    'file' => 'includes/imce.admin.inc',
   );
   $items['admin/config/media/imce/profile'] = array(
     'title' => 'Add new profile',
     'page callback' => 'imce_profile_operations',
     'access arguments' => $access,
     'type' => MENU_VISIBLE_IN_BREADCRUMB,
-    'file' => 'inc/imce.admin.inc',
+    'file' => 'includes/imce.admin.inc',
   );
   return $items;
 }
@@ -62,7 +74,7 @@ function imce_permission() {
  * Implements hook_theme().
  */
 function imce_theme() {
-  $path = drupal_get_path('module', 'imce') . '/tpl';
+  $path = backdrop_get_path('module', 'imce') . '/templates';
   $theme['imce_admin'] = array('function' => 'imce_admin_theme', 'render element' => 'form');
   $theme['imce_directories'] = array('function' => 'imce_directories_theme', 'render element' => 'form');
   $theme['imce_thumbnails'] = array('function' => 'imce_thumbnails_theme', 'render element' => 'form');
@@ -95,7 +107,7 @@ function imce_theme() {
  * Support private downloads if not disabled.
  */
 function imce_file_download($uri) {
-  $serve = file_uri_scheme($uri) == 'private' && !variable_get('imce_settings_disable_private', 1) &&  file_exists($uri) && strpos(basename($uri), '.');
+  $serve = file_uri_scheme($uri) == 'private' && !config_get('imce_settings_disable_private') &&  file_exists($uri) && strpos(basename($uri), '.');
   if ($serve) {
     return array(
       'Content-type' => file_get_mimetype($uri),
@@ -118,12 +130,12 @@ function imce_textarea($element) {
   static $regexp;
   if (!isset($regexp)) {
     $regexp = FALSE;
-    if (imce_access() && $regexp = str_replace(' ', '', variable_get('imce_settings_textarea', ''))) {
+    if (imce_access() && $regexp = str_replace(' ', '', config_get('imce_settings_textarea'))) {
       $regexp = '@^(' . str_replace(',', '|', implode('.*', array_map('preg_quote', explode('*', $regexp)))) . ')$@';
     }
   }
   if ($regexp && preg_match($regexp, $element['#id'])) {
-    drupal_add_js(drupal_get_path('module', 'imce') . '/js/imce_set_inline.js');
+    backdrop_add_js(backdrop_get_path('module', 'imce') . '/js/imce_set_inline.js');
     $element['#description'] = (isset($element['#description']) ? $element['#description'] : '') . '<div class="imce-inline-wrapper" style="display:none">' . t('Insert !image or !link.', array('!image' => l(t('image'), 'imce', array('attributes' => array('name' => $element['#id'] . '-IMCE-image', 'class' => array('imce-inline-image')))), '!link' => l(t('link'), 'imce', array('attributes' => array('name' => $element['#id'] . '-IMCE-link', 'class' => array('imce-inline-link')))))) . '</div>';
   }
   return $element;
@@ -134,10 +146,11 @@ function imce_textarea($element) {
  */
 function imce_user_profile($user, $scheme = NULL) {
   static $ups = array();
+  $config = config('imce.settings');
 
   // Set scheme
   if (empty($scheme)) {
-    $scheme = variable_get('file_default_scheme', 'public');
+    $scheme = config_get('system.core', 'file_default_scheme');
   }
 
   // Return from cache.
@@ -152,7 +165,7 @@ function imce_user_profile($user, $scheme = NULL) {
     return FALSE;
   }
 
-  $profiles = variable_get('imce_profiles', array());
+  $profiles = $config->get('imce_profiles');
   $scinfo = array('scheme' => $scheme);
 
   // Handle user#1 separately
@@ -161,7 +174,7 @@ function imce_user_profile($user, $scheme = NULL) {
   }
 
   // Handle regular users.
-  $roles_profiles = variable_get('imce_roles_profiles', array());
+  $roles_profiles = $config->get('imce_roles_profiles');
   $sckey = $scheme . '_pid';
   foreach ($roles_profiles as $rid => $conf) {
     if (isset($user->roles[$rid]) && isset($conf[$sckey]) && isset($profiles[$conf[$sckey]])) {
