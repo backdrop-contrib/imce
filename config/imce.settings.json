@@ -1,0 +1,15 @@
+{
+    "_config_name": "imce.settings",
+    "imce_profiles": [],
+    "imce_roles_profiles": [],
+    "imce_settings_textarea": "",
+    "imce_settings_absurls": 0,
+    "imce_settings_replace": 0,
+    "imce_settings_thumb_method": "scale_and_crop",
+    "imce_settings_disable_private": 1,
+    "imce_custom_content": [],
+    "imce_custom_process": [],
+    "imce_custom_init": [],
+    "imce_custom_scan": "",
+    "imce_custom_response": []
+}
