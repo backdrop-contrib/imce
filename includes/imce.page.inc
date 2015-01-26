@@ -423,9 +423,7 @@ function imce_delete_filepath($uri) {
       return FALSE;
     }
     // Force delete file. Prevent running file_usage_list() second time.
-    if (!file_delete($file, TRUE)) {
-      return FALSE;
-    }
+    file_delete($file->fid);
   }
   // Not in db. Probably loaded via ftp.
   elseif (!file_unmanaged_delete($uri)) {
