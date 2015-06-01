@@ -152,7 +152,6 @@ function imce_user_profile($user, $scheme = NULL) {
   if (empty($scheme)) {
     $scheme = config_get('system.core', 'file_default_scheme');
   }
-
   // Return from cache.
   if (isset($ups[$scheme][$user->uid])) {
     return $ups[$scheme][$user->uid];
@@ -177,7 +176,7 @@ function imce_user_profile($user, $scheme = NULL) {
   $roles_profiles = $config->get('imce_roles_profiles');
   $sckey = $scheme . '_pid';
   foreach ($roles_profiles as $rid => $conf) {
-    if (isset($user->roles[$rid]) && isset($conf[$sckey]) && isset($profiles[$conf[$sckey]])) {
+    if (in_array($rid, $user->roles) && isset($conf[$sckey]) && isset($profiles[$conf[$sckey]])) {
       return $ups[$scheme][$user->uid] = $profiles[$conf[$sckey]] + $scinfo;
     }
   }
