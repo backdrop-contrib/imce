@@ -217,8 +217,11 @@ function imce_form_alter(&$form, &$form_state, $form_id) {
     return;
   }
   $form['image']['src']['#id'] = 'urlField';
-  $openFileBrowser = "window.open('".base_path().
-    "imce?app=myApp|url@urlField|name@name', '', 'width=760,height=560,resizable=1');";
+  $openFileBrowser =
+    '$("#ckeditor-modal .form-type-managed-file").hide();' .
+    '$("#ckeditor-modal .form-item-attributes-src").show();' .
+    'window.open("'.base_path().
+    'imce?app=myApp|url@urlField", "", "width=760,height=560,resizable=1");';
   $attributes = array();
   if (!empty($form_state['ajax'])) {
     $attributes['target'] = '_blank';
