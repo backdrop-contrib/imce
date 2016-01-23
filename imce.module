@@ -212,10 +212,15 @@ function imce_reg_dir($dirname) {
   return $dirname == '.' || is_int($dirname) || (is_string($dirname) && $dirname != '' && !preg_match('@(^\s)|(^/)|(^\./)|(\s$)|(/$)|(/\.$)|(\.\.)|(//)|(\\\\)|(/\./)@', $dirname));
 }
 
-function imce_form_alter(&$form, &$form_state, $form_id) {
-  if ($form_id !== 'filter_format_editor_image_form') {
-    return;
-  }
+/**
+ * Implements hook_form_FORM_ID-alter().
+ *
+ * Adds a "Browse server" link to the backdropimage dialog.
+ *
+ * @see filter_format_editor_image_form().
+ */
+
+function imce_form_filter_format_editor_image_form_alter(&$form, &$form_state) {
   $form['image']['src']['#id'] = 'urlField';
   $openFileBrowser =
     '$("#ckeditor-modal .form-type-managed-file").hide();' .
