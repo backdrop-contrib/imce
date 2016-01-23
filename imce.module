@@ -223,21 +223,10 @@ function imce_reg_dir($dirname) {
 function imce_form_filter_format_editor_image_form_alter(&$form, &$form_state) {
   $form['image']['src']['#id'] = 'urlField';
   $openFileBrowser =
-    '$("#ckeditor-modal .form-type-managed-file").hide();' .
-    '$("#ckeditor-modal .form-item-attributes-src").show();' .
-    'window.open("'.base_path().
-    'imce?app=myApp|url@urlField", "", "width=760,height=560,resizable=1");';
-  $attributes = array();
-  if (!empty($form_state['ajax'])) {
-    $attributes['target'] = '_blank';
-    $attributes['class'][] = 'overlay-exclude';
-  }
-  $attributes['onclick'] = 'javascript:'.$openFileBrowser.'return false;';
-
-  $form['image']['browse'] = array(
-    '#type' => 'item',
-    '#markup' => l(t('Browse server'), '#', array('attributes' => $attributes)),
-    '#parents' => array('attributes', 'src'),
-    '#weight' => 0,
-  );
+    '$("#ckeditor-modal .form-type-managed-file").hide();'
+  . '$("#ckeditor-modal .form-item-attributes-src").show();'
+  . 'window.open("' . base_path()
+  . 'imce?app=backdrop|url@urlField", "", "width=760,height=560,resizable=1");';
+  $form['image']['src']['#suffix'] = "<input type=button onclick='javascript:"
+    . $openFileBrowser . "' value='Browse server' style='float:right;'>";
 }
