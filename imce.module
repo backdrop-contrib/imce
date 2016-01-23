@@ -211,3 +211,25 @@ function imce_user_page_access($account, $user = FALSE) {
 function imce_reg_dir($dirname) {
   return $dirname == '.' || is_int($dirname) || (is_string($dirname) && $dirname != '' && !preg_match('@(^\s)|(^/)|(^\./)|(\s$)|(/$)|(/\.$)|(\.\.)|(//)|(\\\\)|(/\./)@', $dirname));
 }
+
+function imce_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id !== 'filter_format_editor_image_form') {
+    return;
+  }
+  $form['image']['src']['#id'] = 'urlField';
+  $openFileBrowser = "window.open('".base_path().
+    "imce?app=myApp|url@urlField|name@name', '', 'width=760,height=560,resizable=1');";
+  $attributes = array();
+  if (!empty($form_state['ajax'])) {
+    $attributes['target'] = '_blank';
+    $attributes['class'][] = 'overlay-exclude';
+  }
+  $attributes['onclick'] = 'javascript:'.$openFileBrowser.'return false;';
+
+  $form['image']['browse'] = array(
+    '#type' => 'item',
+    '#markup' => l(t('Browse server'), '#', array('attributes' => $attributes)),
+    '#parents' => array('attributes', 'src'),
+    '#weight' => 0,
+  );
+}
