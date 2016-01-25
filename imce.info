@@ -3,3 +3,4 @@ description = "An image/file uploader and browser supporting personal directorie
 backdrop = "1.x"
 package = "Media"
 configure = "admin/config/media/imce"
+type = module
