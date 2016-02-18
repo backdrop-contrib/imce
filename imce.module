@@ -230,3 +230,20 @@ function imce_form_filter_format_editor_image_form_alter(&$form, &$form_state) {
   $form['image']['src']['#suffix'] = "<input type=button onclick='javascript:"
     . $openFileBrowser . "' value='Browse server' style='float:right;'>";
 }
+
+function imce_ckeditor_plugins() {
+  $plugins['imce'] = array(
+    'name' => 'imce',
+    'desc' => t('Plugin for inserting files from IMCE without image dialog'),
+    'path' =>  backdrop_get_path('module', 'imce') . '/js/ckeditor',
+    'file' => 'plugin.js',
+    'buttons' => array(
+      'IMCE' => array(
+        'label' => 'IMCE',
+        'image' => backdrop_get_path('module', 'imce') . '/js/ckeditor/images/icon.png',
+      ),
+    ),
+    'enabled callback' => TRUE,
+  );
+  return $plugins;
+}
